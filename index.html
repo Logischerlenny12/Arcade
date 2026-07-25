@@ -83,6 +83,7 @@
   .row-gap{margin-top:12px;}
 
   h2.step-title{ font-family:var(--font-display); font-size:13px; color:var(--cyan); margin:0 0 16px; text-align:center; }
+  .section-subtitle{ font-size:12px; font-weight:700; color:var(--gold); margin:14px 0 8px; text-transform:uppercase; letter-spacing:1px; }
   .game-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
   .game-card{ background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:16px 10px; text-align:center; cursor:pointer; }
   .game-card .emoji{font-size:28px; display:block; margin-bottom:8px;}
@@ -176,8 +177,14 @@
 
   <!-- GAME SELECT -->
   <div class="screen" id="screen-game">
-    <h2 class="step-title">SPIEL WÄHLEN</h2>
-    <div class="game-grid" id="gameGrid"></div>
+    <h2 class="step-title">MODUS WÄHLEN</h2>
+    
+    <div class="section-subtitle">⚡ Quick Play (Direktspiel)</div>
+    <div class="game-grid" id="quickPlayGrid"></div>
+
+    <div class="section-subtitle">🌐 Normal Play (Spielewebseiten)</div>
+    <div class="game-grid" id="normalPlayGrid"></div>
+
     <button class="btn btn-ghost" id="backFromGame">← Zurück</button>
   </div>
 
@@ -311,6 +318,13 @@
           <div class="field"><label>Name</label><input type="text" id="newGameName" placeholder="z. B. Yandex Games"></div>
           <div class="field"><label>Spiele-Link (URL)</label><input type="text" id="newGameUrl" placeholder="https://yandex.com/games/..."></div>
           <div class="field"><label>Emoji</label><input type="text" id="newGameEmoji" placeholder="🎮" maxlength="4"></div>
+          <div class="field">
+            <label>Kategorie / Modus</label>
+            <select id="newGameCategory">
+              <option value="quick">⚡ Quick Play (Direktspiel)</option>
+              <option value="normal" selected>🌐 Normal Play (Spielewebseite)</option>
+            </select>
+          </div>
           <button class="btn btn-secondary" id="addGameBtn">+ Spiel hinzufügen</button>
         </div>
       </div>
@@ -369,7 +383,9 @@
     }
   ];
 
-  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🕹️' }];
+  const DEFAULT_GAMES = [
+    { id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal' }
+  ];
   
   let state = { users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], globalAnnouncement: '' };
 
@@ -382,31 +398,58 @@
 
   const $ = id => document.getElementById(id);
 
+  // LOKALER SPEICHER PROSCHUTZ
+  function loadLocalBackup(){
+    try {
+      const loc = localStorage.getItem('arcade_state_backup');
+      if(loc) return JSON.parse(loc);
+    } catch(e){}
+    return null;
+  }
+
+  function saveLocalBackup(){
+    try {
+      localStorage.setItem('arcade_state_backup', JSON.stringify(state));
+    } catch(e){}
+  }
+
   async function loadState(){
+    const localData = loadLocalBackup();
+    if(localData && localData.users && localData.users.length) {
+      state = localData;
+    }
+
     try {
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
       if(res.ok){
         const data = await res.json();
         if(data.record) {
-          state = Object.assign({}, state, data.record);
-          if(!state.users || !state.users.length) state.users = DEFAULT_USERS;
-          if(!state.games) state.games = DEFAULT_GAMES;
-          if(!state.tasks) state.tasks = [];
-          if(!state.history) state.history = [];
+          // Zusammenführen: Verhindert Datenverlust
+          if(data.record.users && data.record.users.length >= state.users.length) {
+            state = Object.assign({}, state, data.record);
+          }
         }
       }
-    } catch(e) { console.error('Ladefehler:', e); }
+    } catch(e) { console.error('Ladefehler Cloud, nutze lokalen Speicher:', e); }
+
+    if(!state.users || !state.users.length) state.users = DEFAULT_USERS;
+    if(!state.games) state.games = DEFAULT_GAMES;
+    if(!state.tasks) state.tasks = [];
+    if(!state.history) state.history = [];
+
+    saveLocalBackup();
     renderAll();
   }
 
   async function saveState(){
+    saveLocalBackup();
     try {
       await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
         body: JSON.stringify(state)
       });
-    } catch(e) { console.error('Speicherfehler:', e); }
+    } catch(e) { console.error('Speicherfehler Cloud:', e); }
   }
 
   function showScreen(id){
@@ -601,21 +644,39 @@
     await saveState(); renderAll(); alert('Benachrichtigung gelöscht!');
   });
 
+  function createGameCard(g){
+    const card = document.createElement('div'); card.className = 'game-card';
+    card.innerHTML = `<span class="emoji">${g.emoji || '🎮'}</span><span class="name">${escapeHtml(g.name)}</span>`;
+    card.addEventListener('click', () => { selectedGame = g; startSession(); });
+    return card;
+  }
+
   function renderGameGrid(){
-    $('gameGrid').innerHTML = '';
-    state.games.forEach(g => {
-      const card = document.createElement('div'); card.className = 'game-card';
-      card.innerHTML = `<span class="emoji">${g.emoji || '🎮'}</span><span class="name">${escapeHtml(g.name)}</span>`;
-      card.addEventListener('click', () => { selectedGame = g; startSession(); });
-      $('gameGrid').appendChild(card);
-    });
+    const qGrid = $('quickPlayGrid'); qGrid.innerHTML = '';
+    const nGrid = $('normalPlayGrid'); nGrid.innerHTML = '';
+
+    const quickGames = state.games.filter(g => g.category === 'quick');
+    const normalGames = state.games.filter(g => g.category !== 'quick');
+
+    if(!quickGames.length) {
+      qGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--cream-dim); font-size:12px; text-align:center;">Keine Quick Play Spiele vorhanden.</div>';
+    } else {
+      quickGames.forEach(g => qGrid.appendChild(createGameCard(g)));
+    }
+
+    if(!normalGames.length) {
+      nGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--cream-dim); font-size:12px; text-align:center;">Keine Webseiten vorhanden.</div>';
+    } else {
+      normalGames.forEach(g => nGrid.appendChild(createGameCard(g)));
+    }
   }
 
   function renderAdminGamesList(){
     const list = $('adminGamesList'); list.innerHTML = '';
     state.games.forEach(g => {
       const row = document.createElement('div'); row.className = 'games-list-item';
-      row.innerHTML = `<span>${g.emoji || '🎮'}</span><span class="glabel">${escapeHtml(g.name)}</span><button>✕</button>`;
+      const catLabel = g.category === 'quick' ? '⚡ Quick' : '🌐 Normal';
+      row.innerHTML = `<span>${g.emoji || '🎮'}</span><span class="glabel">${escapeHtml(g.name)} <small style="color:var(--cyan)">[${catLabel}]</small></span><button>✕</button>`;
       row.querySelector('button').addEventListener('click', async () => { state.games = state.games.filter(x => x.id !== g.id); await saveState(); renderAll(); });
       list.appendChild(row);
     });
@@ -680,7 +741,6 @@
     }
   }
 
-  // RESET ANALYTICS BUTTON LOGIK
   $('resetAnalyticsBtn').addEventListener('click', async () => {
     if(confirm('Möchtest du den gesamten Spielzeit-Verlauf der Analytics wirklich löschen? (Die Coins der Nutzer bleiben erhalten)')){
       state.history = [];
@@ -776,9 +836,13 @@
   });
 
   $('addGameBtn').addEventListener('click', async () => {
-    const name = $('newGameName').value.trim(); const url = $('newGameUrl').value.trim(); const emoji = $('newGameEmoji').value.trim();
+    const name = $('newGameName').value.trim(); 
+    const url = $('newGameUrl').value.trim(); 
+    const emoji = $('newGameEmoji').value.trim();
+    const category = $('newGameCategory').value;
+
     if(!name || !url) return;
-    state.games.push({ id: 'g' + Date.now(), name, url, emoji: emoji || '🎮' });
+    state.games.push({ id: 'g' + Date.now(), name, url, emoji: emoji || '🎮', category: category || 'normal' });
     await saveState(); renderAll(); $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = '';
   });
 
