@@ -71,9 +71,10 @@
   .user-msg-box { background: rgba(63, 224, 208, 0.1); border: 1px solid var(--cyan); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--cyan); }
   .user-badge-header { display:flex; justify-content:space-between; align-items:center; background:#0f0a1e; border:1px solid #3d2f66; border-radius:12px; padding:8px 14px; margin-bottom:16px; font-size:13px; }
 
-  .coin-display{ background:#0f0a1e; border:2px solid var(--gold-dim); border-radius:18px; padding:22px 16px; text-align:center; margin-bottom:22px; }
-  .coin-label{ font-size:11px; letter-spacing:2px; color:var(--cream-dim); text-transform:uppercase; margin-bottom:10px; }
-  .coin-value{ font-family:var(--font-display); font-size:36px; color:var(--gold); display:flex; align-items:center; justify-content:center; gap:10px; }
+  .coin-display{ background:#0f0a1e; border:2px solid var(--gold-dim); border-radius:18px; padding:18px 16px; text-align:center; margin-bottom:18px; display:flex; justify-content:space-around; align-items:center; }
+  .coin-sub-box { text-align:center; }
+  .coin-label{ font-size:10px; letter-spacing:1px; color:var(--cream-dim); text-transform:uppercase; margin-bottom:6px; }
+  .coin-value{ font-family:var(--font-display); font-size:24px; color:var(--gold); display:flex; align-items:center; justify-content:center; gap:6px; }
 
   .btn{ display:block; width:100%; border:none; border-radius:14px; padding:16px 18px; font-family:var(--font-body); font-weight:700; font-size:15px; cursor:pointer; text-align:center; transition:transform .12s; }
   .btn:active{transform:scale(0.97);}
@@ -96,14 +97,30 @@
   .user-card.locked { border-color: var(--danger); opacity: 0.8; }
   .user-info { font-weight:bold; font-size:15px; }
 
-  .tasks-container { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; max-height:360px; overflow-y:auto; }
+  .tasks-container { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; max-height:300px; overflow-y:auto; }
   .task-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:1px solid #3d2f66; border-radius:10px; padding:10px 12px; }
   .task-item.completed { opacity: 0.5; }
   .task-claim-btn { background:var(--gold-dim); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; }
 
+  /* SHOP NEU MIT TABS */
+  .shop-nav { display:flex; gap:8px; margin-bottom:16px; }
+  .shop-nav-btn { flex:1; padding:10px; background:#1c1536; border:1px solid #3d2f66; color:var(--cream-dim); border-radius:10px; font-weight:bold; cursor:pointer; text-align:center; font-size:12px; }
+  .shop-nav-btn.active { background:var(--magenta); color:white; border-color:var(--magenta); }
+  .shop-tab-content { display:none; }
+  .shop-tab-content.active { display:block; }
+
   .shop-grid { display:flex; flex-direction:column; gap:12px; margin-bottom:18px; }
   .shop-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:12px 14px; }
   .shop-item.active-theme { border-color:var(--cyan); background:#251b47; }
+
+  .wheel-card { background:#1c1536; border:2px solid #3d2f66; border-radius:16px; padding:16px; text-align:center; margin-bottom:12px; cursor:pointer; }
+  .wheel-card:hover { border-color:var(--gold); }
+  .wheel-card .wheel-icon { font-size:36px; display:block; margin-bottom:6px; }
+
+  /* GLÜCKSRAD ANIMATION CONTAINER */
+  .wheel-spinner-container { position:relative; width:160px; height:160px; margin:0 auto 16px; }
+  .wheel-spinner { width:100%; height:100%; border-radius:50%; border:8px solid var(--gold); background:conic-gradient(#ff4d8d 0 60deg, #3fe0d0 60deg 120deg, #ffc857 120deg 180deg, #7a6323 180deg 240deg, #d63bff 240deg 300deg, #ff5c5c 300deg 360deg); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); }
+  .wheel-pointer { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-top:20px solid var(--cream); z-index:10; }
 
   .result-box{ text-align:center; padding:10px 4px 6px; }
   .result-title.fail{color:var(--danger);}
@@ -147,6 +164,7 @@
 <div class="cabinet">
   <div class="marquee-title">✦ MÜNZ-ARCADE ✦</div>
 
+  <!-- AUTH SCREEN -->
   <div class="screen active" id="screen-auth">
     <div class="global-announcement" id="globalAnnouncementBox" style="display:none;">
       <div class="title">📢 BENACHRICHTIGUNG</div>
@@ -157,6 +175,7 @@
     <button class="btn btn-secondary" id="registerBtn">➕ Neuen Account erstellen</button>
   </div>
 
+  <!-- HOME SCREEN -->
   <div class="screen" id="screen-home">
     <div class="user-badge-header">
       <span>👤 <b id="currentUserName">Name</b></span>
@@ -168,22 +187,80 @@
     </div>
 
     <div class="coin-display">
-      <div class="coin-label">Guthaben</div>
-      <div class="coin-value"><span class="icon">🪙</span><span id="coinsHome">0</span></div>
+      <div class="coin-sub-box">
+        <div class="coin-label">Münzen</div>
+        <div class="coin-value">🪙 <span id="coinsHome">0</span></div>
+      </div>
+      <div style="width:1px; height:30px; background:#3d2f66;"></div>
+      <div class="coin-sub-box">
+        <div class="coin-label">Tickets</div>
+        <div class="coin-value">🎟️ <span id="ticketsHome">0</span></div>
+      </div>
     </div>
+
     <button class="btn btn-primary" id="playBtn">▶ Spielen</button>
-    <button class="btn btn-secondary row-gap" id="shopBtn">🎨 Design-Shop</button>
+    <button class="btn btn-secondary row-gap" id="shopBtn">🛒 Arcade Shop</button>
     <button class="btn btn-secondary row-gap" id="tasksBtn">📝 Aufgaben & Erfolge</button>
     <button class="btn btn-ghost row-gap" id="dailyRewardBtn">🎁 Belohnung laden...</button>
     <button class="btn btn-ghost row-gap" id="openAdminDashboardBtn" style="display:none; border-color:var(--gold); color:var(--gold);">⚙️ Admin Dashboard</button>
   </div>
 
+  <!-- SHOP SCREEN NEU STRUCTURE -->
   <div class="screen" id="screen-shop">
-    <h2 class="step-title">DESIGN-SHOP</h2>
-    <div class="shop-grid" id="themeShopList"></div>
-    <button class="btn btn-ghost" id="backFromShop">← Zurück</button>
+    <h2 class="step-title">ARCADE SHOP</h2>
+
+    <!-- TICKET KAUFEN BANNER -->
+    <div style="background:#1c1536; border:2px solid var(--gold); border-radius:14px; padding:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <b style="color:var(--gold); font-size:14px;">🎟️ Tickets Kaufen</b><br>
+        <small style="color:var(--cream-dim)">1 Ticket = 50 Coins</small>
+      </div>
+      <button class="btn btn-primary btn-sm" id="buyTicketBtn">+ 1 Ticket (50 🪙)</button>
+    </div>
+
+    <div class="shop-nav">
+      <button class="shop-nav-btn active" data-shoptab="tab-themes">🎨 Themen</button>
+      <button class="shop-nav-btn" data-shoptab="tab-wheels">🎡 Glücksräder</button>
+      <button class="shop-nav-btn" data-shoptab="tab-boosts">⚡ Boosts</button>
+    </div>
+
+    <!-- TAB: THEMEN -->
+    <div class="shop-tab-content active" id="tab-themes">
+      <div class="shop-grid" id="themeShopList"></div>
+    </div>
+
+    <!-- TAB: GLÜCKSRÄDER -->
+    <div class="shop-tab-content" id="tab-wheels">
+      <div class="wheel-card" id="wheelBtn1">
+        <span class="wheel-icon">🥉</span>
+        <b style="color:var(--gold);">Bronze Glücksrad</b><br>
+        <small style="color:var(--cream-dim)">Kosten: 1 Ticket 🎟️</small>
+      </div>
+
+      <div class="wheel-card" id="wheelBtn2">
+        <span class="wheel-icon">🥈</span>
+        <b style="color:var(--cyan);">Silber Glücksrad</b><br>
+        <small style="color:var(--cream-dim)">Kosten: 2 Tickets 🎟️🎟️</small>
+      </div>
+
+      <div class="wheel-card" id="wheelBtn3">
+        <span class="wheel-icon">🥇</span>
+        <b style="color:var(--magenta);">Gold Glücksrad</b><br>
+        <small style="color:var(--cream-dim)">Kosten: 4 Tickets 🎟️🎟️🎟️🎟️</small>
+      </div>
+    </div>
+
+    <!-- TAB: BOOSTS -->
+    <div class="shop-tab-content" id="tab-boosts">
+      <div style="text-align:center; padding:30px 10px; color:var(--cream-dim); background:#1c1536; border-radius:14px; border:1px dashed #3d2f66;">
+        ⚡ <b>Boosts kommen bald!</b><br><small>Hier kannst du bald Multiplikatoren und Boni freischalten.</small>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost row-gap" id="backFromShop">← Zurück</button>
   </div>
 
+  <!-- TASKS SCREEN -->
   <div class="screen" id="screen-tasks">
     <h2 class="step-title">AUFGABEN & ERFOLGE</h2>
     <div class="section-subtitle">🏆 Tägliche Erfolge (17 Stk.)</div>
@@ -194,6 +271,7 @@
     <button class="btn btn-ghost" id="backFromTasks">← Zurück</button>
   </div>
 
+  <!-- GAME SELECT -->
   <div class="screen" id="screen-game">
     <h2 class="step-title">MODUS WÄHLEN</h2>
     <div class="section-subtitle">⚡ Quick Play (Direktspiel)</div>
@@ -203,6 +281,7 @@
     <button class="btn btn-ghost" id="backFromGame">← Zurück</button>
   </div>
 
+  <!-- LIVE GAME SESSION SCREEN -->
   <div class="screen" id="screen-active-session">
     <div class="result-box">
       <h2 class="step-title">🎮 SPIELZEIT LÄUFT</h2>
@@ -214,6 +293,7 @@
     </div>
   </div>
 
+  <!-- ACCOUNT BLOCKED SCREEN -->
   <div class="screen" id="screen-locked">
     <div class="result-box">
       <div class="result-title fail">🔒 ACCOUNT GESPERRT</div>
@@ -223,6 +303,28 @@
   </div>
 </div>
 
+<!-- GLÜCKSRAD BANNER MODAL -->
+<div class="modal-backdrop" id="wheelModal">
+  <div style="background:var(--bg-panel); padding:20px; border-radius:24px; width:100%; max-width:380px; text-align:center;">
+    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:13px; margin-top:0;" id="wheelModalTitle">GLÜCKSRAD</h3>
+    
+    <div class="wheel-spinner-container">
+      <div class="wheel-pointer"></div>
+      <div class="wheel-spinner" id="wheelSpinnerElem"></div>
+    </div>
+
+    <div style="background:#0f0a1e; padding:12px; border-radius:12px; font-size:12px; text-align:left; margin-bottom:14px;" id="wheelChancesBanner">
+      <!-- DYNAMISCHE GEWINNÜBERSICHT -->
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" id="closeWheelModalBtn">Schließen</button>
+      <button class="btn btn-primary" id="spinWheelBtn">🎡 Drehen (<span id="wheelCostTicketCount">1</span> 🎟️)</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN & REGISTER MODALS -->
 <div class="modal-backdrop" id="passwordModal">
   <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
     <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;" id="passwordModalTitle">PASSWORT</h3>
@@ -248,6 +350,7 @@
   </div>
 </div>
 
+<!-- VOLLBILD ADMIN PANEL -->
 <div class="modal-backdrop" id="adminPanelBackdrop">
   <div class="modal-fullscreen">
     <div class="admin-header">
@@ -265,6 +368,7 @@
       <button class="admin-nav-btn" data-tab="tab-logs" id="tabBtnLogs">📜 Log</button>
     </div>
 
+    <!-- TAB: ACCOUNTS -->
     <div class="admin-tab-content active" id="tab-accounts">
       <div style="display:flex; gap:20px; flex-wrap:wrap;">
         <div style="flex:1; min-width:280px;">
@@ -278,6 +382,7 @@
           <div id="accountEditForm" style="display:none;">
             <div class="field"><label>Name</label><input type="text" id="editAccName"></div>
             <div class="field"><label>Coins Guthaben</label><input type="number" id="editAccCoins"></div>
+            <div class="field"><label>Tickets Guthaben</label><input type="number" id="editAccTickets"></div>
             <div class="field"><label>Nachricht an Nutzer</label><input type="text" id="editAccMsg"></div>
             <div class="perm-box">
               <label class="perm-item"><input type="checkbox" id="permLocked"> 🔒 Account Sperren</label>
@@ -297,32 +402,26 @@
       </div>
     </div>
 
+    <!-- TAB: SCHENKEN -->
     <div class="admin-tab-content" id="tab-gift">
       <div style="max-width:500px;">
         <h3>🎁 An Account schenken</h3>
-        <div class="field">
-          <label>Ziel-Account wählen</label>
-          <select id="giftTargetUserSelect"></select>
-        </div>
+        <div class="field"><label>Ziel-Account wählen</label><select id="giftTargetUserSelect"></select></div>
         <div class="field">
           <label>Was möchtest du schenken?</label>
           <select id="giftTypeSelect">
-            <option value="coins">🪙 Coins guthaben</option>
+            <option value="coins">🪙 Coins Guthaben</option>
+            <option value="tickets">🎟️ Tickets Guthaben</option>
             <option value="theme">🎨 Design-Theme freischalten</option>
           </select>
         </div>
-        <div class="field" id="giftCoinsGroup">
-          <label>Anzahl Coins</label>
-          <input type="number" id="giftCoinsAmount" value="50" min="1">
-        </div>
-        <div class="field" id="giftThemeGroup" style="display:none;">
-          <label>Theme wählen</label>
-          <select id="giftThemeSelect"></select>
-        </div>
+        <div class="field" id="giftAmountGroup"><label>Anzahl</label><input type="number" id="giftAmountInput" value="50" min="1"></div>
+        <div class="field" id="giftThemeGroup" style="display:none;"><label>Theme wählen</label><select id="giftThemeSelect"></select></div>
         <button class="btn btn-primary" id="executeGiftBtn">🎁 Jetzt Schenken</button>
       </div>
     </div>
 
+    <!-- TAB: INFO -->
     <div class="admin-tab-content" id="tab-announcements">
       <div style="max-width:500px;">
         <h3>Globale Benachrichtigung</h3>
@@ -332,6 +431,7 @@
       </div>
     </div>
 
+    <!-- TAB: SPIELE -->
     <div class="admin-tab-content" id="tab-games">
       <div style="display:flex; gap:20px; flex-wrap:wrap;">
         <div style="flex:1; min-width:280px;"><h3>Spieleliste</h3><div id="adminGamesList"></div></div>
@@ -346,6 +446,7 @@
       </div>
     </div>
 
+    <!-- TAB: AUFGABEN -->
     <div class="admin-tab-content" id="tab-tasks">
       <div style="display:flex; gap:20px; flex-wrap:wrap;">
         <div style="flex:1; min-width:280px;"><h3>Aktive Aufgaben</h3><div id="adminTasksList"></div></div>
@@ -358,6 +459,7 @@
       </div>
     </div>
 
+    <!-- TAB: ANALYTICS -->
     <div class="admin-tab-content" id="tab-analytics">
       <h3>📊 Übersicht Spielzeit</h3>
       <div class="stats-grid">
@@ -365,21 +467,17 @@
         <div class="stat-card"><div>Letzte 7 Tage</div><div class="num" id="statWeek">0 Min</div></div>
         <div class="stat-card"><div>Gesamt gespielt</div><div class="num" id="statTotal">0 Min</div></div>
       </div>
-
-      <h3 style="margin-top:24px;">🏆 Erledigte Erfolge & Aufgaben (Pro Account)</h3>
+      <h3 style="margin-top:24px;">🏆 Erledigte Erfolge & Aufgaben</h3>
       <div id="adminTaskLogList" style="margin-bottom:24px;"></div>
-
       <button class="btn btn-danger" id="resetAnalyticsBtn" style="max-width:320px;">🗑️ Analytics zurücksetzen</button>
     </div>
 
+    <!-- TAB: LOG -->
     <div class="admin-tab-content" id="tab-logs">
       <h3>📜 Transaktions-Log</h3>
-      <p style="color:var(--cream-dim); font-size:13px;">Alle Ein- und Ausgaben von Münzen für jeden Account.</p>
       <div style="overflow-x:auto;">
         <table class="log-table">
-          <thead>
-            <tr><th>Datum & Zeit</th><th>Account</th><th>Typ / Grund</th><th>Münzen</th></tr>
-          </thead>
+          <thead><tr><th>Datum & Zeit</th><th>Account</th><th>Typ / Grund</th><th>Anzahl</th></tr></thead>
           <tbody id="transactionLogBody"></tbody>
         </table>
       </div>
@@ -397,7 +495,7 @@
     {
       id: 'u_admin', name: 'Admin', password: '1234', approved: true,
       isAdmin: true, unlimitedCoins: true, canAddGames: true, canAddTasks: true,
-      coins: 100, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '',
+      coins: 100, tickets: 5, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '',
       unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: []
     }
   ];
@@ -415,7 +513,6 @@
     { id: 'theme-sunset', name: '☀️ Sunset Drive', cost: 80 }
   ];
 
-  // 17 TÄGLICHE ERFOLGE (DAILY ACHIEVEMENTS)
   const DAILY_ACHIEVEMENTS = [
     { id: 'ach_yt15', title: '🎬 15 Min. auf YouTube verbracht', reward: 10 },
     { id: 'ach_yt30', title: '📺 30 Min. YouTube Video-Marathon', reward: 20 },
@@ -436,12 +533,56 @@
     { id: 'ach_100coins', title: '👑 Kontostand von 100 Coins erreicht', reward: 30 }
   ];
 
+  const WHEELS = {
+    1: {
+      name: '🥉 Bronze Glücksrad', costTickets: 1,
+      chancesHtml: '<b>Mögliche Gewinne:</b><br>• 50% $\rightarrow$ 50 Coins 🪙<br>• 15% $\rightarrow$ 10 Coins 🪙<br>• 10% $\rightarrow$ 70 Coins 🪙<br>• 5% $\rightarrow$ 100 Coins 🪙<br>• 5% $\rightarrow$ 3x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
+      spin: () => {
+        const r = Math.random() * 100;
+        if(r < 50) return { coins: 50, tickets: 0, msg: '50 Coins 🪙' };
+        if(r < 65) return { coins: 10, tickets: 0, msg: '10 Coins 🪙' };
+        if(r < 75) return { coins: 70, tickets: 0, msg: '70 Coins 🪙' };
+        if(r < 80) return { coins: 100, tickets: 0, msg: '🎉 100 Coins! 🪙' };
+        if(r < 85) return { coins: 0, tickets: 3, msg: '🎟️ 3x Tickets!' };
+        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+      }
+    },
+    2: {
+      name: '🥈 Silber Glücksrad', costTickets: 2,
+      chancesHtml: '<b>Mögliche Gewinne:</b><br>• 50% $\rightarrow$ 120 Coins 🪙<br>• 15% $\rightarrow$ 30 Coins 🪙<br>• 10% $\rightarrow$ 180 Coins 🪙<br>• 5% $\rightarrow$ 250 Coins 🪙<br>• 5% $\rightarrow$ 5x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
+      spin: () => {
+        const r = Math.random() * 100;
+        if(r < 50) return { coins: 120, tickets: 0, msg: '120 Coins 🪙' };
+        if(r < 65) return { coins: 30, tickets: 0, msg: '30 Coins 🪙' };
+        if(r < 75) return { coins: 180, tickets: 0, msg: '180 Coins 🪙' };
+        if(r < 80) return { coins: 250, tickets: 0, msg: '🎉 250 Coins! 🪙' };
+        if(r < 85) return { coins: 0, tickets: 5, msg: '🎟️ 5x Tickets!' };
+        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+      }
+    },
+    3: {
+      name: '🥇 Gold Glücksrad', costTickets: 4,
+      chancesHtml: '<b>Mögliche Gewinne:</b><br>• 50% $\rightarrow$ 250 Coins 🪙<br>• 15% $\rightarrow$ 80 Coins 🪙<br>• 10% $\rightarrow$ 400 Coins 🪙<br>• 5% $\rightarrow$ 600 Coins 🪙<br>• 5% $\rightarrow$ 10x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
+      spin: () => {
+        const r = Math.random() * 100;
+        if(r < 50) return { coins: 250, tickets: 0, msg: '250 Coins 🪙' };
+        if(r < 65) return { coins: 80, tickets: 0, msg: '80 Coins 🪙' };
+        if(r < 75) return { coins: 400, tickets: 0, msg: '400 Coins 🪙' };
+        if(r < 80) return { coins: 600, tickets: 0, msg: '🎉 600 Coins Jackpot! 🪙' };
+        if(r < 85) return { coins: 0, tickets: 10, msg: '🎟️ 10x Tickets Jackpot!' };
+        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+      }
+    }
+  };
+
   let state = { users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], logs: [], taskLogs: [], globalAnnouncement: '' };
 
   let currentUser = null;
   let selectedUserForAuth = null;
   let selectedUserForEdit = null;
   let selectedGame = null;
+  let activeWheelKey = 1;
+  let currentWheelRotation = 0;
   let stopwatchInterval = null;
   let sessionSeconds = 0;
 
@@ -473,6 +614,7 @@
     renderAll();
   }
 
+  // BUMM! SOFORT-SPEICHERN BEI JEDEM KLICK!
   async function saveState(){
     saveLocalBackup();
     try {
@@ -484,24 +626,14 @@
     } catch(e) {}
   }
 
-  function addLog(userName, typeReason, amount){
+  function addLog(userName, typeReason, amount, unit='🪙'){
     if(!state.logs) state.logs = [];
-    state.logs.unshift({
-      timestamp: Date.now(),
-      userName: userName,
-      typeReason: typeReason,
-      amount: amount
-    });
+    state.logs.unshift({ timestamp: Date.now(), userName: userName, typeReason: typeReason, amount: amount, unit: unit });
   }
 
   function addTaskLog(userName, taskName, type){
     if(!state.taskLogs) state.taskLogs = [];
-    state.taskLogs.unshift({
-      timestamp: Date.now(),
-      userName: userName,
-      taskName: taskName,
-      type: type
-    });
+    state.taskLogs.unshift({ timestamp: Date.now(), userName: userName, taskName: taskName, type: type });
   }
 
   function applyTheme(themeId){ document.body.className = themeId === 'default' ? '' : themeId; }
@@ -519,10 +651,12 @@
       if(!currentUser.unlockedThemes) currentUser.unlockedThemes = ['default'];
       if(!currentUser.currentTheme) currentUser.currentTheme = 'default';
       if(!currentUser.completedAchievements) currentUser.completedAchievements = [];
+      if(currentUser.tickets === undefined) currentUser.tickets = 0;
 
       applyTheme(currentUser.currentTheme);
       $('currentUserName').textContent = currentUser.name;
       $('coinsHome').textContent = currentUser.unlimitedCoins ? '♾️' : currentUser.coins;
+      $('ticketsHome').textContent = currentUser.tickets;
 
       if(currentUser.message) { $('userPersonalMsgBox').style.display = 'block'; $('userPersonalMsgText').textContent = currentUser.message; }
       else $('userPersonalMsgBox').style.display = 'none';
@@ -608,9 +742,79 @@
     if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
     state.users.push({
       id: 'u_' + Date.now(), name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false, canAddGames: false, canAddTasks: false,
-      coins: 10, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: []
+      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: []
     });
     await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
+  });
+
+  // TICKET KAUF IM SHOP
+  $('buyTicketBtn').addEventListener('click', async () => {
+    if(!currentUser.unlimitedCoins && currentUser.coins < 50){
+      alert('Du brauchst 50 Coins für 1 Ticket!');
+      return;
+    }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= 50;
+    currentUser.tickets = (currentUser.tickets || 0) + 1;
+    addLog(currentUser.name, '🎟️ Ticket gekauft', -50);
+    await saveState(); renderAll(); alert('🎉 1 Ticket gekauft!');
+  });
+
+  // SHOP TABS LOGIK
+  document.querySelectorAll('.shop-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.shop-nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.shop-tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.shoptab).classList.add('active');
+    });
+  });
+
+  // GLÜCKSRAD BANNER ÖFFNEN
+  function openWheelModal(key){
+    activeWheelKey = key;
+    const w = WHEELS[key];
+    $('wheelModalTitle').textContent = w.name.toUpperCase();
+    $('wheelCostTicketCount').textContent = w.costTickets;
+    $('wheelChancesBanner').innerHTML = w.chancesHtml;
+    $('spinWheelBtn').disabled = false;
+    $('wheelModal').classList.add('active');
+  }
+
+  $('wheelBtn1').addEventListener('click', () => openWheelModal(1));
+  $('wheelBtn2').addEventListener('click', () => openWheelModal(2));
+  $('wheelBtn3').addEventListener('click', () => openWheelModal(3));
+  $('closeWheelModalBtn').addEventListener('click', () => $('wheelModal').classList.remove('active'));
+
+  // GLÜCKSRAD DREHEN ANIMATION
+  $('spinWheelBtn').addEventListener('click', async () => {
+    const w = WHEELS[activeWheelKey];
+    if(currentUser.tickets < w.costTickets){
+      alert(`Du brauchst ${w.costTickets} Ticket(s) für dieses Rad! Kaufe sie oben im Shop.`);
+      return;
+    }
+
+    currentUser.tickets -= w.costTickets;
+    addLog(currentUser.name, `🎡 Drehung: ${w.name}`, -w.costTickets, '🎟️');
+    await saveState(); renderAll();
+
+    $('spinWheelBtn').disabled = true;
+
+    // Animation drehen
+    currentWheelRotation += 1440 + Math.floor(Math.random() * 360);
+    $('wheelSpinnerElem').style.transform = `rotate(${currentWheelRotation}deg)`;
+
+    setTimeout(async () => {
+      const result = w.spin();
+      if(result.coins > 0) currentUser.coins += result.coins;
+      if(result.tickets > 0) currentUser.tickets += result.tickets;
+
+      if(result.coins > 0) addLog(currentUser.name, `🎉 Gewinn: ${w.name}`, result.coins, '🪙');
+      if(result.tickets > 0) addLog(currentUser.name, `🎉 Gewinn: ${w.name}`, result.tickets, '🎟️');
+
+      await saveState(); renderAll();
+      alert(`ERGEBNIS:\n${result.msg}`);
+      $('spinWheelBtn').disabled = false;
+    }, 4000);
   });
 
   // ERFOLGE RENDER
@@ -628,12 +832,12 @@
 
       if(!isDone){
         item.querySelector('button').addEventListener('click', async () => {
-          if(confirm(`Hast du "${ach.title}" heute geschafft?`)){
+          if(confirm(`Hast du "${ach.title}" geschafft?`)){
             currentUser.coins += ach.reward;
             currentUser.completedAchievements.push(ach.id);
             addLog(currentUser.name, `🏆 Erfolg: ${ach.title}`, ach.reward);
             addTaskLog(currentUser.name, ach.title, 'Erfolg');
-            await saveState(); renderAll(); alert(`🎉 Erfolg freigeschaltet: +${ach.reward} Coins!`);
+            await saveState(); renderAll(); alert(`🎉 Erfolg: +${ach.reward} Coins!`);
           }
         });
       }
@@ -641,7 +845,7 @@
     });
   }
 
-  // SHOP
+  // SHOP THEMEN
   function renderThemeShop(){
     const list = $('themeShopList'); list.innerHTML = '';
     const unlocked = currentUser.unlockedThemes || ['default'];
@@ -670,7 +874,7 @@
                 if(!currentUser.unlimitedCoins) currentUser.coins -= t.cost;
                 currentUser.unlockedThemes.push(t.id); currentUser.currentTheme = t.id;
                 addLog(currentUser.name, `🎨 Shop-Kauf: ${t.name}`, -t.cost);
-                await saveState(); renderAll(); alert(`🎉 Theme "${t.name}" gekauft!`);
+                await saveState(); renderAll(); alert(`🎉 Theme "${t.name}" aktiviert!`);
               }
             }
           });
@@ -699,10 +903,10 @@
   }
 
   $('giftTypeSelect').addEventListener('change', (e) => {
-    if(e.target.value === 'coins'){
-      $('giftCoinsGroup').style.display = 'block'; $('giftThemeGroup').style.display = 'none';
+    if(e.target.value === 'theme'){
+      $('giftAmountGroup').style.display = 'none'; $('giftThemeGroup').style.display = 'block';
     } else {
-      $('giftCoinsGroup').style.display = 'none'; $('giftThemeGroup').style.display = 'block';
+      $('giftAmountGroup').style.display = 'block'; $('giftThemeGroup').style.display = 'none';
     }
   });
 
@@ -713,26 +917,28 @@
 
     const giftType = $('giftTypeSelect').value;
     if(giftType === 'coins'){
-      const amount = parseInt($('giftCoinsAmount').value, 10) || 0;
+      const amount = parseInt($('giftAmountInput').value, 10) || 0;
       targetUser.coins += amount;
-      addLog(targetUser.name, `🎁 Vom Admin geschenkt`, amount);
+      addLog(targetUser.name, `🎁 Admin-Geschenk Coins`, amount);
       alert(`${amount} Coins an ${targetUser.name} geschenkt!`);
+    } else if(giftType === 'tickets'){
+      const amount = parseInt($('giftAmountInput').value, 10) || 0;
+      targetUser.tickets = (targetUser.tickets || 0) + amount;
+      addLog(targetUser.name, `🎁 Admin-Geschenk Tickets`, amount, '🎟️');
+      alert(`${amount} Ticket(s) an ${targetUser.name} geschenkt!`);
     } else {
       const themeId = $('giftThemeSelect').value;
       const themeObj = THEMES.find(t => t.id === themeId);
       if(!targetUser.unlockedThemes) targetUser.unlockedThemes = ['default'];
       if(!targetUser.unlockedThemes.includes(themeId)){
         targetUser.unlockedThemes.push(themeId);
-        addLog(targetUser.name, `🎁 Theme geschenkt: ${themeObj.name}`, 0);
+        addLog(targetUser.name, `🎁 Admin-Geschenk Theme: ${themeObj.name}`, 0);
         alert(`Theme "${themeObj.name}" an ${targetUser.name} geschenkt!`);
-      } else {
-        alert(`${targetUser.name} besitzt dieses Theme bereits.`);
-      }
+      } else alert(`${targetUser.name} besitzt dieses Theme bereits.`);
     }
     await saveState(); renderAll();
   });
 
-  // LOGS & TRANSAKTIONEN
   function renderLogs(){
     const tbody = $('transactionLogBody'); tbody.innerHTML = '';
     if(!state.logs || !state.logs.length){
@@ -744,8 +950,9 @@
       const dateStr = new Date(l.timestamp).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
       const coinClass = l.amount > 0 ? 'log-plus' : (l.amount < 0 ? 'log-minus' : '');
       const coinSign = l.amount > 0 ? '+' : '';
+      const unit = l.unit || '🪙';
 
-      tr.innerHTML = `<td>${dateStr}</td><td><b>${escapeHtml(l.userName)}</b></td><td>${escapeHtml(l.typeReason)}</td><td class="${coinClass}">${coinSign}${l.amount} 🪙</td>`;
+      tr.innerHTML = `<td>${dateStr}</td><td><b>${escapeHtml(l.userName)}</b></td><td>${escapeHtml(l.typeReason)}</td><td class="${coinClass}">${coinSign}${l.amount} ${unit}</td>`;
       tbody.appendChild(tr);
     });
   }
@@ -765,7 +972,7 @@
     state.users.filter(u => u.approved).forEach(u => {
       const row = document.createElement('div'); row.className = 'games-list-item'; row.style.cursor = 'pointer';
       const lockBadge = u.isLocked ? ' 🔒' : '';
-      row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b> ${u.isAdmin ? '👑' : ''}${lockBadge}<br><small style="color:var(--cream-dim)">Coins: ${u.unlimitedCoins ? '♾️' : u.coins}</small></span><span>⚙️ Edit</span>`;
+      row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b> ${u.isAdmin ? '👑' : ''}${lockBadge}<br><small style="color:var(--cream-dim)">Coins: ${u.unlimitedCoins ? '♾️' : u.coins} | Tickets: ${u.tickets || 0}</small></span><span>⚙️ Edit</span>`;
       row.addEventListener('click', () => loadUserIntoEditForm(u));
       activeList.appendChild(row);
     });
@@ -774,18 +981,19 @@
   function loadUserIntoEditForm(u){
     selectedUserForEdit = u;
     $('accountEditPlaceholder').style.display = 'none'; $('accountEditForm').style.display = 'block';
-    $('editAccName').value = u.name; $('editAccCoins').value = u.coins; $('editAccMsg').value = u.message || ''; $('editAccLockReason').value = u.lockReason || '';
+    $('editAccName').value = u.name; $('editAccCoins').value = u.coins; $('editAccTickets').value = u.tickets || 0; $('editAccMsg').value = u.message || ''; $('editAccLockReason').value = u.lockReason || '';
     $('permLocked').checked = !!u.isLocked; $('permAdmin').checked = !!u.isAdmin; $('permUnlimited').checked = !!u.unlimitedCoins;
     $('permGames').checked = !!u.canAddGames; $('permTasks').checked = !!u.canAddTasks;
   }
 
   $('saveAccChangesBtn').addEventListener('click', async () => {
     if(!selectedUserForEdit) return;
-    const diff = (parseInt($('editAccCoins').value, 10) || 0) - selectedUserForEdit.coins;
-    if(diff !== 0) addLog(selectedUserForEdit.name, '⚙️ Admin Anpassung', diff);
+    const diffCoins = (parseInt($('editAccCoins').value, 10) || 0) - selectedUserForEdit.coins;
+    if(diffCoins !== 0) addLog(selectedUserForEdit.name, '⚙️ Admin Anpassung Coins', diffCoins);
 
     selectedUserForEdit.name = $('editAccName').value.trim() || selectedUserForEdit.name;
     selectedUserForEdit.coins = parseInt($('editAccCoins').value, 10) || 0;
+    selectedUserForEdit.tickets = parseInt($('editAccTickets').value, 10) || 0;
     selectedUserForEdit.message = $('editAccMsg').value.trim();
     selectedUserForEdit.isLocked = $('permLocked').checked;
     selectedUserForEdit.lockReason = $('editAccLockReason').value.trim();
@@ -877,7 +1085,6 @@
     $('statWeek').textContent = weekMin.toFixed(1) + ' Min';
     $('statTotal').textContent = totalMin.toFixed(1) + ' Min';
 
-    // ERFOLGS-LOG
     const taskLogContainer = $('adminTaskLogList'); taskLogContainer.innerHTML = '';
     if(!state.taskLogs || !state.taskLogs.length){
       taskLogContainer.innerHTML = '<div style="color:var(--cream-dim); font-size:13px;">Bisher wurden noch keine Aufgaben/Erfolge erledigt.</div>';
