@@ -372,7 +372,6 @@
   <div class="scene-3d">
     <div class="light-beam"></div>
     <div class="box-3d" id="box3dContainer">
-      <!-- Wände der Sci-Fi Kiste -->
       <div class="box-face box-front"></div>
       <div class="box-face box-back"></div>
       <div class="box-face box-left"></div>
@@ -636,39 +635,52 @@
   }
 
   // ==========================================
-  // WAHRSCHEINLICHKEITEN FÜR LOOTBOXEN
-  // - 20% Niete (0 Coins)
-  // - 40% Box-Wert (Silber: 70, Gold: 140, Diamond: 280)
-  // - 20% Trostpreis
-  // - 15% Guter Gewinn
-  // - 5% Jackpot (> Box-Wert)
+  // NEUE WAHRSCHEINLICHKEITEN FÜR LOOTBOXEN
+  // - 15% Niete (0)
+  // - 15% Trostpreis (Silber: 35, Gold: 70, Diamond: 140)
+  // - 15% Exakter Box-Wert (Silber: 70, Gold: 140, Diamond: 280)
+  // - 10% Leicht drüber (Silber: 80, Gold: 160, Diamond: 310)
+  // - 15% Ticket Gewinn (Silber: 1, Gold: 2, Diamond: 4)
+  // -  5% Doppel-Ticket Gewinn (Silber: 2, Gold: 4, Diamond: 8)
+  // - 15% Guter Gewinn (Silber: 100, Gold: 200, Diamond: 400)
+  // - 10% Jackpot (Silber: 150, Gold: 300, Diamond: 650)
+  // Summe: 100%
   // ==========================================
   const BOX_CONFIGS = {
     1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#00f0ff',
       open: (r) => {
-        if(r < 20) return { coins: 0, tickets: 0 };      // 20% Niete
-        if(r < 60) return { coins: 70, tickets: 0 };     // 40% Wert der Box (70 Coins)
-        if(r < 80) return { coins: 35, tickets: 0 };     // 20% Trostpreis
-        if(r < 95) return { coins: 100, tickets: 0 };    // 15% Gewinn
-        return { coins: 150, tickets: 0 };               // 5% Jackpot (> 70 Coins)
+        if(r < 15) return { coins: 0, tickets: 0 };      // 15% Niete
+        if(r < 30) return { coins: 35, tickets: 0 };     // 15% Trostpreis
+        if(r < 45) return { coins: 70, tickets: 0 };     // 15% Exakter Wert (70 Coins)
+        if(r < 55) return { coins: 80, tickets: 0 };     // 10% Leicht drüber (80 Coins)
+        if(r < 70) return { coins: 0, tickets: 1 };      // 15% 1 Ticket
+        if(r < 75) return { coins: 0, tickets: 2 };      //  5% 2 Tickets
+        if(r < 90) return { coins: 100, tickets: 0 };    // 15% Guter Gewinn
+        return { coins: 150, tickets: 0 };               // 10% Jackpot (150 Coins)
       }
     },
     2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffb703',
       open: (r) => {
-        if(r < 20) return { coins: 0, tickets: 0 };      // 20% Niete
-        if(r < 60) return { coins: 140, tickets: 0 };    // 40% Wert der Box (140 Coins)
-        if(r < 80) return { coins: 70, tickets: 0 };     // 20% Trostpreis
-        if(r < 95) return { coins: 200, tickets: 0 };    // 15% Gewinn
-        return { coins: 300, tickets: 0 };               // 5% Jackpot (> 140 Coins)
+        if(r < 15) return { coins: 0, tickets: 0 };      // 15% Niete
+        if(r < 30) return { coins: 70, tickets: 0 };     // 15% Trostpreis
+        if(r < 45) return { coins: 140, tickets: 0 };    // 15% Exakter Wert (140 Coins)
+        if(r < 55) return { coins: 160, tickets: 0 };    // 10% Leicht drüber (160 Coins)
+        if(r < 70) return { coins: 0, tickets: 2 };      // 15% 2 Tickets
+        if(r < 75) return { coins: 0, tickets: 4 };      //  5% 4 Tickets
+        if(r < 90) return { coins: 200, tickets: 0 };    // 15% Guter Gewinn
+        return { coins: 300, tickets: 0 };               // 10% Jackpot (300 Coins)
       }
     },
     3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#d63bff',
       open: (r) => {
-        if(r < 20) return { coins: 0, tickets: 0 };      // 20% Niete
-        if(r < 60) return { coins: 280, tickets: 0 };    // 40% Wert der Box (280 Coins)
-        if(r < 80) return { coins: 140, tickets: 0 };    // 20% Trostpreis
-        if(r < 95) return { coins: 400, tickets: 0 };    // 15% Gewinn
-        return { coins: 650, tickets: 0 };               // 5% Jackpot (> 280 Coins)
+        if(r < 15) return { coins: 0, tickets: 0 };      // 15% Niete
+        if(r < 30) return { coins: 140, tickets: 0 };    // 15% Trostpreis
+        if(r < 45) return { coins: 280, tickets: 0 };    // 15% Exakter Wert (280 Coins)
+        if(r < 55) return { coins: 310, tickets: 0 };    // 10% Leicht drüber (310 Coins)
+        if(r < 70) return { coins: 0, tickets: 4 };      // 15% 4 Tickets
+        if(r < 75) return { coins: 0, tickets: 8 };      //  5% 8 Tickets
+        if(r < 90) return { coins: 400, tickets: 0 };    // 15% Guter Gewinn
+        return { coins: 650, tickets: 0 };               // 10% Jackpot (650 Coins)
       }
     }
   };
