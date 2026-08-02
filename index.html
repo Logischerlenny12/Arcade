@@ -178,6 +178,10 @@
   /* SUMMARY SCREEN UI */
   .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:24px; max-width:340px; width:100%; }
 
+  .result-box{ text-align:center; padding:10px 4px 6px; }
+  .result-title.fail{color:var(--danger);}
+  .timer-display{ font-family:var(--font-display); font-size:32px; color:var(--gold); margin:15px 0; }
+
   .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(8,5,18,0.92); align-items:center; justify-content:center; padding:20px; z-index:50; }
   .modal-backdrop.active{display:flex;}
   .modal-fullscreen { width:100vw; height:100vh; max-width:none; border-radius:0; border:none; background:var(--bg-deep); padding:24px; display:flex; flex-direction:column; }
@@ -265,9 +269,9 @@
     <div style="background:#1c1536; border:2px solid var(--gold); border-radius:14px; padding:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
       <div>
         <b style="color:var(--gold); font-size:14px;">🎟️ Tickets Kaufen</b><br>
-        <small style="color:var(--cream-dim)">1 Ticket = 50 Coins</small>
+        <small style="color:var(--cream-dim)">1 Ticket = 70 Coins</small>
       </div>
-      <button class="btn btn-primary btn-sm" id="buyTicketBtn">+ 1 Ticket (50 🪙)</button>
+      <button class="btn btn-primary btn-sm" id="buyTicketBtn">+ 1 Ticket (70 🪙)</button>
     </div>
 
     <div class="shop-nav">
@@ -336,7 +340,7 @@
       <h2 class="step-title">🎮 SPIELZEIT LÄUFT</h2>
       <div style="color:var(--cream-dim); font-size:13px; margin-bottom:10px;" id="activeGameTitle">Spiel Name</div>
       <div class="timer-display" id="sessionStopwatchDisplay">00:00</div>
-      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <b id="currentCalculatedCost">1</b> 🪙</div>
+      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <b id="currentCalculatedCost">3</b> 🪙</div>
       <button class="btn btn-secondary" id="reopenGameBtn">🔗 Spiel-Fenster öffnen</button>
       <button class="btn btn-primary row-gap" id="stopAndBillBtn">✓ Beenden & Abrechnen</button>
     </div>
@@ -570,11 +574,11 @@
 
   const THEMES = [
     { id: 'default', name: '👾 Retro Arcade', cost: 0 },
-    { id: 'theme-cyberpunk', name: '🏎️ Neon Cyberpunk', cost: 80 },
-    { id: 'theme-matrix', name: '💚 Matrix Green', cost: 80 },
-    { id: 'theme-gold', name: '👑 Gold & Diamond', cost: 80 },
-    { id: 'theme-candy', name: '🍧 Pastell Candy', cost: 80 },
-    { id: 'theme-sunset', name: '☀️ Sunset Drive', cost: 80 }
+    { id: 'theme-cyberpunk', name: '🏎️ Neon Cyberpunk', cost: 100 },
+    { id: 'theme-matrix', name: '💚 Matrix Green', cost: 100 },
+    { id: 'theme-gold', name: '👑 Gold & Diamond', cost: 100 },
+    { id: 'theme-candy', name: '🍧 Pastell Candy', cost: 100 },
+    { id: 'theme-sunset', name: '☀️ Sunset Drive', cost: 100 }
   ];
 
   const DAILY_ACHIEVEMENTS = [
@@ -598,9 +602,42 @@
   ];
 
   const BOX_CONFIGS = {
-    1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#a8b2c1', totalTarget: 50 },
-    2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffc857', totalTarget: 150 },
-    3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#3fe0d0', totalTarget: 400 }
+    1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#a8b2c1', totalTarget: 50,
+      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 40% $\rightarrow$ 50 Coins 🪙<br>• 15% $\rightarrow$ 10 Coins 🪙<br>• 10% $\rightarrow$ 70 Coins 🪙<br>• 5% $\rightarrow$ 100 Coins 🪙<br>• 5% $\rightarrow$ 3x Tickets 🎟️<br>• 25% $\rightarrow$ Niete (0 Coins)',
+      open: () => {
+        const r = Math.random() * 100;
+        if(r < 40) return { coins: 50, tickets: 0, msg: '+50 Coins! 🪙' };
+        if(r < 55) return { coins: 10, tickets: 0, msg: '+10 Coins! 🪙' };
+        if(r < 65) return { coins: 70, tickets: 0, msg: '+70 Coins! 🪙' };
+        if(r < 70) return { coins: 100, tickets: 0, msg: '🎉 +100 Coins! 🪙' };
+        if(r < 75) return { coins: 0, tickets: 3, msg: '🎟️ +3 Tickets!' };
+        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+      }
+    },
+    2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffc857', totalTarget: 150,
+      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 40% $\rightarrow$ 120 Coins 🪙<br>• 15% $\rightarrow$ 30 Coins 🪙<br>• 10% $\rightarrow$ 180 Coins 🪙<br>• 5% $\rightarrow$ 250 Coins 🪙<br>• 5% $\rightarrow$ 5x Tickets 🎟️<br>• 25% $\rightarrow$ Niete (0 Coins)',
+      open: () => {
+        const r = Math.random() * 100;
+        if(r < 40) return { coins: 120, tickets: 0, msg: '+120 Coins! 🪙' };
+        if(r < 55) return { coins: 30, tickets: 0, msg: '+30 Coins! 🪙' };
+        if(r < 65) return { coins: 180, tickets: 0, msg: '+180 Coins! 🪙' };
+        if(r < 70) return { coins: 250, tickets: 0, msg: '🎉 +250 Coins! 🪙' };
+        if(r < 75) return { coins: 0, tickets: 5, msg: '🎟️ +5 Tickets!' };
+        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+      }
+    },
+    3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#3fe0d0', totalTarget: 400,
+      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 40% $\rightarrow$ 250 Coins 🪙<br>• 15% $\rightarrow$ 80 Coins 🪙<br>• 10% $\rightarrow$ 400 Coins 🪙<br>• 5% $\rightarrow$ 600 Coins 🪙<br>• 5% $\rightarrow$ 10x Tickets 🎟️<br>• 25% $\rightarrow$ Niete (0 Coins)',
+      open: () => {
+        const r = Math.random() * 100;
+        if(r < 40) return { coins: 250, tickets: 0, msg: '+250 Coins! 🪙' };
+        if(r < 55) return { coins: 80, tickets: 0, msg: '+80 Coins! 🪙' };
+        if(r < 65) return { coins: 400, tickets: 0, msg: '+400 Coins! 🪙' };
+        if(r < 70) return { coins: 600, tickets: 0, msg: '🎉 +600 Coins Jackpot! 🪙' };
+        if(r < 75) return { coins: 0, tickets: 10, msg: '🎟️ +10 Tickets Jackpot!' };
+        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+      }
+    }
   };
 
   let state = { users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], logs: [], taskLogs: [], globalAnnouncement: '' };
@@ -615,6 +652,7 @@
   let revealSteps = [];
   let currentStepIndex = 0;
   let accumulatedCoins = 0;
+  let accumulatedTickets = 0;
 
   let stopwatchInterval = null;
   let sessionSeconds = 0;
@@ -781,13 +819,13 @@
 
   // TICKET KAUF
   $('buyTicketBtn').addEventListener('click', async () => {
-    if(!currentUser.unlimitedCoins && currentUser.coins < 50){
-      alert('Du brauchst 50 Coins für 1 Ticket!');
+    if(!currentUser.unlimitedCoins && currentUser.coins < 70){
+      alert('Du brauchst 70 Coins für 1 Ticket!');
       return;
     }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 50;
+    if(!currentUser.unlimitedCoins) currentUser.coins -= 70;
     currentUser.tickets = (currentUser.tickets || 0) + 1;
-    addLog(currentUser.name, '🎟️ Ticket gekauft', -50);
+    addLog(currentUser.name, '🎟️ Ticket gekauft', -70);
     await saveState(); renderAll(); alert('🎉 1 Ticket gekauft!');
   });
 
@@ -801,7 +839,7 @@
     });
   });
 
-  // 3D LOOTBOX UNBOXING CORE LOGIK
+  // 3D LOOTBOX UNBOXING LOGIK
   function start3dUnboxing(key){
     const cfg = BOX_CONFIGS[key];
     if(currentUser.tickets < cfg.costTickets){
@@ -816,27 +854,34 @@
     currentUnboxingKey = key;
     currentStepIndex = 0;
     accumulatedCoins = 0;
+    accumulatedTickets = 0;
 
-    // Aufteilung der Gewinne in 3 Happen
-    const t = cfg.totalTarget;
-    const p1 = Math.round(t * 0.2);
-    const p2 = Math.round(t * 0.4);
-    const p3 = t - p1 - p2;
-    revealSteps = [p1, p2, p3];
+    const result = cfg.open();
+    
+    if(result.coins > 0){
+        // Gewinne in 3 Happen aufteilen
+        const p1 = Math.round(result.coins * 0.2);
+        const p2 = Math.round(result.coins * 0.4);
+        const p3 = result.coins - p1 - p2;
+        revealSteps = [{type: 'coin', val: p1}, {type: 'coin', val: p2}, {type: 'coin', val: p3}];
+    } else if(result.tickets > 0){
+        // Tickets direkt auf einmal
+        revealSteps = [{type: 'ticket', val: result.tickets}];
+    } else {
+        // Niete
+        revealSteps = [{type: 'niete', val: 0}];
+    }
 
-    // Reset UI
     const backdrop = $('unboxingFullscreen');
     backdrop.className = 'unboxing-fullscreen-backdrop active shaking';
     $('unboxingTitle').textContent = `${cfg.name.toUpperCase()} WIRD GEÖFFNET...`;
     $('revealDropBox').style.display = 'none';
     $('summaryBox').style.display = 'none';
 
-    // Set dynamic box color
     document.querySelectorAll('.box-face, .box-lid-face').forEach(el => {
       el.style.borderColor = cfg.themeColor;
     });
 
-    // Spannung aufbauen (Shake 2.5 Sek -> Deckel auf)
     setTimeout(() => {
       backdrop.classList.remove('shaking');
       backdrop.classList.add('opened');
@@ -850,24 +895,41 @@
 
   function showNextDropStep(){
     if(currentStepIndex < revealSteps.length){
-      const val = revealSteps[currentStepIndex];
-      accumulatedCoins += val;
-      $('revealItemText').textContent = `+${val} Münzen 🪙`;
+      const step = revealSteps[currentStepIndex];
+      
+      if(step.type === 'coin'){
+        accumulatedCoins += step.val;
+        $('revealItemText').textContent = `+${step.val} Münzen 🪙`;
+      } else if(step.type === 'ticket'){
+        accumulatedTickets += step.val;
+        $('revealItemText').textContent = `+${step.val} Tickets 🎟️`;
+      } else {
+        $('revealItemText').textContent = `Leider Niete! ❌`;
+      }
+      
       $('revealDropBox').style.display = 'block';
     } else {
-      // LOOT BEENDET -> SUMMARY SHOW
       $('revealDropBox').style.display = 'none';
-      $('summaryItemsList').textContent = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
+      let summaryText = "";
+      if(accumulatedCoins > 0) summaryText = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
+      else if(accumulatedTickets > 0) summaryText = `+${accumulatedTickets} Tickets Gesamtausbeute! 🎟️`;
+      else summaryText = "Leider kein Gewinn diesmal!";
+      
+      $('summaryItemsList').textContent = summaryText;
       $('summaryBox').style.display = 'block';
 
-      // Speichern
-      currentUser.coins += accumulatedCoins;
-      addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedCoins);
+      if(accumulatedCoins > 0){
+          currentUser.coins += accumulatedCoins;
+          addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedCoins);
+      }
+      if(accumulatedTickets > 0){
+          currentUser.tickets += accumulatedTickets;
+          addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedTickets, '🎟️');
+      }
       saveState(); renderAll();
     }
   }
 
-  // SCREEN TAP BEIM REVEAL
   $('unboxingFullscreen').addEventListener('click', (e) => {
     if(e.target.id === 'finishUnboxingBtn') return;
     if($('revealDropBox').style.display === 'block'){
@@ -1193,7 +1255,7 @@
 
   function updateStopwatchUI(){
     $('sessionStopwatchDisplay').textContent = formatSeconds(sessionSeconds);
-    const cost = Math.max(1, Math.ceil(sessionSeconds / 60));
+    const cost = Math.max(3, Math.ceil(sessionSeconds / 60) * 3);
     $('currentCalculatedCost').textContent = currentUser.unlimitedCoins ? 0 : cost;
   }
 
@@ -1202,7 +1264,7 @@
   $('stopAndBillBtn').addEventListener('click', async () => {
     clearInterval(stopwatchInterval);
     const playedMinutes = sessionSeconds / 60;
-    const costCoins = Math.max(1, Math.ceil(playedMinutes));
+    const costCoins = Math.max(3, Math.ceil(playedMinutes) * 3);
 
     if(!currentUser.unlimitedCoins) {
       currentUser.coins -= costCoins;
