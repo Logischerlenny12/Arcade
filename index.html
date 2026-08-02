@@ -113,33 +113,70 @@
   .shop-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:12px 14px; }
   .shop-item.active-theme { border-color:var(--cyan); background:#251b47; }
 
-  /* LOOTBOX CARDS */
-  .lootbox-card { background:linear-gradient(135deg, #1f183d 0%, #0d0822 100%); border:2px solid #3d2f66; border-radius:16px; padding:16px; text-align:center; margin-bottom:12px; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.2s, border-color 0.2s; }
+  /* LOOTBOX CARDS IN SHOP */
+  .lootbox-card { background:linear-gradient(135deg, #1f183d 0%, #0d0822 100%); border:2px solid #3d2f66; border-radius:16px; padding:16px; text-align:center; margin-bottom:12px; cursor:pointer; transition:transform 0.2s, border-color 0.2s; }
   .lootbox-card:hover { transform:translateY(-2px); }
   .lootbox-card.silver { border-color:#a8b2c1; box-shadow:0 0 15px rgba(168,178,193,0.15); }
   .lootbox-card.gold { border-color:var(--gold); box-shadow:0 0 15px rgba(255,200,87,0.2); }
   .lootbox-card.diamond { border-color:var(--cyan); box-shadow:0 0 15px rgba(63,224,208,0.25); }
 
-  /* CSS SCI-FI LOOTBOX GRAPHIK */
-  .box-container { width:120px; height:100px; margin:0 auto 10px; position:relative; perspective:600px; }
-  .box-body { width:100%; height:70px; background:#1c2333; border:3px solid var(--cyan); border-radius:8px; position:absolute; bottom:0; box-shadow:inset 0 0 20px rgba(63,224,208,0.3); overflow:hidden; }
-  .box-body::before { content:"82"; position:absolute; top:8px; left:8px; font-family:var(--font-display); font-size:10px; color:rgba(255,255,255,0.2); }
-  .box-lid { width:108%; height:26px; background:#2a3447; border:3px solid var(--cyan); border-radius:6px; position:absolute; top:12px; left:-4%; transform-origin:top center; transition:transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:2; }
-  .box-glow { position:absolute; inset:0; background:radial-gradient(circle, rgba(63,224,208,0.8) 0%, transparent 70%); opacity:0; transition:opacity 0.4s; }
+  /* --- VOLLBILD 3D LOOTBOX UNBOXING STYLES --- */
+  .unboxing-fullscreen-backdrop {
+    display:none; position:fixed; inset:0; z-index:100;
+    background: radial-gradient(circle at center, #1b263b 0%, #080512 100%);
+    flex-direction:column; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .unboxing-fullscreen-backdrop.active { display:flex; }
 
-  /* ANIMATIONEN BEIM ÖFFNEN */
-  .opening .box-container { animation: boxShake 0.12s infinite; }
-  .opened .box-lid { transform: rotateX(-110deg) translateY(-10px); }
-  .opened .box-glow { opacity:1; }
+  .unboxing-title { font-family:var(--font-display); font-size:16px; color:var(--gold); margin-bottom:30px; text-shadow:0 0 10px var(--gold); }
 
-  @keyframes boxShake { 0%{transform:translateX(0);} 25%{transform:translateX(-3px) rotate(-1deg);} 75%{transform:translateX(3px) rotate(1deg);} 100%{transform:translateX(0);} }
+  /* 3D SCENE CONTAINER */
+  .scene-3d { width:220px; height:180px; perspective:800px; position:relative; margin-bottom:40px; }
+  .box-3d { width:100%; height:100%; position:absolute; transform-style:preserve-3d; transform:rotateX(-15deg) rotateY(25deg); transition:transform 0.5s; }
 
-  .prize-popup { display:none; animation: prizeUp 0.6s ease forwards; font-family:var(--font-display); color:var(--gold); font-size:18px; margin-top:15px; }
-  @keyframes prizeUp { from{opacity:0; transform:scale(0.5) translateY(20px);} to{opacity:1; transform:scale(1) translateY(0);} }
+  .box-face { position:absolute; border:3px solid var(--cyan); background:#151c28; box-shadow:inset 0 0 25px rgba(63,224,208,0.3); }
+  
+  .box-front  { width:220px; height:120px; bottom:0; transform:translateZ(60px); }
+  .box-back   { width:220px; height:120px; bottom:0; transform:rotateY(180deg) translateZ(60px); }
+  .box-left   { width:120px; height:120px; bottom:0; transform:rotateY(-90deg) translateZ(60px); }
+  .box-right  { width:120px; height:120px; bottom:0; transform:rotateY(90deg) translateZ(160px); }
+  .box-bottom { width:220px; height:120px; bottom:0; transform:rotateX(-90deg) translateZ(60px); }
 
-  .result-box{ text-align:center; padding:10px 4px 6px; }
-  .result-title.fail{color:var(--danger);}
-  .timer-display{ font-family:var(--font-display); font-size:32px; color:var(--gold); margin:15px 0; }
+  /* 3D DECKEL WITH ANIMATION */
+  .box-lid-3d {
+    width:226px; height:126px; position:absolute; top:35px; left:-3px;
+    transform-style:preserve-3d; transform-origin:back center;
+    transition:transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .box-lid-face { position:absolute; border:3px solid var(--cyan); background:#202b3c; }
+  .lid-top { width:226px; height:126px; transform:rotateX(90deg) translateZ(63px); }
+  .lid-front { width:226px; height:35px; transform:translateZ(63px); }
+
+  /* GLOW LIGHT BEAM FROM INSIDE */
+  .light-beam {
+    position:absolute; width:180px; height:300px; bottom:60px; left:20px;
+    background:linear-gradient(0deg, rgba(63,224,208,0.8) 0%, rgba(255,200,87,0.5) 50%, transparent 100%);
+    clip-path: polygon(20% 100%, 80% 100%, 100% 0%, 0% 0%);
+    opacity:0; transition:opacity 0.8s; pointer-events:none;
+  }
+
+  /* OPENING ANIMATION CLASSES */
+  .unboxing-fullscreen-backdrop.shaking .box-3d { animation: shake3d 0.1s infinite; }
+  @keyframes shake3d { 0%{transform:rotateX(-15deg) rotateY(25deg) translate(0,0);} 50%{transform:rotateX(-15deg) rotateY(25deg) translate(-5px, 5px);} 100%{transform:rotateX(-15deg) rotateY(25deg) translate(5px, -3px);} }
+
+  .unboxing-fullscreen-backdrop.opened .box-lid-3d { transform:rotateX(-115deg); }
+  .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; }
+
+  /* REVEAL DROP ITEM UI */
+  .reveal-drop-box { text-align:center; display:none; animation: popUpDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  @keyframes popUpDrop { from{opacity:0; transform:scale(0.3) translateY(40px);} to{opacity:1; transform:scale(1) translateY(0);} }
+  
+  .reveal-item-text { font-family:var(--font-display); font-size:22px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 15px var(--gold); }
+  .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; }
+  @keyframes blinkPrompt { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  /* SUMMARY SCREEN UI */
+  .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:24px; max-width:340px; width:100%; }
 
   .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(8,5,18,0.92); align-items:center; justify-content:center; padding:20px; z-index:50; }
   .modal-backdrop.active{display:flex;}
@@ -315,30 +352,39 @@
   </div>
 </div>
 
-<!-- LOOTBOX MODAL BANNER -->
-<div class="modal-backdrop" id="boxModal">
-  <div style="background:var(--bg-panel); padding:24px; border-radius:24px; width:100%; max-width:380px; text-align:center;" id="boxModalMain">
-    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:13px; margin-top:0;" id="boxModalTitle">LOOTBOX</h3>
-    
-    <div class="box-container" id="lootboxAnimElem">
-      <div class="box-lid" id="boxLidElem"></div>
-      <div class="box-body" id="boxBodyElem">
-        <div class="box-glow"></div>
+<!-- 3D LOOTBOX UNBOXING FULLSCREEN -->
+<div class="unboxing-fullscreen-backdrop" id="unboxingFullscreen">
+  <div class="unboxing-title" id="unboxingTitle">BOX ÖFFNEN...</div>
+
+  <!-- 3D SCENE -->
+  <div class="scene-3d">
+    <div class="light-beam"></div>
+    <div class="box-3d" id="box3dContainer">
+      <div class="box-face box-front"></div>
+      <div class="box-face box-back"></div>
+      <div class="box-face box-left"></div>
+      <div class="box-face box-right"></div>
+      <div class="box-face box-bottom"></div>
+      
+      <!-- 3D LID -->
+      <div class="box-lid-3d">
+        <div class="box-lid-face lid-top"></div>
+        <div class="box-lid-face lid-front"></div>
       </div>
     </div>
+  </div>
 
-    <div class="prize-popup" id="prizePopupElem">
-      <span id="prizeTextElem">+100 Coins!</span>
-    </div>
+  <!-- LOOT REVEAL DROP UI -->
+  <div class="reveal-drop-box" id="revealDropBox">
+    <div class="reveal-item-text" id="revealItemText">+10 Münzen 🪙</div>
+    <div class="tap-prompt">Tippe auf den Bildschirm für mehr Loot!</div>
+  </div>
 
-    <div style="background:#0f0a1e; padding:12px; border-radius:12px; font-size:12px; text-align:left; margin:14px 0;" id="boxChancesBanner">
-      <!-- GEWINNCHANCEN -->
-    </div>
-
-    <div style="display:flex; gap:8px;">
-      <button class="btn btn-ghost" id="closeBoxModalBtn">Schließen</button>
-      <button class="btn btn-primary" id="openBoxBtn">📦 Öffnen (<span id="boxCostTicketCount">1</span> 🎟️)</button>
-    </div>
+  <!-- SUMMARY UI -->
+  <div class="summary-box" id="summaryBox">
+    <h3 style="font-family:var(--font-display); color:var(--gold); margin-top:0;">LOOT ÜBERSICHT</h3>
+    <div id="summaryItemsList" style="font-size:16px; margin:20px 0; font-weight:bold; color:var(--cyan);"></div>
+    <button class="btn btn-primary" id="finishUnboxingBtn">Fertig (Hauptmenü)</button>
   </div>
 </div>
 
@@ -551,47 +597,10 @@
     { id: 'ach_100coins', title: '👑 Kontostand von 100 Coins erreicht', reward: 30 }
   ];
 
-  // LOOTBOX CONFIG (SILBER, GOLD, DIAMOND)
-  const BOXES = {
-    1: {
-      name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#a8b2c1',
-      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 50% $\rightarrow$ 50 Coins 🪙<br>• 15% $\rightarrow$ 10 Coins 🪙<br>• 10% $\rightarrow$ 70 Coins 🪙<br>• 5% $\rightarrow$ 100 Coins 🪙<br>• 5% $\rightarrow$ 3x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
-      open: () => {
-        const r = Math.random() * 100;
-        if(r < 50) return { coins: 50, tickets: 0, msg: '+50 Coins! 🪙' };
-        if(r < 65) return { coins: 10, tickets: 0, msg: '+10 Coins! 🪙' };
-        if(r < 75) return { coins: 70, tickets: 0, msg: '+70 Coins! 🪙' };
-        if(r < 80) return { coins: 100, tickets: 0, msg: '🎉 +100 Coins! 🪙' };
-        if(r < 85) return { coins: 0, tickets: 3, msg: '🎟️ +3 Tickets!' };
-        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
-      }
-    },
-    2: {
-      name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffc857',
-      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 50% $\rightarrow$ 120 Coins 🪙<br>• 15% $\rightarrow$ 30 Coins 🪙<br>• 10% $\rightarrow$ 180 Coins 🪙<br>• 5% $\rightarrow$ 250 Coins 🪙<br>• 5% $\rightarrow$ 5x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
-      open: () => {
-        const r = Math.random() * 100;
-        if(r < 50) return { coins: 120, tickets: 0, msg: '+120 Coins! 🪙' };
-        if(r < 65) return { coins: 30, tickets: 0, msg: '+30 Coins! 🪙' };
-        if(r < 75) return { coins: 180, tickets: 0, msg: '+180 Coins! 🪙' };
-        if(r < 80) return { coins: 250, tickets: 0, msg: '🎉 +250 Coins! 🪙' };
-        if(r < 85) return { coins: 0, tickets: 5, msg: '🎟️ +5 Tickets!' };
-        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
-      }
-    },
-    3: {
-      name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#3fe0d0',
-      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 50% $\rightarrow$ 250 Coins 🪙<br>• 15% $\rightarrow$ 80 Coins 🪙<br>• 10% $\rightarrow$ 400 Coins 🪙<br>• 5% $\rightarrow$ 600 Coins 🪙<br>• 5% $\rightarrow$ 10x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
-      open: () => {
-        const r = Math.random() * 100;
-        if(r < 50) return { coins: 250, tickets: 0, msg: '+250 Coins! 🪙' };
-        if(r < 65) return { coins: 80, tickets: 0, msg: '+80 Coins! 🪙' };
-        if(r < 75) return { coins: 400, tickets: 0, msg: '+400 Coins! 🪙' };
-        if(r < 80) return { coins: 600, tickets: 0, msg: '🎉 +600 Coins Jackpot! 🪙' };
-        if(r < 85) return { coins: 0, tickets: 10, msg: '🎟️ +10 Tickets Jackpot!' };
-        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
-      }
-    }
+  const BOX_CONFIGS = {
+    1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#a8b2c1', totalTarget: 50 },
+    2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffc857', totalTarget: 150 },
+    3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#3fe0d0', totalTarget: 400 }
   };
 
   let state = { users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], logs: [], taskLogs: [], globalAnnouncement: '' };
@@ -600,7 +609,13 @@
   let selectedUserForAuth = null;
   let selectedUserForEdit = null;
   let selectedGame = null;
-  let activeBoxKey = 1;
+
+  // LOOT UNBOXING STATE
+  let currentUnboxingKey = 1;
+  let revealSteps = [];
+  let currentStepIndex = 0;
+  let accumulatedCoins = 0;
+
   let stopwatchInterval = null;
   let sessionSeconds = 0;
 
@@ -776,7 +791,7 @@
     await saveState(); renderAll(); alert('🎉 1 Ticket gekauft!');
   });
 
-  // SHOP TABS LOGIK
+  // SHOP TABS
   document.querySelectorAll('.shop-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.shop-nav-btn').forEach(b => b.classList.remove('active'));
@@ -786,70 +801,90 @@
     });
   });
 
-  // LOOTBOX BANNER ÖFFNEN
-  function openBoxModal(key){
-    activeBoxKey = key;
-    const b = BOXES[key];
-    $('boxModalTitle').textContent = b.name.toUpperCase();
-    $('boxCostTicketCount').textContent = b.costTickets;
-    $('boxChancesBanner').innerHTML = b.chancesHtml;
-    
-    // Farben anpassen
-    $('boxBodyElem').style.borderColor = b.themeColor;
-    $('boxLidElem').style.borderColor = b.themeColor;
-
-    // Reset Animation
-    $('lootboxAnimElem').classList.remove('opening', 'opened');
-    $('prizePopupElem').style.display = 'none';
-    $('openBoxBtn').disabled = false;
-
-    $('boxModal').classList.add('active');
-  }
-
-  $('boxBtn1').addEventListener('click', () => openBoxModal(1));
-  $('boxBtn2').addEventListener('click', () => openBoxModal(2));
-  $('boxBtn3').addEventListener('click', () => openBoxModal(3));
-  $('closeBoxModalBtn').addEventListener('click', () => $('boxModal').classList.remove('active'));
-
-  // LOOTBOX ÖFFNEN ANIMATION LOGIK
-  $('openBoxBtn').addEventListener('click', async () => {
-    const b = BOXES[activeBoxKey];
-    if(currentUser.tickets < b.costTickets){
-      alert(`Du brauchst ${b.costTickets} Ticket(s) für diese Box! Kaufe sie im Shop.`);
+  // 3D LOOTBOX UNBOXING CORE LOGIK
+  function start3dUnboxing(key){
+    const cfg = BOX_CONFIGS[key];
+    if(currentUser.tickets < cfg.costTickets){
+      alert(`Du brauchst ${cfg.costTickets} Ticket(s) für diese Box! Kaufe sie oben im Shop.`);
       return;
     }
 
-    currentUser.tickets -= b.costTickets;
-    addLog(currentUser.name, `📦 Lootbox: ${b.name}`, -b.costTickets, '🎟️');
-    await saveState(); renderAll();
+    currentUser.tickets -= cfg.costTickets;
+    addLog(currentUser.name, `📦 Lootbox: ${cfg.name}`, -cfg.costTickets, '🎟️');
+    saveState(); renderAll();
 
-    $('openBoxBtn').disabled = true;
+    currentUnboxingKey = key;
+    currentStepIndex = 0;
+    accumulatedCoins = 0;
 
-    // Start Shake Animation
-    const animElem = $('lootboxAnimElem');
-    animElem.classList.add('opening');
+    // Aufteilung der Gewinne in 3 Happen
+    const t = cfg.totalTarget;
+    const p1 = Math.round(t * 0.2);
+    const p2 = Math.round(t * 0.4);
+    const p3 = t - p1 - p2;
+    revealSteps = [p1, p2, p3];
 
+    // Reset UI
+    const backdrop = $('unboxingFullscreen');
+    backdrop.className = 'unboxing-fullscreen-backdrop active shaking';
+    $('unboxingTitle').textContent = `${cfg.name.toUpperCase()} WIRD GEÖFFNET...`;
+    $('revealDropBox').style.display = 'none';
+    $('summaryBox').style.display = 'none';
+
+    // Set dynamic box color
+    document.querySelectorAll('.box-face, .box-lid-face').forEach(el => {
+      el.style.borderColor = cfg.themeColor;
+    });
+
+    // Spannung aufbauen (Shake 2.5 Sek -> Deckel auf)
     setTimeout(() => {
-      // Open Lid
-      animElem.classList.remove('opening');
-      animElem.classList.add('opened');
-
-      const result = b.open();
-      if(result.coins > 0) currentUser.coins += result.coins;
-      if(result.tickets > 0) currentUser.tickets += result.tickets;
-
-      if(result.coins > 0) addLog(currentUser.name, `🎉 Loot: ${b.name}`, result.coins, '🪙');
-      if(result.tickets > 0) addLog(currentUser.name, `🎉 Loot: ${b.name}`, result.tickets, '🎟️');
-
-      saveState().then(() => renderAll());
+      backdrop.classList.remove('shaking');
+      backdrop.classList.add('opened');
+      $('unboxingTitle').textContent = 'TAP TO REVEAL LOOT!';
 
       setTimeout(() => {
-        $('prizeTextElem').textContent = result.msg;
-        $('prizePopupElem').style.display = 'block';
-      }, 300);
+        showNextDropStep();
+      }, 800);
+    }, 2500);
+  }
 
-    }, 2000);
+  function showNextDropStep(){
+    if(currentStepIndex < revealSteps.length){
+      const val = revealSteps[currentStepIndex];
+      accumulatedCoins += val;
+      $('revealItemText').textContent = `+${val} Münzen 🪙`;
+      $('revealDropBox').style.display = 'block';
+    } else {
+      // LOOT BEENDET -> SUMMARY SHOW
+      $('revealDropBox').style.display = 'none';
+      $('summaryItemsList').textContent = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
+      $('summaryBox').style.display = 'block';
+
+      // Speichern
+      currentUser.coins += accumulatedCoins;
+      addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedCoins);
+      saveState(); renderAll();
+    }
+  }
+
+  // SCREEN TAP BEIM REVEAL
+  $('unboxingFullscreen').addEventListener('click', (e) => {
+    if(e.target.id === 'finishUnboxingBtn') return;
+    if($('revealDropBox').style.display === 'block'){
+      currentStepIndex++;
+      $('revealDropBox').style.display = 'none';
+      setTimeout(() => { showNextDropStep(); }, 200);
+    }
   });
+
+  $('finishUnboxingBtn').addEventListener('click', () => {
+    $('unboxingFullscreen').classList.remove('active', 'shaking', 'opened');
+    showScreen('screen-home');
+  });
+
+  $('boxBtn1').addEventListener('click', () => start3dUnboxing(1));
+  $('boxBtn2').addEventListener('click', () => start3dUnboxing(2));
+  $('boxBtn3').addEventListener('click', () => start3dUnboxing(3));
 
   // ERFOLGE RENDER
   function renderUserAchievementsList(){
