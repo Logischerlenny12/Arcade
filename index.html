@@ -102,7 +102,7 @@
   .task-item.completed { opacity: 0.5; }
   .task-claim-btn { background:var(--gold-dim); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; }
 
-  /* SHOP NEU MIT TABS */
+  /* SHOP TABS */
   .shop-nav { display:flex; gap:8px; margin-bottom:16px; }
   .shop-nav-btn { flex:1; padding:10px; background:#1c1536; border:1px solid #3d2f66; color:var(--cream-dim); border-radius:10px; font-weight:bold; cursor:pointer; text-align:center; font-size:12px; }
   .shop-nav-btn.active { background:var(--magenta); color:white; border-color:var(--magenta); }
@@ -113,20 +113,35 @@
   .shop-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:12px 14px; }
   .shop-item.active-theme { border-color:var(--cyan); background:#251b47; }
 
-  .wheel-card { background:#1c1536; border:2px solid #3d2f66; border-radius:16px; padding:16px; text-align:center; margin-bottom:12px; cursor:pointer; }
-  .wheel-card:hover { border-color:var(--gold); }
-  .wheel-card .wheel-icon { font-size:36px; display:block; margin-bottom:6px; }
+  /* LOOTBOX CARDS */
+  .lootbox-card { background:linear-gradient(135deg, #1f183d 0%, #0d0822 100%); border:2px solid #3d2f66; border-radius:16px; padding:16px; text-align:center; margin-bottom:12px; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.2s, border-color 0.2s; }
+  .lootbox-card:hover { transform:translateY(-2px); }
+  .lootbox-card.silver { border-color:#a8b2c1; box-shadow:0 0 15px rgba(168,178,193,0.15); }
+  .lootbox-card.gold { border-color:var(--gold); box-shadow:0 0 15px rgba(255,200,87,0.2); }
+  .lootbox-card.diamond { border-color:var(--cyan); box-shadow:0 0 15px rgba(63,224,208,0.25); }
 
-  /* GLÜCKSRAD ANIMATION CONTAINER */
-  .wheel-spinner-container { position:relative; width:160px; height:160px; margin:0 auto 16px; }
-  .wheel-spinner { width:100%; height:100%; border-radius:50%; border:8px solid var(--gold); background:conic-gradient(#ff4d8d 0 60deg, #3fe0d0 60deg 120deg, #ffc857 120deg 180deg, #7a6323 180deg 240deg, #d63bff 240deg 300deg, #ff5c5c 300deg 360deg); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); }
-  .wheel-pointer { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-top:20px solid var(--cream); z-index:10; }
+  /* CSS SCI-FI LOOTBOX GRAPHIK */
+  .box-container { width:120px; height:100px; margin:0 auto 10px; position:relative; perspective:600px; }
+  .box-body { width:100%; height:70px; background:#1c2333; border:3px solid var(--cyan); border-radius:8px; position:absolute; bottom:0; box-shadow:inset 0 0 20px rgba(63,224,208,0.3); overflow:hidden; }
+  .box-body::before { content:"82"; position:absolute; top:8px; left:8px; font-family:var(--font-display); font-size:10px; color:rgba(255,255,255,0.2); }
+  .box-lid { width:108%; height:26px; background:#2a3447; border:3px solid var(--cyan); border-radius:6px; position:absolute; top:12px; left:-4%; transform-origin:top center; transition:transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:2; }
+  .box-glow { position:absolute; inset:0; background:radial-gradient(circle, rgba(63,224,208,0.8) 0%, transparent 70%); opacity:0; transition:opacity 0.4s; }
+
+  /* ANIMATIONEN BEIM ÖFFNEN */
+  .opening .box-container { animation: boxShake 0.12s infinite; }
+  .opened .box-lid { transform: rotateX(-110deg) translateY(-10px); }
+  .opened .box-glow { opacity:1; }
+
+  @keyframes boxShake { 0%{transform:translateX(0);} 25%{transform:translateX(-3px) rotate(-1deg);} 75%{transform:translateX(3px) rotate(1deg);} 100%{transform:translateX(0);} }
+
+  .prize-popup { display:none; animation: prizeUp 0.6s ease forwards; font-family:var(--font-display); color:var(--gold); font-size:18px; margin-top:15px; }
+  @keyframes prizeUp { from{opacity:0; transform:scale(0.5) translateY(20px);} to{opacity:1; transform:scale(1) translateY(0);} }
 
   .result-box{ text-align:center; padding:10px 4px 6px; }
   .result-title.fail{color:var(--danger);}
   .timer-display{ font-family:var(--font-display); font-size:32px; color:var(--gold); margin:15px 0; }
 
-  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(8,5,18,0.9); align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(8,5,18,0.92); align-items:center; justify-content:center; padding:20px; z-index:50; }
   .modal-backdrop.active{display:flex;}
   .modal-fullscreen { width:100vw; height:100vh; max-width:none; border-radius:0; border:none; background:var(--bg-deep); padding:24px; display:flex; flex-direction:column; }
   
@@ -205,7 +220,7 @@
     <button class="btn btn-ghost row-gap" id="openAdminDashboardBtn" style="display:none; border-color:var(--gold); color:var(--gold);">⚙️ Admin Dashboard</button>
   </div>
 
-  <!-- SHOP SCREEN NEU STRUCTURE -->
+  <!-- SHOP SCREEN STRUCTURE -->
   <div class="screen" id="screen-shop">
     <h2 class="step-title">ARCADE SHOP</h2>
 
@@ -220,7 +235,7 @@
 
     <div class="shop-nav">
       <button class="shop-nav-btn active" data-shoptab="tab-themes">🎨 Themen</button>
-      <button class="shop-nav-btn" data-shoptab="tab-wheels">🎡 Glücksräder</button>
+      <button class="shop-nav-btn" data-shoptab="tab-lootboxes">📦 Lootboxen</button>
       <button class="shop-nav-btn" data-shoptab="tab-boosts">⚡ Boosts</button>
     </div>
 
@@ -229,23 +244,20 @@
       <div class="shop-grid" id="themeShopList"></div>
     </div>
 
-    <!-- TAB: GLÜCKSRÄDER -->
-    <div class="shop-tab-content" id="tab-wheels">
-      <div class="wheel-card" id="wheelBtn1">
-        <span class="wheel-icon">🥉</span>
-        <b style="color:var(--gold);">Bronze Glücksrad</b><br>
+    <!-- TAB: LOOTBOXEN -->
+    <div class="shop-tab-content" id="tab-lootboxes">
+      <div class="lootbox-card silver" id="boxBtn1">
+        <b style="color:#a8b2c1; font-size:16px;">🥈 Silber Lootbox</b><br>
         <small style="color:var(--cream-dim)">Kosten: 1 Ticket 🎟️</small>
       </div>
 
-      <div class="wheel-card" id="wheelBtn2">
-        <span class="wheel-icon">🥈</span>
-        <b style="color:var(--cyan);">Silber Glücksrad</b><br>
+      <div class="lootbox-card gold" id="boxBtn2">
+        <b style="color:var(--gold); font-size:16px;">🥇 Gold Lootbox</b><br>
         <small style="color:var(--cream-dim)">Kosten: 2 Tickets 🎟️🎟️</small>
       </div>
 
-      <div class="wheel-card" id="wheelBtn3">
-        <span class="wheel-icon">🥇</span>
-        <b style="color:var(--magenta);">Gold Glücksrad</b><br>
+      <div class="lootbox-card diamond" id="boxBtn3">
+        <b style="color:var(--cyan); font-size:16px;">💎 Diamond Lootbox</b><br>
         <small style="color:var(--cream-dim)">Kosten: 4 Tickets 🎟️🎟️🎟️🎟️</small>
       </div>
     </div>
@@ -303,23 +315,29 @@
   </div>
 </div>
 
-<!-- GLÜCKSRAD BANNER MODAL -->
-<div class="modal-backdrop" id="wheelModal">
-  <div style="background:var(--bg-panel); padding:20px; border-radius:24px; width:100%; max-width:380px; text-align:center;">
-    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:13px; margin-top:0;" id="wheelModalTitle">GLÜCKSRAD</h3>
+<!-- LOOTBOX MODAL BANNER -->
+<div class="modal-backdrop" id="boxModal">
+  <div style="background:var(--bg-panel); padding:24px; border-radius:24px; width:100%; max-width:380px; text-align:center;" id="boxModalMain">
+    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:13px; margin-top:0;" id="boxModalTitle">LOOTBOX</h3>
     
-    <div class="wheel-spinner-container">
-      <div class="wheel-pointer"></div>
-      <div class="wheel-spinner" id="wheelSpinnerElem"></div>
+    <div class="box-container" id="lootboxAnimElem">
+      <div class="box-lid" id="boxLidElem"></div>
+      <div class="box-body" id="boxBodyElem">
+        <div class="box-glow"></div>
+      </div>
     </div>
 
-    <div style="background:#0f0a1e; padding:12px; border-radius:12px; font-size:12px; text-align:left; margin-bottom:14px;" id="wheelChancesBanner">
-      <!-- DYNAMISCHE GEWINNÜBERSICHT -->
+    <div class="prize-popup" id="prizePopupElem">
+      <span id="prizeTextElem">+100 Coins!</span>
+    </div>
+
+    <div style="background:#0f0a1e; padding:12px; border-radius:12px; font-size:12px; text-align:left; margin:14px 0;" id="boxChancesBanner">
+      <!-- GEWINNCHANCEN -->
     </div>
 
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-ghost" id="closeWheelModalBtn">Schließen</button>
-      <button class="btn btn-primary" id="spinWheelBtn">🎡 Drehen (<span id="wheelCostTicketCount">1</span> 🎟️)</button>
+      <button class="btn btn-ghost" id="closeBoxModalBtn">Schließen</button>
+      <button class="btn btn-primary" id="openBoxBtn">📦 Öffnen (<span id="boxCostTicketCount">1</span> 🎟️)</button>
     </div>
   </div>
 </div>
@@ -533,43 +551,44 @@
     { id: 'ach_100coins', title: '👑 Kontostand von 100 Coins erreicht', reward: 30 }
   ];
 
-  const WHEELS = {
+  // LOOTBOX CONFIG (SILBER, GOLD, DIAMOND)
+  const BOXES = {
     1: {
-      name: '🥉 Bronze Glücksrad', costTickets: 1,
-      chancesHtml: '<b>Mögliche Gewinne:</b><br>• 50% $\rightarrow$ 50 Coins 🪙<br>• 15% $\rightarrow$ 10 Coins 🪙<br>• 10% $\rightarrow$ 70 Coins 🪙<br>• 5% $\rightarrow$ 100 Coins 🪙<br>• 5% $\rightarrow$ 3x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
-      spin: () => {
+      name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#a8b2c1',
+      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 50% $\rightarrow$ 50 Coins 🪙<br>• 15% $\rightarrow$ 10 Coins 🪙<br>• 10% $\rightarrow$ 70 Coins 🪙<br>• 5% $\rightarrow$ 100 Coins 🪙<br>• 5% $\rightarrow$ 3x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
+      open: () => {
         const r = Math.random() * 100;
-        if(r < 50) return { coins: 50, tickets: 0, msg: '50 Coins 🪙' };
-        if(r < 65) return { coins: 10, tickets: 0, msg: '10 Coins 🪙' };
-        if(r < 75) return { coins: 70, tickets: 0, msg: '70 Coins 🪙' };
-        if(r < 80) return { coins: 100, tickets: 0, msg: '🎉 100 Coins! 🪙' };
-        if(r < 85) return { coins: 0, tickets: 3, msg: '🎟️ 3x Tickets!' };
+        if(r < 50) return { coins: 50, tickets: 0, msg: '+50 Coins! 🪙' };
+        if(r < 65) return { coins: 10, tickets: 0, msg: '+10 Coins! 🪙' };
+        if(r < 75) return { coins: 70, tickets: 0, msg: '+70 Coins! 🪙' };
+        if(r < 80) return { coins: 100, tickets: 0, msg: '🎉 +100 Coins! 🪙' };
+        if(r < 85) return { coins: 0, tickets: 3, msg: '🎟️ +3 Tickets!' };
         return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
       }
     },
     2: {
-      name: '🥈 Silber Glücksrad', costTickets: 2,
-      chancesHtml: '<b>Mögliche Gewinne:</b><br>• 50% $\rightarrow$ 120 Coins 🪙<br>• 15% $\rightarrow$ 30 Coins 🪙<br>• 10% $\rightarrow$ 180 Coins 🪙<br>• 5% $\rightarrow$ 250 Coins 🪙<br>• 5% $\rightarrow$ 5x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
-      spin: () => {
+      name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffc857',
+      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 50% $\rightarrow$ 120 Coins 🪙<br>• 15% $\rightarrow$ 30 Coins 🪙<br>• 10% $\rightarrow$ 180 Coins 🪙<br>• 5% $\rightarrow$ 250 Coins 🪙<br>• 5% $\rightarrow$ 5x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
+      open: () => {
         const r = Math.random() * 100;
-        if(r < 50) return { coins: 120, tickets: 0, msg: '120 Coins 🪙' };
-        if(r < 65) return { coins: 30, tickets: 0, msg: '30 Coins 🪙' };
-        if(r < 75) return { coins: 180, tickets: 0, msg: '180 Coins 🪙' };
-        if(r < 80) return { coins: 250, tickets: 0, msg: '🎉 250 Coins! 🪙' };
-        if(r < 85) return { coins: 0, tickets: 5, msg: '🎟️ 5x Tickets!' };
+        if(r < 50) return { coins: 120, tickets: 0, msg: '+120 Coins! 🪙' };
+        if(r < 65) return { coins: 30, tickets: 0, msg: '+30 Coins! 🪙' };
+        if(r < 75) return { coins: 180, tickets: 0, msg: '+180 Coins! 🪙' };
+        if(r < 80) return { coins: 250, tickets: 0, msg: '🎉 +250 Coins! 🪙' };
+        if(r < 85) return { coins: 0, tickets: 5, msg: '🎟️ +5 Tickets!' };
         return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
       }
     },
     3: {
-      name: '🥇 Gold Glücksrad', costTickets: 4,
-      chancesHtml: '<b>Mögliche Gewinne:</b><br>• 50% $\rightarrow$ 250 Coins 🪙<br>• 15% $\rightarrow$ 80 Coins 🪙<br>• 10% $\rightarrow$ 400 Coins 🪙<br>• 5% $\rightarrow$ 600 Coins 🪙<br>• 5% $\rightarrow$ 10x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
-      spin: () => {
+      name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#3fe0d0',
+      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 50% $\rightarrow$ 250 Coins 🪙<br>• 15% $\rightarrow$ 80 Coins 🪙<br>• 10% $\rightarrow$ 400 Coins 🪙<br>• 5% $\rightarrow$ 600 Coins 🪙<br>• 5% $\rightarrow$ 10x Tickets 🎟️<br>• 15% $\rightarrow$ Niete (0 Coins)',
+      open: () => {
         const r = Math.random() * 100;
-        if(r < 50) return { coins: 250, tickets: 0, msg: '250 Coins 🪙' };
-        if(r < 65) return { coins: 80, tickets: 0, msg: '80 Coins 🪙' };
-        if(r < 75) return { coins: 400, tickets: 0, msg: '400 Coins 🪙' };
-        if(r < 80) return { coins: 600, tickets: 0, msg: '🎉 600 Coins Jackpot! 🪙' };
-        if(r < 85) return { coins: 0, tickets: 10, msg: '🎟️ 10x Tickets Jackpot!' };
+        if(r < 50) return { coins: 250, tickets: 0, msg: '+250 Coins! 🪙' };
+        if(r < 65) return { coins: 80, tickets: 0, msg: '+80 Coins! 🪙' };
+        if(r < 75) return { coins: 400, tickets: 0, msg: '+400 Coins! 🪙' };
+        if(r < 80) return { coins: 600, tickets: 0, msg: '🎉 +600 Coins Jackpot! 🪙' };
+        if(r < 85) return { coins: 0, tickets: 10, msg: '🎟️ +10 Tickets Jackpot!' };
         return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
       }
     }
@@ -581,8 +600,7 @@
   let selectedUserForAuth = null;
   let selectedUserForEdit = null;
   let selectedGame = null;
-  let activeWheelKey = 1;
-  let currentWheelRotation = 0;
+  let activeBoxKey = 1;
   let stopwatchInterval = null;
   let sessionSeconds = 0;
 
@@ -614,7 +632,6 @@
     renderAll();
   }
 
-  // BUMM! SOFORT-SPEICHERN BEI JEDEM KLICK!
   async function saveState(){
     saveLocalBackup();
     try {
@@ -747,7 +764,7 @@
     await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
   });
 
-  // TICKET KAUF IM SHOP
+  // TICKET KAUF
   $('buyTicketBtn').addEventListener('click', async () => {
     if(!currentUser.unlimitedCoins && currentUser.coins < 50){
       alert('Du brauchst 50 Coins für 1 Ticket!');
@@ -769,52 +786,69 @@
     });
   });
 
-  // GLÜCKSRAD BANNER ÖFFNEN
-  function openWheelModal(key){
-    activeWheelKey = key;
-    const w = WHEELS[key];
-    $('wheelModalTitle').textContent = w.name.toUpperCase();
-    $('wheelCostTicketCount').textContent = w.costTickets;
-    $('wheelChancesBanner').innerHTML = w.chancesHtml;
-    $('spinWheelBtn').disabled = false;
-    $('wheelModal').classList.add('active');
+  // LOOTBOX BANNER ÖFFNEN
+  function openBoxModal(key){
+    activeBoxKey = key;
+    const b = BOXES[key];
+    $('boxModalTitle').textContent = b.name.toUpperCase();
+    $('boxCostTicketCount').textContent = b.costTickets;
+    $('boxChancesBanner').innerHTML = b.chancesHtml;
+    
+    // Farben anpassen
+    $('boxBodyElem').style.borderColor = b.themeColor;
+    $('boxLidElem').style.borderColor = b.themeColor;
+
+    // Reset Animation
+    $('lootboxAnimElem').classList.remove('opening', 'opened');
+    $('prizePopupElem').style.display = 'none';
+    $('openBoxBtn').disabled = false;
+
+    $('boxModal').classList.add('active');
   }
 
-  $('wheelBtn1').addEventListener('click', () => openWheelModal(1));
-  $('wheelBtn2').addEventListener('click', () => openWheelModal(2));
-  $('wheelBtn3').addEventListener('click', () => openWheelModal(3));
-  $('closeWheelModalBtn').addEventListener('click', () => $('wheelModal').classList.remove('active'));
+  $('boxBtn1').addEventListener('click', () => openBoxModal(1));
+  $('boxBtn2').addEventListener('click', () => openBoxModal(2));
+  $('boxBtn3').addEventListener('click', () => openBoxModal(3));
+  $('closeBoxModalBtn').addEventListener('click', () => $('boxModal').classList.remove('active'));
 
-  // GLÜCKSRAD DREHEN ANIMATION
-  $('spinWheelBtn').addEventListener('click', async () => {
-    const w = WHEELS[activeWheelKey];
-    if(currentUser.tickets < w.costTickets){
-      alert(`Du brauchst ${w.costTickets} Ticket(s) für dieses Rad! Kaufe sie oben im Shop.`);
+  // LOOTBOX ÖFFNEN ANIMATION LOGIK
+  $('openBoxBtn').addEventListener('click', async () => {
+    const b = BOXES[activeBoxKey];
+    if(currentUser.tickets < b.costTickets){
+      alert(`Du brauchst ${b.costTickets} Ticket(s) für diese Box! Kaufe sie im Shop.`);
       return;
     }
 
-    currentUser.tickets -= w.costTickets;
-    addLog(currentUser.name, `🎡 Drehung: ${w.name}`, -w.costTickets, '🎟️');
+    currentUser.tickets -= b.costTickets;
+    addLog(currentUser.name, `📦 Lootbox: ${b.name}`, -b.costTickets, '🎟️');
     await saveState(); renderAll();
 
-    $('spinWheelBtn').disabled = true;
+    $('openBoxBtn').disabled = true;
 
-    // Animation drehen
-    currentWheelRotation += 1440 + Math.floor(Math.random() * 360);
-    $('wheelSpinnerElem').style.transform = `rotate(${currentWheelRotation}deg)`;
+    // Start Shake Animation
+    const animElem = $('lootboxAnimElem');
+    animElem.classList.add('opening');
 
-    setTimeout(async () => {
-      const result = w.spin();
+    setTimeout(() => {
+      // Open Lid
+      animElem.classList.remove('opening');
+      animElem.classList.add('opened');
+
+      const result = b.open();
       if(result.coins > 0) currentUser.coins += result.coins;
       if(result.tickets > 0) currentUser.tickets += result.tickets;
 
-      if(result.coins > 0) addLog(currentUser.name, `🎉 Gewinn: ${w.name}`, result.coins, '🪙');
-      if(result.tickets > 0) addLog(currentUser.name, `🎉 Gewinn: ${w.name}`, result.tickets, '🎟️');
+      if(result.coins > 0) addLog(currentUser.name, `🎉 Loot: ${b.name}`, result.coins, '🪙');
+      if(result.tickets > 0) addLog(currentUser.name, `🎉 Loot: ${b.name}`, result.tickets, '🎟️');
 
-      await saveState(); renderAll();
-      alert(`ERGEBNIS:\n${result.msg}`);
-      $('spinWheelBtn').disabled = false;
-    }, 4000);
+      saveState().then(() => renderAll());
+
+      setTimeout(() => {
+        $('prizeTextElem').textContent = result.msg;
+        $('prizePopupElem').style.display = 'block';
+      }, 300);
+
+    }, 2000);
   });
 
   // ERFOLGE RENDER
