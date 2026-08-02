@@ -123,60 +123,68 @@
   /* --- VOLLBILD 3D LOOTBOX UNBOXING STYLES --- */
   .unboxing-fullscreen-backdrop {
     display:none; position:fixed; inset:0; z-index:100;
-    background: radial-gradient(circle at center, #1b263b 0%, #080512 100%);
+    background: radial-gradient(circle at center, #11151f 0%, #06080d 100%);
     flex-direction:column; align-items:center; justify-content:center; overflow:hidden;
   }
   .unboxing-fullscreen-backdrop.active { display:flex; }
 
-  .unboxing-title { font-family:var(--font-display); font-size:16px; color:var(--gold); margin-bottom:30px; text-shadow:0 0 10px var(--gold); }
+  .unboxing-title { font-family:var(--font-display); font-size:16px; color:var(--gold); margin-bottom:50px; text-shadow:0 0 10px var(--gold); z-index: 10; }
 
   /* 3D SCENE CONTAINER */
-  .scene-3d { width:220px; height:180px; perspective:800px; position:relative; margin-bottom:40px; }
+  .scene-3d { width:240px; height:180px; perspective:900px; position:relative; margin-bottom:40px; z-index: 5; }
   .box-3d { width:100%; height:100%; position:absolute; transform-style:preserve-3d; transform:rotateX(-15deg) rotateY(25deg); transition:transform 0.5s; }
 
-  .box-face { position:absolute; border:3px solid var(--cyan); background:#151c28; box-shadow:inset 0 0 25px rgba(63,224,208,0.3); }
+  /* BOX SURFACES (Anpassung an das Sci-Fi Foto) */
+  .box-face { position:absolute; border:3px solid #00f0ff; background:#1c2333; box-shadow:inset 0 0 25px rgba(0,240,255,0.4), inset 0 0 50px rgba(0,0,0,0.8); }
   
-  .box-front  { width:220px; height:120px; bottom:0; transform:translateZ(60px); }
-  .box-back   { width:220px; height:120px; bottom:0; transform:rotateY(180deg) translateZ(60px); }
-  .box-left   { width:120px; height:120px; bottom:0; transform:rotateY(-90deg) translateZ(60px); }
-  .box-right  { width:120px; height:120px; bottom:0; transform:rotateY(90deg) translateZ(160px); }
-  .box-bottom { width:220px; height:120px; bottom:0; transform:rotateX(-90deg) translateZ(60px); }
+  .box-front  { width:240px; height:140px; bottom:0; transform:translateZ(70px); }
+  .box-back   { width:240px; height:140px; bottom:0; transform:rotateY(180deg) translateZ(70px); }
+  .box-left   { width:140px; height:140px; bottom:0; transform:rotateY(-90deg) translateZ(70px); }
+  .box-right  { width:140px; height:140px; bottom:0; transform:rotateY(90deg) translateZ(170px); }
+  .box-bottom { width:240px; height:140px; bottom:0; transform:rotateX(-90deg) translateZ(70px); background:#0c101a; box-shadow:none; }
+
+  /* DECO ELEMENTS FRONT */
+  .box-front::before { content:"⚠ 07"; position:absolute; top:10px; left:10px; color:#fff; font-size:12px; font-weight:bold; opacity:0.6; }
+  .box-front::after { content:""; position:absolute; bottom:0; left:10%; width:80%; height:8px; background:#111; border-top:1px solid #333; }
 
   /* 3D DECKEL WITH ANIMATION */
   .box-lid-3d {
-    width:226px; height:126px; position:absolute; top:35px; left:-3px;
+    width:246px; height:146px; position:absolute; top:37px; left:-3px;
     transform-style:preserve-3d; transform-origin:back center;
-    transition:transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition:transform 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
-  .box-lid-face { position:absolute; border:3px solid var(--cyan); background:#202b3c; }
-  .lid-top { width:226px; height:126px; transform:rotateX(90deg) translateZ(63px); }
-  .lid-front { width:226px; height:35px; transform:translateZ(63px); }
+  .box-lid-face { position:absolute; border:3px solid #00f0ff; background:#242d40; }
+  .lid-top { width:246px; height:146px; transform:rotateX(90deg) translateZ(73px); box-shadow:inset 0 0 30px rgba(0,240,255,0.4); }
+  .lid-top::after { content:""; position:absolute; top:20%; left:20%; width:60%; height:60%; border:2px solid rgba(0,240,255,0.3); border-radius:10px; }
+  .lid-front { width:246px; height:45px; transform:translateZ(73px); }
 
-  /* GLOW LIGHT BEAM FROM INSIDE */
+  /* GLOW LIGHT BEAM FROM INSIDE (Gelb/Orange wie im Bild) */
   .light-beam {
-    position:absolute; width:180px; height:300px; bottom:60px; left:20px;
-    background:linear-gradient(0deg, rgba(63,224,208,0.8) 0%, rgba(255,200,87,0.5) 50%, transparent 100%);
+    position:absolute; width:200px; height:400px; bottom:70px; left:20px;
+    background:linear-gradient(0deg, rgba(255,204,0,0.9) 0%, rgba(255,165,0,0.5) 40%, transparent 100%);
     clip-path: polygon(20% 100%, 80% 100%, 100% 0%, 0% 0%);
-    opacity:0; transition:opacity 0.8s; pointer-events:none;
+    opacity:0; transition:opacity 1s; pointer-events:none; z-index: 10;
+    box-shadow: 0 0 50px rgba(255,204,0,0.8);
   }
 
   /* OPENING ANIMATION CLASSES */
-  .unboxing-fullscreen-backdrop.shaking .box-3d { animation: shake3d 0.1s infinite; }
-  @keyframes shake3d { 0%{transform:rotateX(-15deg) rotateY(25deg) translate(0,0);} 50%{transform:rotateX(-15deg) rotateY(25deg) translate(-5px, 5px);} 100%{transform:rotateX(-15deg) rotateY(25deg) translate(5px, -3px);} }
+  .unboxing-fullscreen-backdrop.shaking .box-3d { animation: shake3d 0.08s infinite; }
+  @keyframes shake3d { 0%{transform:rotateX(-15deg) rotateY(25deg) translate(0,0);} 50%{transform:rotateX(-15deg) rotateY(25deg) translate(-6px, 6px);} 100%{transform:rotateX(-15deg) rotateY(25deg) translate(6px, -4px);} }
 
-  .unboxing-fullscreen-backdrop.opened .box-lid-3d { transform:rotateX(-115deg); }
-  .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; }
+  .unboxing-fullscreen-backdrop.opened .box-lid-3d { transform:rotateX(-120deg); }
+  .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; animation: pulseLight 2s infinite alternate; }
+  @keyframes pulseLight { 0%{opacity:0.8;} 100%{opacity:1;} }
 
   /* REVEAL DROP ITEM UI */
-  .reveal-drop-box { text-align:center; display:none; animation: popUpDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .reveal-drop-box { text-align:center; display:none; animation: popUpDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 20; position:relative; }
   @keyframes popUpDrop { from{opacity:0; transform:scale(0.3) translateY(40px);} to{opacity:1; transform:scale(1) translateY(0);} }
   
-  .reveal-item-text { font-family:var(--font-display); font-size:22px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 15px var(--gold); }
-  .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; }
+  .reveal-item-text { font-family:var(--font-display); font-size:24px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 20px var(--gold); }
+  .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; font-weight:bold; }
   @keyframes blinkPrompt { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
   /* SUMMARY SCREEN UI */
-  .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:24px; max-width:340px; width:100%; }
+  .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:30px; max-width:340px; width:100%; z-index:20; position:relative; }
 
   .result-box{ text-align:center; padding:10px 4px 6px; }
   .result-title.fail{color:var(--danger);}
@@ -187,8 +195,8 @@
   .modal-fullscreen { width:100vw; height:100vh; max-width:none; border-radius:0; border:none; background:var(--bg-deep); padding:24px; display:flex; flex-direction:column; }
   
   .admin-header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #3d2f66; padding-bottom:16px; margin-bottom:20px; }
-  .admin-nav { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-  .admin-nav-btn { flex:1; min-width:110px; padding:12px; background:#1c1536; border:1px solid #3d2f66; color:var(--cream-dim); border-radius:10px; font-weight:bold; cursor:pointer; }
+  .admin-nav { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .admin-nav-btn { flex:1; min-width:90px; padding:10px; background:#1c1536; border:1px solid #3d2f66; color:var(--cream-dim); border-radius:10px; font-weight:bold; cursor:pointer; font-size:12px; text-align:center; }
   .admin-nav-btn.active { background:var(--magenta); color:white; border-color:var(--magenta); }
   
   .admin-tab-content { display:none; flex:1; overflow-y:auto; }
@@ -261,7 +269,7 @@
     <button class="btn btn-ghost row-gap" id="openAdminDashboardBtn" style="display:none; border-color:var(--gold); color:var(--gold);">⚙️ Admin Dashboard</button>
   </div>
 
-  <!-- SHOP SCREEN STRUCTURE -->
+  <!-- SHOP SCREEN -->
   <div class="screen" id="screen-shop">
     <h2 class="step-title">ARCADE SHOP</h2>
 
@@ -358,19 +366,20 @@
 
 <!-- 3D LOOTBOX UNBOXING FULLSCREEN -->
 <div class="unboxing-fullscreen-backdrop" id="unboxingFullscreen">
-  <div class="unboxing-title" id="unboxingTitle">BOX ÖFFNEN...</div>
+  <div class="unboxing-title" id="unboxingTitle">BOX WIRD GEÖFFNET...</div>
 
   <!-- 3D SCENE -->
   <div class="scene-3d">
     <div class="light-beam"></div>
     <div class="box-3d" id="box3dContainer">
+      <!-- Wände der Sci-Fi Kiste -->
       <div class="box-face box-front"></div>
       <div class="box-face box-back"></div>
       <div class="box-face box-left"></div>
       <div class="box-face box-right"></div>
       <div class="box-face box-bottom"></div>
       
-      <!-- 3D LID -->
+      <!-- 3D DECKEL -->
       <div class="box-lid-3d">
         <div class="box-lid-face lid-top"></div>
         <div class="box-lid-face lid-front"></div>
@@ -381,14 +390,14 @@
   <!-- LOOT REVEAL DROP UI -->
   <div class="reveal-drop-box" id="revealDropBox">
     <div class="reveal-item-text" id="revealItemText">+10 Münzen 🪙</div>
-    <div class="tap-prompt">Tippe auf den Bildschirm für mehr Loot!</div>
+    <div class="tap-prompt">Klicke weiter, um den Rest zu looten!</div>
   </div>
 
   <!-- SUMMARY UI -->
   <div class="summary-box" id="summaryBox">
     <h3 style="font-family:var(--font-display); color:var(--gold); margin-top:0;">LOOT ÜBERSICHT</h3>
-    <div id="summaryItemsList" style="font-size:16px; margin:20px 0; font-weight:bold; color:var(--cyan);"></div>
-    <button class="btn btn-primary" id="finishUnboxingBtn">Fertig (Hauptmenü)</button>
+    <div id="summaryItemsList" style="font-size:18px; margin:24px 0; font-weight:bold; color:var(--cyan); text-shadow:0 0 10px rgba(63,224,208,0.5);"></div>
+    <button class="btn btn-primary" id="finishUnboxingBtn">Fertig (Zurück)</button>
   </div>
 </div>
 
@@ -426,14 +435,14 @@
       <button class="btn btn-ghost" id="closeAdminPanel" style="width:auto; padding:8px 16px;">✕ Schließen</button>
     </div>
 
+    <!-- NEUER ADMIN TAB: "GLÜCK" -->
     <div class="admin-nav">
-      <button class="admin-nav-btn active" data-tab="tab-accounts" id="tabBtnAccounts">👥 Accounts</button>
-      <button class="admin-nav-btn" data-tab="tab-gift" id="tabBtnGift">🎁 Schenken</button>
-      <button class="admin-nav-btn" data-tab="tab-announcements" id="tabBtnAnnounce">📢 Info</button>
+      <button class="admin-nav-btn active" data-tab="tab-accounts" id="tabBtnAccounts">👥 Acc</button>
+      <button class="admin-nav-btn" data-tab="tab-luck" id="tabBtnLuck" style="color:var(--gold);">🍀 Glück</button>
+      <button class="admin-nav-btn" data-tab="tab-gift" id="tabBtnGift">🎁 Gift</button>
       <button class="admin-nav-btn" data-tab="tab-games" id="tabBtnGames">🎮 Spiele</button>
-      <button class="admin-nav-btn" data-tab="tab-tasks" id="tabBtnTasks">📝 Aufgaben</button>
-      <button class="admin-nav-btn" data-tab="tab-analytics" id="tabBtnAnalytics">📊 Analytics</button>
-      <button class="admin-nav-btn" data-tab="tab-logs" id="tabBtnLogs">📜 Log</button>
+      <button class="admin-nav-btn" data-tab="tab-tasks" id="tabBtnTasks">📝 Tasks</button>
+      <button class="admin-nav-btn" data-tab="tab-analytics" id="tabBtnAnalytics">📊 Info/Log</button>
     </div>
 
     <!-- TAB: ACCOUNTS -->
@@ -459,8 +468,6 @@
             <div class="perm-box">
               <label class="perm-item"><input type="checkbox" id="permAdmin"> 👑 Admin</label>
               <label class="perm-item"><input type="checkbox" id="permUnlimited"> ♾️ Unendliche Coins</label>
-              <label class="perm-item"><input type="checkbox" id="permGames"> 🎮 Spiele-Rechte</label>
-              <label class="perm-item"><input type="checkbox" id="permTasks"> 📝 Aufgaben-Rechte</label>
             </div>
             <button class="btn btn-secondary row-gap" id="saveAccChangesBtn">Speichern</button>
             <button class="btn btn-danger row-gap" id="deleteAccBtn">Account löschen</button>
@@ -470,10 +477,32 @@
       </div>
     </div>
 
+    <!-- TAB: 🍀 GLÜCK (MANIPULATION) -->
+    <div class="admin-tab-content" id="tab-luck">
+      <div style="max-width:500px; background:#1c1536; padding:20px; border-radius:14px; border:2px solid var(--gold);">
+        <h3 style="color:var(--gold); margin-top:0;">🍀 Garantierten Loot einstellen</h3>
+        <p style="color:var(--cream-dim); font-size:13px; margin-bottom:20px;">Bestimme exakt, was der Account bei seiner <b>nächsten Lootbox</b> zwingend ziehen wird (überschreibt den Zufall).</p>
+        
+        <div class="field"><label>1. Account wählen</label><select id="luckTargetUserSelect"></select></div>
+        <div class="field">
+          <label>2. Garantiertes Ergebnis</label>
+          <select id="luckTypeSelect">
+            <option value="coins">🪙 Coins (Jackpot/Geld)</option>
+            <option value="tickets">🎟️ Tickets</option>
+            <option value="niete">❌ Niete (0)</option>
+          </select>
+        </div>
+        <div class="field" id="luckAmountGroup"><label>3. Anzahl</label><input type="number" id="luckAmountInput" value="1000" min="1"></div>
+        <button class="btn btn-primary" id="saveLuckBtn" style="background:linear-gradient(135deg, var(--gold), #ffae00);">🔒 Für nächste Box speichern</button>
+      </div>
+
+      <div id="activeLuckDisplay" style="margin-top:20px; font-size:14px; color:var(--cyan);"></div>
+    </div>
+
     <!-- TAB: SCHENKEN -->
     <div class="admin-tab-content" id="tab-gift">
       <div style="max-width:500px;">
-        <h3>🎁 An Account schenken</h3>
+        <h3>🎁 Sofortiges Geschenk</h3>
         <div class="field"><label>Ziel-Account wählen</label><select id="giftTargetUserSelect"></select></div>
         <div class="field">
           <label>Was möchtest du schenken?</label>
@@ -486,16 +515,6 @@
         <div class="field" id="giftAmountGroup"><label>Anzahl</label><input type="number" id="giftAmountInput" value="50" min="1"></div>
         <div class="field" id="giftThemeGroup" style="display:none;"><label>Theme wählen</label><select id="giftThemeSelect"></select></div>
         <button class="btn btn-primary" id="executeGiftBtn">🎁 Jetzt Schenken</button>
-      </div>
-    </div>
-
-    <!-- TAB: INFO -->
-    <div class="admin-tab-content" id="tab-announcements">
-      <div style="max-width:500px;">
-        <h3>Globale Benachrichtigung</h3>
-        <div class="field"><label>Ankündigungstext</label><textarea id="globalAnnounceInput" rows="4"></textarea></div>
-        <button class="btn btn-secondary" id="saveGlobalAnnounceBtn">Veröffentlichen</button>
-        <button class="btn btn-ghost row-gap" id="clearGlobalAnnounceBtn">Löschen</button>
       </div>
     </div>
 
@@ -527,28 +546,29 @@
       </div>
     </div>
 
-    <!-- TAB: ANALYTICS -->
+    <!-- TAB: INFO & LOGS & ANALYTICS -->
     <div class="admin-tab-content" id="tab-analytics">
-      <h3>📊 Übersicht Spielzeit</h3>
+      <h3>Globale Benachrichtigung</h3>
+      <div class="field"><textarea id="globalAnnounceInput" rows="2" placeholder="Text eingeben..."></textarea></div>
+      <button class="btn btn-secondary btn-sm" id="saveGlobalAnnounceBtn">Veröffentlichen</button>
+      <button class="btn btn-ghost btn-sm" id="clearGlobalAnnounceBtn">Löschen</button>
+
+      <h3 style="margin-top:30px;">📊 Übersicht Spielzeit</h3>
       <div class="stats-grid">
         <div class="stat-card"><div>Heute gespielt</div><div class="num" id="statToday">0 Min</div></div>
         <div class="stat-card"><div>Letzte 7 Tage</div><div class="num" id="statWeek">0 Min</div></div>
         <div class="stat-card"><div>Gesamt gespielt</div><div class="num" id="statTotal">0 Min</div></div>
       </div>
-      <h3 style="margin-top:24px;">🏆 Erledigte Erfolge & Aufgaben</h3>
-      <div id="adminTaskLogList" style="margin-bottom:24px;"></div>
-      <button class="btn btn-danger" id="resetAnalyticsBtn" style="max-width:320px;">🗑️ Analytics zurücksetzen</button>
-    </div>
 
-    <!-- TAB: LOG -->
-    <div class="admin-tab-content" id="tab-logs">
-      <h3>📜 Transaktions-Log</h3>
-      <div style="overflow-x:auto;">
+      <h3 style="margin-top:24px;">📜 Transaktions-Log</h3>
+      <div style="overflow-x:auto; max-height:400px; border:1px solid #3d2f66; border-radius:10px;">
         <table class="log-table">
           <thead><tr><th>Datum & Zeit</th><th>Account</th><th>Typ / Grund</th><th>Anzahl</th></tr></thead>
           <tbody id="transactionLogBody"></tbody>
         </table>
       </div>
+      
+      <button class="btn btn-danger row-gap" id="resetAnalyticsBtn" style="max-width:320px;">🗑️ Analytics zurücksetzen</button>
     </div>
 
   </div>
@@ -562,15 +582,13 @@
   const DEFAULT_USERS = [
     {
       id: 'u_admin', name: 'Admin', password: '1234', approved: true,
-      isAdmin: true, unlimitedCoins: true, canAddGames: true, canAddTasks: true,
+      isAdmin: true, unlimitedCoins: true,
       coins: 100, tickets: 5, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '',
-      unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: []
+      unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null
     }
   ];
 
-  const DEFAULT_GAMES = [
-    { id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal' }
-  ];
+  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal' }];
 
   const THEMES = [
     { id: 'default', name: '👾 Retro Arcade', cost: 0 },
@@ -582,60 +600,75 @@
   ];
 
   const DAILY_ACHIEVEMENTS = [
-    { id: 'ach_yt15', title: '🎬 15 Min. auf YouTube verbracht', reward: 10 },
-    { id: 'ach_yt30', title: '📺 30 Min. YouTube Video-Marathon', reward: 20 },
-    { id: 'ach_poke15', title: '⚡ 15 Min. Pokémon Trainer', reward: 12 },
-    { id: 'ach_poki15', title: '🎮 15 Min. auf Poki gezockt', reward: 10 },
-    { id: 'ach_poki30', title: '🕹️ 30 Min. Poki Master Pro', reward: 22 },
-    { id: 'ach_gemini', title: '🤖 1 Frage an Gemini gestellt', reward: 5 },
-    { id: 'ach_first_task', title: '📝 1 echten Job/Aufgabe erledigt', reward: 15 },
-    { id: 'ach_play_quick', title: '⚡ 1 Quick Play Spiel gestartet', reward: 3 },
-    { id: 'ach_play_normal', title: '🌐 1 Normal Play Spiel gestartet', reward: 3 },
-    { id: 'ach_theme_shop', title: '🎨 Design-Shop besucht', reward: 1 },
-    { id: 'ach_daily_claim', title: '🎁 Tägliche Belohnung abgeholt', reward: 5 },
-    { id: 'ach_game30', title: '⏱️ 30 Min. Gesamte Spielzeit heute', reward: 25 },
-    { id: 'ach_game60', title: '⏱️ 60 Min. Gesamte Spielzeit heute', reward: 30 },
-    { id: 'ach_night_play', title: '🌙 Nach 18:00 Uhr gezockt', reward: 8 },
-    { id: 'ach_morning_play', title: '☀️ Vor 12:00 Uhr mittags aktiv', reward: 8 },
-    { id: 'ach_50coins', title: '🪙 Kontostand von 50 Coins erreicht', reward: 15 },
-    { id: 'ach_100coins', title: '👑 Kontostand von 100 Coins erreicht', reward: 30 }
+    { id: 'ach_yt15', title: '🎬 15 Min. YouTube', reward: 10 },
+    { id: 'ach_yt30', title: '📺 30 Min. YouTube', reward: 20 },
+    { id: 'ach_poke15', title: '⚡ 15 Min. Pokémon', reward: 12 },
+    { id: 'ach_poki15', title: '🎮 15 Min. Poki', reward: 10 },
+    { id: 'ach_poki30', title: '🕹️ 30 Min. Poki Master', reward: 22 },
+    { id: 'ach_gemini', title: '🤖 1 Frage an Gemini', reward: 5 },
+    { id: 'ach_first_task', title: '📝 1 Aufgabe erledigt', reward: 15 },
+    { id: 'ach_daily_claim', title: '🎁 Belohnung abgeholt', reward: 5 },
+    { id: 'ach_game30', title: '⏱️ 30 Min. Spielzeit', reward: 25 },
+    { id: 'ach_100coins', title: '👑 100 Coins erreicht', reward: 30 }
   ];
 
+  // ==========================================
+  // ECHTER ZUFALLSGENERATOR (Kryptographisch)
+  // ==========================================
+  function getSecureRandom() {
+      const array = new Uint32Array(1);
+      window.crypto.getRandomValues(array);
+      return (array[0] / 4294967295) * 100; // Gibt einen Wert von 0.0 bis 99.999... zurück
+  }
+
+  // Teilt den Gewinn zufällig auf 3 Klicks auf
+  function splitIntoRandomChunks(totalAmount) {
+      if (totalAmount <= 0) return [{type: 'niete', val: 0}];
+      if (totalAmount === 1) return [{type: 'coin', val: 1}];
+      if (totalAmount === 2) return [{type: 'coin', val: 1}, {type: 'coin', val: 1}];
+      
+      // Erster Teil zwischen 10% und 40%
+      let p1 = Math.max(1, Math.floor(totalAmount * (0.1 + (getSecureRandom()/100 * 0.3))));
+      // Zweiter Teil vom Rest zwischen 20% und 60%
+      let p2 = Math.max(1, Math.floor((totalAmount - p1) * (0.2 + (getSecureRandom()/100 * 0.4))));
+      let p3 = totalAmount - p1 - p2;
+      
+      if (p3 <= 0) { p3 = 1; p2 -= 1; }
+      
+      let chunks = [p1, p2, p3].filter(v => v > 0).map(v => ({type: 'coin', val: v}));
+      // Mische die Reihenfolge, damit der größte Brocken zufällig kommt!
+      return chunks.sort(() => Math.random() - 0.5);
+  }
+
   const BOX_CONFIGS = {
-    1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#a8b2c1', totalTarget: 50,
-      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 40% $\rightarrow$ 50 Coins 🪙<br>• 15% $\rightarrow$ 10 Coins 🪙<br>• 10% $\rightarrow$ 70 Coins 🪙<br>• 5% $\rightarrow$ 100 Coins 🪙<br>• 5% $\rightarrow$ 3x Tickets 🎟️<br>• 25% $\rightarrow$ Niete (0 Coins)',
-      open: () => {
-        const r = Math.random() * 100;
-        if(r < 40) return { coins: 50, tickets: 0, msg: '+50 Coins! 🪙' };
-        if(r < 55) return { coins: 10, tickets: 0, msg: '+10 Coins! 🪙' };
-        if(r < 65) return { coins: 70, tickets: 0, msg: '+70 Coins! 🪙' };
-        if(r < 70) return { coins: 100, tickets: 0, msg: '🎉 +100 Coins! 🪙' };
-        if(r < 75) return { coins: 0, tickets: 3, msg: '🎟️ +3 Tickets!' };
-        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+    1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#00f0ff',
+      open: (r) => {
+        if(r < 25) return { coins: 0, tickets: 0 };
+        if(r < 65) return { coins: 50, tickets: 0 };
+        if(r < 80) return { coins: 10, tickets: 0 };
+        if(r < 90) return { coins: 70, tickets: 0 };
+        if(r < 95) return { coins: 100, tickets: 0 };
+        return { coins: 0, tickets: 3 };
       }
     },
-    2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffc857', totalTarget: 150,
-      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 40% $\rightarrow$ 120 Coins 🪙<br>• 15% $\rightarrow$ 30 Coins 🪙<br>• 10% $\rightarrow$ 180 Coins 🪙<br>• 5% $\rightarrow$ 250 Coins 🪙<br>• 5% $\rightarrow$ 5x Tickets 🎟️<br>• 25% $\rightarrow$ Niete (0 Coins)',
-      open: () => {
-        const r = Math.random() * 100;
-        if(r < 40) return { coins: 120, tickets: 0, msg: '+120 Coins! 🪙' };
-        if(r < 55) return { coins: 30, tickets: 0, msg: '+30 Coins! 🪙' };
-        if(r < 65) return { coins: 180, tickets: 0, msg: '+180 Coins! 🪙' };
-        if(r < 70) return { coins: 250, tickets: 0, msg: '🎉 +250 Coins! 🪙' };
-        if(r < 75) return { coins: 0, tickets: 5, msg: '🎟️ +5 Tickets!' };
-        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+    2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffb703',
+      open: (r) => {
+        if(r < 25) return { coins: 0, tickets: 0 };
+        if(r < 65) return { coins: 120, tickets: 0 };
+        if(r < 80) return { coins: 30, tickets: 0 };
+        if(r < 90) return { coins: 180, tickets: 0 };
+        if(r < 95) return { coins: 250, tickets: 0 };
+        return { coins: 0, tickets: 5 };
       }
     },
-    3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#3fe0d0', totalTarget: 400,
-      chancesHtml: '<b>Mögliche Loot-Gewinne:</b><br>• 40% $\rightarrow$ 250 Coins 🪙<br>• 15% $\rightarrow$ 80 Coins 🪙<br>• 10% $\rightarrow$ 400 Coins 🪙<br>• 5% $\rightarrow$ 600 Coins 🪙<br>• 5% $\rightarrow$ 10x Tickets 🎟️<br>• 25% $\rightarrow$ Niete (0 Coins)',
-      open: () => {
-        const r = Math.random() * 100;
-        if(r < 40) return { coins: 250, tickets: 0, msg: '+250 Coins! 🪙' };
-        if(r < 55) return { coins: 80, tickets: 0, msg: '+80 Coins! 🪙' };
-        if(r < 65) return { coins: 400, tickets: 0, msg: '+400 Coins! 🪙' };
-        if(r < 70) return { coins: 600, tickets: 0, msg: '🎉 +600 Coins Jackpot! 🪙' };
-        if(r < 75) return { coins: 0, tickets: 10, msg: '🎟️ +10 Tickets Jackpot!' };
-        return { coins: 0, tickets: 0, msg: 'Leider Niete! ❌' };
+    3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#d63bff',
+      open: (r) => {
+        if(r < 25) return { coins: 0, tickets: 0 };
+        if(r < 65) return { coins: 250, tickets: 0 };
+        if(r < 80) return { coins: 80, tickets: 0 };
+        if(r < 90) return { coins: 400, tickets: 0 };
+        if(r < 95) return { coins: 600, tickets: 0 };
+        return { coins: 0, tickets: 10 };
       }
     }
   };
@@ -679,7 +712,6 @@
     if(!state.tasks) state.tasks = [];
     if(!state.history) state.history = [];
     if(!state.logs) state.logs = [];
-    if(!state.taskLogs) state.taskLogs = [];
 
     saveLocalBackup();
     renderAll();
@@ -699,11 +731,6 @@
   function addLog(userName, typeReason, amount, unit='🪙'){
     if(!state.logs) state.logs = [];
     state.logs.unshift({ timestamp: Date.now(), userName: userName, typeReason: typeReason, amount: amount, unit: unit });
-  }
-
-  function addTaskLog(userName, taskName, type){
-    if(!state.taskLogs) state.taskLogs = [];
-    state.taskLogs.unshift({ timestamp: Date.now(), userName: userName, taskName: taskName, type: type });
   }
 
   function applyTheme(themeId){ document.body.className = themeId === 'default' ? '' : themeId; }
@@ -731,16 +758,7 @@
       if(currentUser.message) { $('userPersonalMsgBox').style.display = 'block'; $('userPersonalMsgText').textContent = currentUser.message; }
       else $('userPersonalMsgBox').style.display = 'none';
 
-      const canSeeDash = currentUser.isAdmin || currentUser.canAddGames || currentUser.canAddTasks;
-      $('openAdminDashboardBtn').style.display = canSeeDash ? 'block' : 'none';
-
-      $('tabBtnAccounts').style.display = currentUser.isAdmin ? 'block' : 'none';
-      $('tabBtnGift').style.display = currentUser.isAdmin ? 'block' : 'none';
-      $('tabBtnAnnounce').style.display = currentUser.isAdmin ? 'block' : 'none';
-      $('tabBtnAnalytics').style.display = currentUser.isAdmin ? 'block' : 'none';
-      $('tabBtnLogs').style.display = currentUser.isAdmin ? 'block' : 'none';
-      $('tabBtnGames').style.display = (currentUser.isAdmin || currentUser.canAddGames) ? 'block' : 'none';
-      $('tabBtnTasks').style.display = (currentUser.isAdmin || currentUser.canAddTasks) ? 'block' : 'none';
+      $('openAdminDashboardBtn').style.display = currentUser.isAdmin ? 'block' : 'none';
 
       renderGameGrid();
       renderUserTasksList();
@@ -752,6 +770,7 @@
       renderAnalytics();
       renderGiftSelects();
       renderLogs();
+      renderLuckTab();
 
       const btn = $('dailyRewardBtn');
       const timeSinceLast = Date.now() - (currentUser.lastDailyClaim || 0);
@@ -811,8 +830,8 @@
     const name = $('regNameInput').value.trim(); const pw = $('regPasswordInput').value.trim();
     if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
     state.users.push({
-      id: 'u_' + Date.now(), name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false, canAddGames: false, canAddTasks: false,
-      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: []
+      id: 'u_' + Date.now(), name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false,
+      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null
     });
     await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
   });
@@ -839,58 +858,74 @@
     });
   });
 
-  // 3D LOOTBOX UNBOXING LOGIK
+  // ==========================================
+  // VOLLBILD 3D LOOTBOX UNBOXING LOGIK
+  // ==========================================
   function start3dUnboxing(key){
     const cfg = BOX_CONFIGS[key];
     if(currentUser.tickets < cfg.costTickets){
-      alert(`Du brauchst ${cfg.costTickets} Ticket(s) für diese Box! Kaufe sie oben im Shop.`);
+      alert(`Du brauchst ${cfg.costTickets} Ticket(s) für diese Box! Kaufe sie im Shop.`);
       return;
     }
 
     currentUser.tickets -= cfg.costTickets;
     addLog(currentUser.name, `📦 Lootbox: ${cfg.name}`, -cfg.costTickets, '🎟️');
-    saveState(); renderAll();
-
+    
     currentUnboxingKey = key;
     currentStepIndex = 0;
     accumulatedCoins = 0;
     accumulatedTickets = 0;
 
-    const result = cfg.open();
+    let result = { coins: 0, tickets: 0 };
     
+    // PRÜFEN: GIBT ES EINEN ADMIN LUCK-OVERRIDE?
+    if (currentUser.forcedLoot) {
+        const override = currentUser.forcedLoot;
+        currentUser.forcedLoot = null; // Direkt verbrauchen
+        if(override.type === 'coins') result.coins = override.amount;
+        else if(override.type === 'tickets') result.tickets = override.amount;
+        // else Niete (Bleibt beides 0)
+    } else {
+        // Echter Zufall
+        const r = getSecureRandom();
+        result = cfg.open(r);
+    }
+
+    // SPANNUNGS-SPLITTER FÜR DIE GEWINNE
     if(result.coins > 0){
-        // Gewinne in 3 Happen aufteilen
-        const p1 = Math.round(result.coins * 0.2);
-        const p2 = Math.round(result.coins * 0.4);
-        const p3 = result.coins - p1 - p2;
-        revealSteps = [{type: 'coin', val: p1}, {type: 'coin', val: p2}, {type: 'coin', val: p3}];
+        revealSteps = splitIntoRandomChunks(result.coins);
     } else if(result.tickets > 0){
-        // Tickets direkt auf einmal
         revealSteps = [{type: 'ticket', val: result.tickets}];
     } else {
-        // Niete
         revealSteps = [{type: 'niete', val: 0}];
     }
 
+    saveState(); // Ticket-Abzug und verbrauchtes ForcedLoot speichern
+    renderAll();
+
+    // UI Vorbereitung
     const backdrop = $('unboxingFullscreen');
     backdrop.className = 'unboxing-fullscreen-backdrop active shaking';
-    $('unboxingTitle').textContent = `${cfg.name.toUpperCase()} WIRD GEÖFFNET...`;
+    $('unboxingTitle').textContent = `BOX WIRD GEÖFFNET...`;
     $('revealDropBox').style.display = 'none';
     $('summaryBox').style.display = 'none';
 
+    // Box Farben setzen
     document.querySelectorAll('.box-face, .box-lid-face').forEach(el => {
       el.style.borderColor = cfg.themeColor;
+      el.style.boxShadow = `inset 0 0 25px ${cfg.themeColor}66, inset 0 0 50px rgba(0,0,0,0.8)`;
     });
 
+    // 4 Sekunden Spannungs-Vibrieren
     setTimeout(() => {
       backdrop.classList.remove('shaking');
       backdrop.classList.add('opened');
-      $('unboxingTitle').textContent = 'TAP TO REVEAL LOOT!';
+      $('unboxingTitle').textContent = 'KLICKE FÜR LOOT!';
 
       setTimeout(() => {
         showNextDropStep();
-      }, 800);
-    }, 2500);
+      }, 1200);
+    }, 4000);
   }
 
   function showNextDropStep(){
@@ -913,7 +948,7 @@
       let summaryText = "";
       if(accumulatedCoins > 0) summaryText = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
       else if(accumulatedTickets > 0) summaryText = `+${accumulatedTickets} Tickets Gesamtausbeute! 🎟️`;
-      else summaryText = "Leider kein Gewinn diesmal!";
+      else summaryText = "Leider kein Gewinn diesmal! 😭";
       
       $('summaryItemsList').textContent = summaryText;
       $('summaryBox').style.display = 'block';
@@ -935,7 +970,7 @@
     if($('revealDropBox').style.display === 'block'){
       currentStepIndex++;
       $('revealDropBox').style.display = 'none';
-      setTimeout(() => { showNextDropStep(); }, 200);
+      setTimeout(() => { showNextDropStep(); }, 150);
     }
   });
 
@@ -952,22 +987,16 @@
   function renderUserAchievementsList(){
     const list = $('userAchievementsList'); list.innerHTML = '';
     const completed = currentUser.completedAchievements || [];
-
     DAILY_ACHIEVEMENTS.forEach(ach => {
       const isDone = completed.includes(ach.id);
       const item = document.createElement('div');
       item.className = 'task-item' + (isDone ? ' completed' : '');
-      
-      item.innerHTML = `<div>${ach.title}</div>
-        <div>${isDone ? '<span style="color:var(--cyan); font-weight:bold; font-size:12px;">✓ Erledigt</span>' : `<button class="task-claim-btn">+${ach.reward} 🪙</button>`}</div>`;
-
+      item.innerHTML = `<div>${ach.title}</div><div>${isDone ? '<span style="color:var(--cyan); font-weight:bold; font-size:12px;">✓ Erledigt</span>' : `<button class="task-claim-btn">+${ach.reward} 🪙</button>`}</div>`;
       if(!isDone){
         item.querySelector('button').addEventListener('click', async () => {
           if(confirm(`Hast du "${ach.title}" geschafft?`)){
-            currentUser.coins += ach.reward;
-            currentUser.completedAchievements.push(ach.id);
+            currentUser.coins += ach.reward; currentUser.completedAchievements.push(ach.id);
             addLog(currentUser.name, `🏆 Erfolg: ${ach.title}`, ach.reward);
-            addTaskLog(currentUser.name, ach.title, 'Erfolg');
             await saveState(); renderAll(); alert(`🎉 Erfolg: +${ach.reward} Coins!`);
           }
         });
@@ -981,18 +1010,14 @@
     const list = $('themeShopList'); list.innerHTML = '';
     const unlocked = currentUser.unlockedThemes || ['default'];
     const current = currentUser.currentTheme || 'default';
-
     THEMES.forEach(t => {
       const isUnlocked = unlocked.includes(t.id);
       const isActive = current === t.id;
       const item = document.createElement('div');
       item.className = 'shop-item' + (isActive ? ' active-theme' : '');
-
       let btnHtml = isActive ? '<span style="color:var(--cyan); font-weight:bold; font-size:12px;">✓ Aktiv</span>' :
                     (isUnlocked ? `<button class="btn btn-secondary btn-sm">Aktivieren</button>` : `<button class="btn btn-primary btn-sm">Kaufen (${t.cost} 🪙)</button>`);
-
       item.innerHTML = `<div><b>${t.name}</b></div><div>${btnHtml}</div>`;
-
       if(!isActive){
         const btn = item.querySelector('button');
         if(btn){
@@ -1025,7 +1050,6 @@
       const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.name;
       uSelect.appendChild(opt);
     });
-
     const tSelect = $('giftThemeSelect'); tSelect.innerHTML = '';
     THEMES.forEach(t => {
       const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.name;
@@ -1034,56 +1058,80 @@
   }
 
   $('giftTypeSelect').addEventListener('change', (e) => {
-    if(e.target.value === 'theme'){
-      $('giftAmountGroup').style.display = 'none'; $('giftThemeGroup').style.display = 'block';
-    } else {
-      $('giftAmountGroup').style.display = 'block'; $('giftThemeGroup').style.display = 'none';
-    }
+    if(e.target.value === 'theme'){ $('giftAmountGroup').style.display = 'none'; $('giftThemeGroup').style.display = 'block'; } 
+    else { $('giftAmountGroup').style.display = 'block'; $('giftThemeGroup').style.display = 'none'; }
   });
 
   $('executeGiftBtn').addEventListener('click', async () => {
-    const targetId = $('giftTargetUserSelect').value;
-    const targetUser = state.users.find(u => u.id === targetId);
+    const targetId = $('giftTargetUserSelect').value; const targetUser = state.users.find(u => u.id === targetId);
     if(!targetUser) return;
-
     const giftType = $('giftTypeSelect').value;
     if(giftType === 'coins'){
-      const amount = parseInt($('giftAmountInput').value, 10) || 0;
-      targetUser.coins += amount;
-      addLog(targetUser.name, `🎁 Admin-Geschenk Coins`, amount);
-      alert(`${amount} Coins an ${targetUser.name} geschenkt!`);
+      const amount = parseInt($('giftAmountInput').value, 10) || 0; targetUser.coins += amount;
+      addLog(targetUser.name, `🎁 Admin-Geschenk Coins`, amount); alert(`${amount} Coins an ${targetUser.name} geschenkt!`);
     } else if(giftType === 'tickets'){
-      const amount = parseInt($('giftAmountInput').value, 10) || 0;
-      targetUser.tickets = (targetUser.tickets || 0) + amount;
-      addLog(targetUser.name, `🎁 Admin-Geschenk Tickets`, amount, '🎟️');
-      alert(`${amount} Ticket(s) an ${targetUser.name} geschenkt!`);
+      const amount = parseInt($('giftAmountInput').value, 10) || 0; targetUser.tickets = (targetUser.tickets || 0) + amount;
+      addLog(targetUser.name, `🎁 Admin-Geschenk Tickets`, amount, '🎟️'); alert(`${amount} Ticket(s) an ${targetUser.name} geschenkt!`);
     } else {
-      const themeId = $('giftThemeSelect').value;
-      const themeObj = THEMES.find(t => t.id === themeId);
+      const themeId = $('giftThemeSelect').value; const themeObj = THEMES.find(t => t.id === themeId);
       if(!targetUser.unlockedThemes) targetUser.unlockedThemes = ['default'];
       if(!targetUser.unlockedThemes.includes(themeId)){
-        targetUser.unlockedThemes.push(themeId);
-        addLog(targetUser.name, `🎁 Admin-Geschenk Theme: ${themeObj.name}`, 0);
-        alert(`Theme "${themeObj.name}" an ${targetUser.name} geschenkt!`);
+        targetUser.unlockedThemes.push(themeId); addLog(targetUser.name, `🎁 Admin-Geschenk Theme: ${themeObj.name}`, 0);
+        alert(`Theme "${themeObj.name}" geschenkt!`);
       } else alert(`${targetUser.name} besitzt dieses Theme bereits.`);
     }
     await saveState(); renderAll();
   });
 
+  // ADMIN GLÜCK TAB (MANIPULATION)
+  function renderLuckTab(){
+    const uSelect = $('luckTargetUserSelect'); uSelect.innerHTML = '';
+    state.users.filter(u => u.approved).forEach(u => {
+      const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.name;
+      uSelect.appendChild(opt);
+    });
+
+    const display = $('activeLuckDisplay'); display.innerHTML = '';
+    const forcedUsers = state.users.filter(u => u.forcedLoot);
+    if(forcedUsers.length > 0){
+      display.innerHTML = '<b>Aktivierte Garantie-Gewinne:</b><br>';
+      forcedUsers.forEach(u => {
+        const f = u.forcedLoot;
+        let text = f.type === 'niete' ? '❌ Niete' : `+${f.amount} ${f.type === 'coins' ? '🪙' : '🎟️'}`;
+        display.innerHTML += `• ${escapeHtml(u.name)}: ${text}<br>`;
+      });
+    } else {
+      display.innerHTML = '<span style="color:var(--cream-dim);">Aktuell gibt es keine manipulierten Boxen. Alles ist echter Zufall.</span>';
+    }
+  }
+
+  $('luckTypeSelect').addEventListener('change', (e) => {
+    if(e.target.value === 'niete') $('luckAmountGroup').style.display = 'none';
+    else $('luckAmountGroup').style.display = 'block';
+  });
+
+  $('saveLuckBtn').addEventListener('click', async () => {
+    const targetId = $('luckTargetUserSelect').value;
+    const targetUser = state.users.find(u => u.id === targetId);
+    if(!targetUser) return;
+
+    const type = $('luckTypeSelect').value;
+    const amount = parseInt($('luckAmountInput').value, 10) || 0;
+
+    targetUser.forcedLoot = { type: type, amount: amount };
+    await saveState(); renderAll();
+    alert(`Gespeichert! Wenn ${targetUser.name} die nächste Box öffnet, kommt genau das raus.`);
+  });
+
   function renderLogs(){
     const tbody = $('transactionLogBody'); tbody.innerHTML = '';
-    if(!state.logs || !state.logs.length){
-      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--cream-dim); text-align:center;">Keine Log-Einträge vorhanden.</td></tr>';
-      return;
-    }
+    if(!state.logs || !state.logs.length){ tbody.innerHTML = '<tr><td colspan="4" style="color:var(--cream-dim); text-align:center;">Keine Log-Einträge vorhanden.</td></tr>'; return; }
     state.logs.forEach(l => {
       const tr = document.createElement('tr');
       const dateStr = new Date(l.timestamp).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
       const coinClass = l.amount > 0 ? 'log-plus' : (l.amount < 0 ? 'log-minus' : '');
       const coinSign = l.amount > 0 ? '+' : '';
-      const unit = l.unit || '🪙';
-
-      tr.innerHTML = `<td>${dateStr}</td><td><b>${escapeHtml(l.userName)}</b></td><td>${escapeHtml(l.typeReason)}</td><td class="${coinClass}">${coinSign}${l.amount} ${unit}</td>`;
+      tr.innerHTML = `<td>${dateStr}</td><td><b>${escapeHtml(l.userName)}</b></td><td>${escapeHtml(l.typeReason)}</td><td class="${coinClass}">${coinSign}${l.amount} ${l.unit||'🪙'}</td>`;
       tbody.appendChild(tr);
     });
   }
@@ -1091,7 +1139,6 @@
   function renderAdminAccounts(){
     const pendingList = $('adminPendingAccountsList'); pendingList.innerHTML = '';
     const activeList = $('adminActiveAccountsList'); activeList.innerHTML = '';
-    
     state.users.filter(u => !u.approved).forEach(u => {
       const row = document.createElement('div'); row.className = 'games-list-item';
       row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b></span><button class="btn btn-secondary btn-sm" style="color:var(--cyan)">✓</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
@@ -1099,7 +1146,6 @@
       row.children[2].addEventListener('click', async () => { state.users = state.users.filter(x => x.id !== u.id); await saveState(); renderAll(); });
       pendingList.appendChild(row);
     });
-
     state.users.filter(u => u.approved).forEach(u => {
       const row = document.createElement('div'); row.className = 'games-list-item'; row.style.cursor = 'pointer';
       const lockBadge = u.isLocked ? ' 🔒' : '';
@@ -1114,14 +1160,12 @@
     $('accountEditPlaceholder').style.display = 'none'; $('accountEditForm').style.display = 'block';
     $('editAccName').value = u.name; $('editAccCoins').value = u.coins; $('editAccTickets').value = u.tickets || 0; $('editAccMsg').value = u.message || ''; $('editAccLockReason').value = u.lockReason || '';
     $('permLocked').checked = !!u.isLocked; $('permAdmin').checked = !!u.isAdmin; $('permUnlimited').checked = !!u.unlimitedCoins;
-    $('permGames').checked = !!u.canAddGames; $('permTasks').checked = !!u.canAddTasks;
   }
 
   $('saveAccChangesBtn').addEventListener('click', async () => {
     if(!selectedUserForEdit) return;
     const diffCoins = (parseInt($('editAccCoins').value, 10) || 0) - selectedUserForEdit.coins;
     if(diffCoins !== 0) addLog(selectedUserForEdit.name, '⚙️ Admin Anpassung Coins', diffCoins);
-
     selectedUserForEdit.name = $('editAccName').value.trim() || selectedUserForEdit.name;
     selectedUserForEdit.coins = parseInt($('editAccCoins').value, 10) || 0;
     selectedUserForEdit.tickets = parseInt($('editAccTickets').value, 10) || 0;
@@ -1130,9 +1174,6 @@
     selectedUserForEdit.lockReason = $('editAccLockReason').value.trim();
     selectedUserForEdit.isAdmin = $('permAdmin').checked;
     selectedUserForEdit.unlimitedCoins = $('permUnlimited').checked;
-    selectedUserForEdit.canAddGames = $('permGames').checked;
-    selectedUserForEdit.canAddTasks = $('permTasks').checked;
-
     await saveState(); renderAll(); alert('Gespeichert!');
   });
 
@@ -1180,11 +1221,8 @@
       item.innerHTML = `<div class="task-name">📝 ${escapeHtml(t.name)}</div><button class="task-claim-btn">+${t.reward} 🪙</button>`;
       item.querySelector('.task-claim-btn').addEventListener('click', async () => {
         if(confirm(`"${t.name}" erledigt?`)){
-          currentUser.coins += t.reward;
-          addLog(currentUser.name, `📝 Aufgabe: ${t.name}`, t.reward);
-          addTaskLog(currentUser.name, t.name, 'Aufgabe');
-          state.tasks = state.tasks.filter(x => x.id !== t.id);
-          await saveState(); renderAll(); alert(`🎉 +${t.reward} Coins!`);
+          currentUser.coins += t.reward; addLog(currentUser.name, `📝 Aufgabe: ${t.name}`, t.reward);
+          state.tasks = state.tasks.filter(x => x.id !== t.id); await saveState(); renderAll(); alert(`🎉 +${t.reward} Coins!`);
         }
       });
       list.appendChild(item);
@@ -1204,36 +1242,18 @@
   function renderAnalytics(){
     const now = Date.now(), oneDay = 24*60*60*1000, sevenDays = 7*oneDay;
     let totalMin = 0, todayMin = 0, weekMin = 0;
-
     (state.history || []).forEach(h => {
-      const age = now - h.timestamp;
-      totalMin += h.minutes;
+      const age = now - h.timestamp; totalMin += h.minutes;
       if (age <= oneDay) todayMin += h.minutes;
       if (age <= sevenDays) weekMin += h.minutes;
     });
-
     $('statToday').textContent = todayMin.toFixed(1) + ' Min';
     $('statWeek').textContent = weekMin.toFixed(1) + ' Min';
     $('statTotal').textContent = totalMin.toFixed(1) + ' Min';
-
-    const taskLogContainer = $('adminTaskLogList'); taskLogContainer.innerHTML = '';
-    if(!state.taskLogs || !state.taskLogs.length){
-      taskLogContainer.innerHTML = '<div style="color:var(--cream-dim); font-size:13px;">Bisher wurden noch keine Aufgaben/Erfolge erledigt.</div>';
-    } else {
-      state.taskLogs.forEach(tl => {
-        const dateStr = new Date(tl.timestamp).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-        const item = document.createElement('div'); item.className = 'games-list-item';
-        item.innerHTML = `<span class="glabel"><b>${escapeHtml(tl.userName)}</b>: ${escapeHtml(tl.taskName)} <small style="color:var(--cyan)">[${tl.type}]</small><br><small style="color:var(--cream-dim);">${dateStr}</small></span>`;
-        taskLogContainer.appendChild(item);
-      });
-    }
   }
 
   $('resetAnalyticsBtn').addEventListener('click', async () => {
-    if(confirm('Analytics-Verlauf zurücksetzen?')){
-      state.history = []; state.taskLogs = [];
-      await saveState(); renderAll(); alert('Analytics zurückgesetzt!');
-    }
+    if(confirm('Analytics-Verlauf zurücksetzen?')){ state.history = []; await saveState(); renderAll(); alert('Analytics zurückgesetzt!'); }
   });
 
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
@@ -1267,26 +1287,15 @@
     const costCoins = Math.max(3, Math.ceil(playedMinutes) * 3);
 
     if(!currentUser.unlimitedCoins) {
-      currentUser.coins -= costCoins;
-      addLog(currentUser.name, `🎮 Spielzeit: ${selectedGame.name}`, -costCoins);
-      if(currentUser.coins < 0) {
-        currentUser.isLocked = true;
-        currentUser.lockReason = `Guthaben aufgebraucht (${currentUser.coins} Coins).`;
-      }
+      currentUser.coins -= costCoins; addLog(currentUser.name, `🎮 Spielzeit: ${selectedGame.name}`, -costCoins);
+      if(currentUser.coins < 0) { currentUser.isLocked = true; currentUser.lockReason = `Guthaben aufgebraucht.`; }
     }
-
     if(!state.history) state.history = [];
     state.history.push({ userName: currentUser.name, gameName: selectedGame.name, minutes: playedMinutes, timestamp: Date.now() });
 
     await saveState(); renderAll();
-
-    if(currentUser.isLocked) {
-      $('lockedReasonText').textContent = currentUser.lockReason;
-      showScreen('screen-locked');
-    } else {
-      alert(`Spielzeit beendet! Abgezogen: ${currentUser.unlimitedCoins ? 0 : costCoins} 🪙`);
-      showScreen('screen-home');
-    }
+    if(currentUser.isLocked) { $('lockedReasonText').textContent = currentUser.lockReason; showScreen('screen-locked'); } 
+    else { alert(`Spielzeit beendet! Abgezogen: ${currentUser.unlimitedCoins ? 0 : costCoins} 🪙`); showScreen('screen-home'); }
   });
 
   $('openAdminDashboardBtn').addEventListener('click', () => { renderAll(); $('adminPanelBackdrop').classList.add('active'); });
