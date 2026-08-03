@@ -38,6 +38,11 @@
     --gold:#ff7e5f; --gold-dim:#994b39; --magenta:#feb47b; --cyan:#ff7e5f;
     --cream:#fff5f0; --cream-dim:#d6a393;
   }
+  body.theme-cosmic {
+    --bg-deep:#090014; --bg-panel:#19002e; --bg-panel-2:#240046;
+    --gold:#e0aaff; --gold-dim:#7b2cbf; --magenta:#c77dff; --cyan:#9d4edd;
+    --cream:#f72585; --cream-dim:#b5179e;
+  }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%; margin:0;}
@@ -103,9 +108,7 @@
   .task-claim-btn { background:var(--gold-dim); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; }
 
   /* BRAWL STARS STYLE EPIC VOLLBILD SHOP */
-  .epic-shop-fullscreen {
-    display:none; position:fixed; inset:0; z-index:90; background:#0c081e; flex-direction:row; overflow:hidden;
-  }
+  .epic-shop-fullscreen { display:none; position:fixed; inset:0; z-index:90; background:#0c081e; flex-direction:row; overflow:hidden; }
   .epic-shop-fullscreen.active { display:flex; }
   .shop-main-content { flex:1; display:flex; flex-direction:column; padding:20px; overflow-y:auto; }
   .shop-header-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#160f2b; padding:12px 20px; border-radius:16px; border:2px solid #3d2f66; }
@@ -131,10 +134,9 @@
   .brawl-card .buy-btn { width:100%; border:none; border-radius:12px; padding:12px; background:linear-gradient(135deg, #00f2fe, #4facfe); color:black; font-weight:bold; font-family:var(--font-display); font-size:11px; cursor:pointer; text-align:center; }
   .brawl-card .buy-btn.vip-buy { background:linear-gradient(135deg, var(--gold), #ffae00); }
 
-  /* BOOST ACTIVE INDICATOR */
   .boost-active-badge { background:rgba(63,224,208,0.2); border:1px solid var(--cyan); border-radius:10px; padding:8px 12px; color:var(--cyan); font-size:12px; font-weight:bold; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
 
-  /* 3D UNBOXING STYLES */
+  /* 3D UNBOXING STYLES & ANIMATIONS */
   .unboxing-fullscreen-backdrop { display:none; position:fixed; inset:0; z-index:100; background:radial-gradient(circle at center, #11151f 0%, #06080d 100%); flex-direction:column; align-items:center; justify-content:center; overflow:hidden; }
   .unboxing-fullscreen-backdrop.active { display:flex; }
   .unboxing-title { font-family:var(--font-display); font-size:16px; color:var(--gold); margin-bottom:50px; text-shadow:0 0 10px var(--gold); z-index:10; }
@@ -157,9 +159,17 @@
   .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; animation: pulseLight 2s infinite alternate; }
   @keyframes pulseLight { 0%{opacity:0.8;} 100%{opacity:1;} }
 
+  /* EFFEKTE FÜR KAUFBARE ANIMATIONEN BEIM UNBOXING */
+  .anim-fx-anim_neon .box-face { border-color:#00f2fe; box-shadow:0 0 25px #00f2fe; }
+  .anim-fx-anim_fire .light-beam { background:linear-gradient(0deg, #ff0000 0%, #ff7700 60%, transparent 100%); }
+  .anim-fx-anim_matrix .box-face { border-color:#00ff41; background:#051405; }
+  .anim-fx-anim_matrix .light-beam { background:linear-gradient(0deg, #00ff41 0%, rgba(0,255,65,0.4) 60%, transparent 100%); }
+  .anim-fx-anim_hyper .light-beam { background:linear-gradient(0deg, #ff0000, #ff7700, #00ff41, #00f2fe, #d63bff); animation:rainbowBeam 0.5s linear infinite; }
+  @keyframes rainbowBeam { 0%{filter:hue-rotate(0deg);} 100%{filter:hue-rotate(360deg);} }
+
   .reveal-drop-box { text-align:center; display:none; animation: popUpDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:20; position:relative; }
   @keyframes popUpDrop { from{opacity:0; transform:scale(0.3) translateY(40px);} to{opacity:1; transform:scale(1) translateY(0);} }
-  .reveal-item-text { font-family:var(--font-display); font-size:24px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 20px var(--gold); }
+  .reveal-item-text { font-family:var(--font-display); font-size:20px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 20px var(--gold); }
   .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; font-weight:bold; }
   @keyframes blinkPrompt { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
   .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:30px; max-width:340px; width:100%; z-index:20; position:relative; }
@@ -233,7 +243,6 @@
       </div>
     </div>
 
-    <!-- BOOSTER TIMER HOMESCREEN ANZEIGE -->
     <div id="activeBoostsHomeBox" style="display:none; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
 
     <button class="btn btn-primary" id="playBtn">▶ Spielen</button>
@@ -269,7 +278,7 @@
       <h2 class="step-title">🎮 SPIELZEIT LÄUFT</h2>
       <div style="color:var(--cream-dim); font-size:13px; margin-bottom:10px;" id="activeGameTitle">Spiel Name</div>
       <div class="timer-display" id="sessionStopwatchDisplay">00:00</div>
-      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <b id="currentCalculatedCost">3</b> 🪙</div>
+      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <span id="currentCalculatedCost">3 🪙</span></div>
       <button class="btn btn-secondary" id="reopenGameBtn">🔗 Spiel-Fenster öffnen</button>
       <button class="btn btn-primary row-gap" id="stopAndBillBtn">✓ Beenden & Abrechnen</button>
     </div>
@@ -285,9 +294,7 @@
   </div>
 </div>
 
-<!-- ==========================================
-     EPISCHER VOLLBILD BRAWL STARS SHOP
-========================================== -->
+<!-- VOLLBILD BRAWL STARS SHOP -->
 <div class="epic-shop-fullscreen" id="epicShopFullscreen">
   <div class="shop-main-content">
     <div class="shop-header-bar">
@@ -309,15 +316,18 @@
           <div class="card-icon">👑</div>
           <div class="card-title">VIP-Pass (7 Tage)</div>
           <div class="card-desc">Schaltet exklusive VIP-Items & Kisten frei!</div>
-          <button class="buy-btn vip-buy" id="buyVipBtn">200 🪙 Kaufen</button>
+          <button class="buy-btn vip-buy" id="buyVipBtn"></button>
         </div>
         <div class="brawl-card">
           <div class="card-icon">🎟️</div>
           <div class="card-title">1 Arcade Ticket</div>
           <div class="card-desc">Zum Öffnen von Kisten im Store.</div>
-          <button class="buy-btn" id="buyTicketBrawlBtn">70 🪙 Kaufen</button>
+          <button class="buy-btn" id="buyTicketBrawlBtn"></button>
         </div>
       </div>
+
+      <div class="brawl-section-title" style="margin-top:20px;">🎨 FARBIGE DESIGN-THEMEN (7 STÜCK)</div>
+      <div class="brawl-row-scroll" id="shopThemesList"></div>
 
       <div class="brawl-section-title" style="margin-top:20px;">🎬 EXKLUSIVE ANIMATIONEN</div>
       <div class="brawl-row-scroll" id="shopAnimList"></div>
@@ -340,19 +350,19 @@
           <div class="card-icon">⚡</div>
           <div class="card-title">1,25x Multiplikator</div>
           <div class="card-desc">Gilt 12 Std. lang auf alle Coin-Belohnungen.</div>
-          <button class="buy-btn" id="buyBoostMulti">80 🪙 (12 Std.)</button>
+          <button class="buy-btn" id="buyBoostMulti"></button>
         </div>
         <div class="brawl-card">
           <div class="card-icon">🛡️</div>
           <div class="card-title">Pechschutz</div>
           <div class="card-desc">Keine Nieten beim Kistenöffnen für 10 Min!</div>
-          <button class="buy-btn" id="buyBoostNoDud">50 🪙 (10 Min)</button>
+          <button class="buy-btn" id="buyBoostNoDud"></button>
         </div>
         <div class="brawl-card">
           <div class="card-icon">🏷️</div>
           <div class="card-title">Rabatt-Pass (15%)</div>
           <div class="card-desc">15% Rabatt auf Spielzeit-Kosten für 20 Min!</div>
-          <button class="buy-btn" id="buyBoostDiscount">60 🪙 (20 Min)</button>
+          <button class="buy-btn" id="buyBoostDiscount"></button>
         </div>
       </div>
     </div>
@@ -391,11 +401,11 @@
 
     <!-- SUBKATEGORIE: ACCOUNTS / SOCIAL -->
     <div class="brawl-section" id="brawl-sub-accounts">
-      <div class="brawl-section-title">📢 GLOBALE NRICHT KAUFEN</div>
+      <div class="brawl-section-title">📢 GLOBALE NACHRICHT KAUFEN</div>
       <div style="background:#1c1536; padding:16px; border-radius:14px; border:2px solid #3d2f66; max-width:500px; margin-bottom:20px;">
-        <p style="font-size:12px; color:var(--cream-dim);">Kauf eine globale Nachricht im Header für alle Spieler für <b>20 Coins</b>!</p>
+        <p style="font-size:12px; color:var(--cream-dim);">Kauf eine globale Nachricht im Header für alle Spieler!</p>
         <div class="field"><input type="text" id="buyAnnounceText" placeholder="Deine Nachricht an alle..."></div>
-        <button class="btn btn-primary btn-sm" id="buyAnnounceBtn">📢 Senden (20 🪙)</button>
+        <button class="btn btn-primary btn-sm" id="buyAnnounceBtn"></button>
       </div>
 
       <div class="brawl-section-title">🎁 ITEMS & COINS AN FREUNDE VERSCHICKEN</div>
@@ -414,7 +424,6 @@
     </div>
   </div>
 
-  <!-- RECHTE SEITENLEISTE (BRAWL STARS UNTERKATEGORIEN) -->
   <div class="shop-sidebar-right">
     <div class="shop-sidebar-btn active" data-brawltab="brawl-sub-store">🛒 STORE</div>
     <div class="shop-sidebar-btn" data-brawltab="brawl-sub-boosts">⚡ BOOSTS</div>
@@ -521,6 +530,18 @@
               <label class="perm-item"><input type="checkbox" id="permAdmin"> 👑 Admin</label>
               <label class="perm-item"><input type="checkbox" id="permUnlimited"> ♾️ Unendliche Coins</label>
             </div>
+
+            <!-- EFFEKTE & STATUS ENTFERNEN (ADMIN NEU) -->
+            <div class="perm-box" style="border:1px solid var(--danger);">
+              <label style="color:var(--danger); font-weight:bold; font-size:12px;">🚫 Ausrüstung & Status zurücksetzen</label>
+              <button class="btn btn-danger btn-sm" id="resetVipBtn">VIP entfernen</button>
+              <button class="btn btn-ghost btn-sm" id="resetThemeBtn">Theme zurücksetzen</button>
+              <button class="btn btn-ghost btn-sm" id="resetNameColorBtn">Namensfarben zurücksetzen</button>
+              <button class="btn btn-ghost btn-sm" id="resetAnimBtn">Animationen zurücksetzen</button>
+              <button class="btn btn-ghost btn-sm" id="resetBadgeBtn">Badges zurücksetzen</button>
+              <button class="btn btn-ghost btn-sm" id="clearBoostsBtn">Aktive Boosts löschen</button>
+            </div>
+
             <button class="btn btn-secondary row-gap" id="saveAccChangesBtn">Speichern</button>
             <button class="btn btn-danger row-gap" id="deleteAccBtn">Account löschen</button>
           </div>
@@ -549,7 +570,7 @@
       <div id="activeLuckDisplay" style="margin-top:20px; font-size:14px; color:var(--cyan);"></div>
     </div>
 
-    <!-- TAB: SCHENKEN (ALLES VERSCHENKEN) -->
+    <!-- TAB: SCHENKEN -->
     <div class="admin-tab-content" id="tab-gift">
       <div style="max-width:500px;">
         <h3>🎁 Sofortiges Geschenk (Admin Vollzugriff)</h3>
@@ -560,6 +581,7 @@
             <option value="coins">🪙 Coins Guthaben</option>
             <option value="tickets">🎟️ Tickets Guthaben</option>
             <option value="vip">👑 VIP Pass (7 Tage)</option>
+            <option value="theme">🎨 Design Theme</option>
             <option value="animation">🎬 Exklusive Animation</option>
             <option value="nameColor">🎨 Namensfarbe / Effekt</option>
             <option value="badge">🏆 Profil Badge</option>
@@ -659,7 +681,18 @@
     { id: 'ach_100coins', title: '👑 100 Coins erreicht', reward: 30 }
   ];
 
-  // ANIMATIONEN (7 STÜCK - 2 VIP EXKLUSIV)
+  // 7 THEMEN (2 VIP EXKLUSIV)
+  const THEMES = [
+    { id: 'default', name: '👾 Retro Arcade', cost: 0, icon: '👾', vip: false },
+    { id: 'theme-cyberpunk', name: '🏎️ Cyberpunk', cost: 100, icon: '🏎️', vip: false },
+    { id: 'theme-matrix', name: '💚 Matrix Green', cost: 100, icon: '💚', vip: false },
+    { id: 'theme-candy', name: '🍧 Pastell Candy', cost: 120, icon: '🍧', vip: false },
+    { id: 'theme-sunset', name: '☀️ Sunset Drive', cost: 120, icon: '☀️', vip: false },
+    { id: 'theme-gold', name: '👑 Royal Gold', cost: 180, icon: '👑', vip: true },
+    { id: 'theme-cosmic', name: '🌌 Cosmic Void', cost: 220, icon: '🌌', vip: true }
+  ];
+
+  // 7 ANIMATIONEN (2 VIP EXKLUSIV)
   const ANIMATIONS = [
     { id: 'anim_standard', name: 'Standard Light', cost: 50, icon: '✨', vip: false },
     { id: 'anim_neon', name: 'Neon Flash', cost: 70, icon: '⚡', vip: false },
@@ -670,7 +703,6 @@
     { id: 'anim_hyper', name: 'Rainbow Hyper', cost: 200, icon: '🌈', vip: true }
   ];
 
-  // NAMENSFARBEN & EFFEKTE (1 VIP EXKLUSIV)
   const NAME_COLORS = [
     { id: 'nc_cyan', name: 'Neon Cyan', cost: 60, color: '#00f2fe', vip: false },
     { id: 'nc_pink', name: 'Magenta Glow', cost: 90, color: '#ff4d8d', vip: false },
@@ -678,7 +710,6 @@
     { id: 'nc_gold', name: 'Royal Gold (VIP)', cost: 200, color: '#ffd700', vip: true }
   ];
 
-  // PROFIL BADGES (1 VIP EXKLUSIV)
   const BADGES = [
     { id: 'badge_speed', name: 'Speedster', cost: 50, icon: '⚡', vip: false },
     { id: 'badge_pro', name: 'Arcade Pro', cost: 100, icon: '🎮', vip: false },
@@ -704,7 +735,6 @@
     return chunks.sort(() => Math.random() - 0.5);
   }
 
-  // LOOTBOX CONFIGS (INKL. VIP BOX #4)
   const BOX_CONFIGS = {
     1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#00f0ff', vipOnly: false,
       open: (r, noDud) => {
@@ -759,12 +789,28 @@
   let state = { users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], logs: [], globalAnnouncement: '' };
   let currentUser = null, selectedUserForAuth = null, selectedUserForEdit = null, selectedGame = null;
   let currentUnboxingKey = 1, revealSteps = [], currentStepIndex = 0, accumulatedCoins = 0, accumulatedTickets = 0;
+  let unboxingBaseCoins = 0, unboxingBoostedCoins = 0;
   let stopwatchInterval = null, sessionSeconds = 0;
 
   const $ = id => document.getElementById(id);
 
   function isVip(user) { return user && user.vipUntil && user.vipUntil > Date.now(); }
   function isBoostActive(user, type) { return user && user.boosts && user.boosts[type] && user.boosts[type] > Date.now(); }
+
+  function getActualPrice(origPrice) {
+    if(isBoostActive(currentUser, 'discount')) {
+      return Math.max(1, Math.floor(origPrice * 0.85));
+    }
+    return origPrice;
+  }
+
+  function getPriceHtml(origPrice) {
+    if(isBoostActive(currentUser, 'discount')) {
+      const disc = Math.max(1, Math.floor(origPrice * 0.85));
+      return `<s style="opacity:0.6; font-size:10px;">${origPrice} 🪙</s><br><span style="color:var(--cyan); font-weight:bold;">${disc} 🪙 (-15%)</span>`;
+    }
+    return `${origPrice} 🪙`;
+  }
 
   function loadLocalBackup(){ try { const loc = localStorage.getItem('arcade_state_backup'); if(loc) return JSON.parse(loc); } catch(e){} return null; }
   function saveLocalBackup(){ try { localStorage.setItem('arcade_state_backup', JSON.stringify(state)); } catch(e){} }
@@ -829,7 +875,6 @@
 
       applyTheme(currentUser.currentTheme);
       
-      // USERNAME DISPLAY WITH COLOR & BADGE
       let nameHtml = escapeHtml(currentUser.name);
       if(currentUser.currentNameColor && currentUser.currentNameColor !== 'default'){
         const nc = NAME_COLORS.find(c => c.id === currentUser.currentNameColor);
@@ -951,13 +996,10 @@
     await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
   });
 
-  // ==========================================
-  // SHOP & STORE LOGIK
-  // ==========================================
+  // SHOP LOGIK
   $('openEpicShopBtn').addEventListener('click', () => { renderShopItems(); $('epicShopFullscreen').classList.add('active'); });
   $('closeEpicShopBtn').addEventListener('click', () => { $('epicShopFullscreen').classList.remove('active'); renderAll(); });
 
-  // RECHTE SEITENLEISTE NAV
   document.querySelectorAll('.shop-sidebar-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.shop-sidebar-btn').forEach(b => b.classList.remove('active'));
@@ -973,13 +1015,46 @@
     $('shopTicketsVal').textContent = currentUser.tickets;
     $('shopVipBadge').innerHTML = isVip(currentUser) ? '👑 <b style="color:var(--gold);">VIP</b>' : '';
 
+    $('buyVipBtn').innerHTML = `Kaufen (${getPriceHtml(200)})`;
+    $('buyTicketBrawlBtn').innerHTML = `Kaufen (${getPriceHtml(70)})`;
+    $('buyBoostMulti').innerHTML = `Aktivieren (${getPriceHtml(80)})`;
+    $('buyBoostNoDud').innerHTML = `Aktivieren (${getPriceHtml(50)})`;
+    $('buyBoostDiscount').innerHTML = `Aktivieren (${getPriceHtml(60)})`;
+    $('buyAnnounceBtn').innerHTML = `📢 Senden (${getPriceHtml(20)})`;
+
+    // THEMEN RENDER (7 STÜCK INKL 2 VIP)
+    const themeBox = $('shopThemesList'); themeBox.innerHTML = '';
+    THEMES.forEach(t => {
+      const isUnlocked = (currentUser.unlockedThemes || []).includes(t.id);
+      const isActive = currentUser.currentTheme === t.id;
+      const card = document.createElement('div'); card.className = 'brawl-card' + (t.vip ? ' vip-card' : '');
+      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : (t.cost === 0 ? 'Kostenlos' : `Kaufen (${getPriceHtml(t.cost)})`));
+      card.innerHTML = `${t.vip ? '<div class="vip-badge">VIP</div>' : ''}
+        <div class="card-icon">${t.icon}</div>
+        <div class="card-title">${t.name}</div>
+        <div class="card-desc">Farb-Design für die App</div>
+        <button class="buy-btn ${t.vip?'vip-buy':''}">${btnText}</button>`;
+      card.querySelector('button').addEventListener('click', async () => {
+        if(isActive) return;
+        if(isUnlocked || t.cost === 0){ currentUser.currentTheme = t.id; applyTheme(t.id); await saveState(); renderShopItems(); return; }
+        if(t.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
+        const finalPrice = getActualPrice(t.cost);
+        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
+        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
+        currentUser.unlockedThemes.push(t.id); currentUser.currentTheme = t.id; applyTheme(t.id);
+        addLog(currentUser.name, `🎨 Theme gekauft: ${t.name}`, -finalPrice);
+        await saveState(); renderShopItems(); alert(`🎉 Theme "${t.name}" freigeschaltet!`);
+      });
+      themeBox.appendChild(card);
+    });
+
     // ANIMATIONEN RENDER
     const animBox = $('shopAnimList'); animBox.innerHTML = '';
     ANIMATIONS.forEach(a => {
       const isUnlocked = (currentUser.unlockedAnims || []).includes(a.id);
       const isActive = currentUser.currentAnim === a.id;
       const card = document.createElement('div'); card.className = 'brawl-card' + (a.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `${a.cost} 🪙 Kaufen`);
+      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `Kaufen (${getPriceHtml(a.cost)})`);
       card.innerHTML = `${a.vip ? '<div class="vip-badge">VIP</div>' : ''}
         <div class="card-icon">${a.icon}</div>
         <div class="card-title">${a.name}</div>
@@ -989,10 +1064,11 @@
         if(isActive) return;
         if(isUnlocked){ currentUser.currentAnim = a.id; await saveState(); renderShopItems(); return; }
         if(a.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        if(!currentUser.unlimitedCoins && currentUser.coins < a.cost){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= a.cost;
+        const finalPrice = getActualPrice(a.cost);
+        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
+        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedAnims.push(a.id); currentUser.currentAnim = a.id;
-        addLog(currentUser.name, `🎬 Animation gekauft: ${a.name}`, -a.cost);
+        addLog(currentUser.name, `🎬 Animation gekauft: ${a.name}`, -finalPrice);
         await saveState(); renderShopItems(); alert(`🎉 Animation "${a.name}" freigeschaltet!`);
       });
       animBox.appendChild(card);
@@ -1004,7 +1080,7 @@
       const isUnlocked = (currentUser.unlockedNameColors || []).includes(c.id);
       const isActive = currentUser.currentNameColor === c.id;
       const card = document.createElement('div'); card.className = 'brawl-card' + (c.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `${c.cost} 🪙 Kaufen`);
+      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `Kaufen (${getPriceHtml(c.cost)})`);
       card.innerHTML = `${c.vip ? '<div class="vip-badge">VIP</div>' : ''}
         <div class="card-icon" style="color:${c.color}">🎨</div>
         <div class="card-title" style="color:${c.color}">${c.name}</div>
@@ -1014,10 +1090,11 @@
         if(isActive) return;
         if(isUnlocked){ currentUser.currentNameColor = c.id; await saveState(); renderShopItems(); return; }
         if(c.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        if(!currentUser.unlimitedCoins && currentUser.coins < c.cost){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= c.cost;
+        const finalPrice = getActualPrice(c.cost);
+        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
+        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedNameColors.push(c.id); currentUser.currentNameColor = c.id;
-        addLog(currentUser.name, `🎨 Namensfarbe gekauft: ${c.name}`, -c.cost);
+        addLog(currentUser.name, `🎨 Namensfarbe gekauft: ${c.name}`, -finalPrice);
         await saveState(); renderShopItems(); alert(`🎉 Namensfarbe "${c.name}" freigeschaltet!`);
       });
       colorBox.appendChild(card);
@@ -1029,7 +1106,7 @@
       const isUnlocked = (currentUser.unlockedBadges || []).includes(b.id);
       const isActive = currentUser.currentBadge === b.id;
       const card = document.createElement('div'); card.className = 'brawl-card' + (b.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `${b.cost} 🪙 Kaufen`);
+      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `Kaufen (${getPriceHtml(b.cost)})`);
       card.innerHTML = `${b.vip ? '<div class="vip-badge">VIP</div>' : ''}
         <div class="card-icon">${b.icon}</div>
         <div class="card-title">${b.name}</div>
@@ -1039,10 +1116,11 @@
         if(isActive) return;
         if(isUnlocked){ currentUser.currentBadge = b.id; await saveState(); renderShopItems(); return; }
         if(b.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        if(!currentUser.unlimitedCoins && currentUser.coins < b.cost){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= b.cost;
+        const finalPrice = getActualPrice(b.cost);
+        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
+        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedBadges.push(b.id); currentUser.currentBadge = b.id;
-        addLog(currentUser.name, `🏆 Badge gekauft: ${b.name}`, -b.cost);
+        addLog(currentUser.name, `🏆 Badge gekauft: ${b.name}`, -finalPrice);
         await saveState(); renderShopItems(); alert(`🎉 Badge "${b.name}" freigeschaltet!`);
       });
       badgeBox.appendChild(card);
@@ -1055,7 +1133,6 @@
     if(currentUser.boosts.noDud > now) bStatus.innerHTML += `<div class="boost-active-badge">🛡️ Pechschutz AKTIV (${Math.ceil((currentUser.boosts.noDud-now)/60000)} Min)</div>`;
     if(currentUser.boosts.discount > now) bStatus.innerHTML += `<div class="boost-active-badge">🏷️ Rabatt-Pass AKTIV (${Math.ceil((currentUser.boosts.discount-now)/60000)} Min)</div>`;
 
-    // USER DROPDOWN FÜR GIFTS IM ACCOUNTS TAB
     const sendSelect = $('sendGiftTargetUser'); sendSelect.innerHTML = '';
     state.users.filter(u => u.approved && u.id !== currentUser.id).forEach(u => {
       const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.name;
@@ -1063,56 +1140,60 @@
     });
   }
 
-  // KAUF-BUTTONS SHOP
+  // SHOP KÄUFE
   $('buyVipBtn').addEventListener('click', async () => {
-    if(!currentUser.unlimitedCoins && currentUser.coins < 200){ alert('Du brauchst 200 Coins!'); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 200;
+    const cost = getActualPrice(200);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.vipUntil = Date.now() + (7 * 24 * 60 * 60 * 1000);
-    addLog(currentUser.name, '👑 VIP-Pass gekauft (7 Tage)', -200);
+    addLog(currentUser.name, '👑 VIP-Pass gekauft (7 Tage)', -cost);
     await saveState(); renderShopItems(); alert('🎉 VIP-Pass für 7 Tage aktiviert!');
   });
 
   $('buyTicketBrawlBtn').addEventListener('click', async () => {
-    if(!currentUser.unlimitedCoins && currentUser.coins < 70){ alert('Du brauchst 70 Coins!'); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 70;
+    const cost = getActualPrice(70);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.tickets = (currentUser.tickets || 0) + 1;
-    addLog(currentUser.name, '🎟️ Ticket gekauft', -70);
+    addLog(currentUser.name, '🎟️ Ticket gekauft', -cost);
     await saveState(); renderShopItems(); alert('🎉 1 Ticket gekauft!');
   });
 
-  // BOOST KÄUFE
   $('buyBoostMulti').addEventListener('click', async () => {
-    if(!currentUser.unlimitedCoins && currentUser.coins < 80){ alert('Du brauchst 80 Coins!'); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 80;
+    const cost = getActualPrice(80);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.boosts.multi = Date.now() + (12 * 60 * 60 * 1000);
-    addLog(currentUser.name, '⚡ Boost 1,25x gekauft', -80);
+    addLog(currentUser.name, '⚡ Boost 1,25x gekauft', -cost);
     await saveState(); renderShopItems(); alert('⚡ 1,25x Multiplikator für 12 Std aktiviert!');
   });
 
   $('buyBoostNoDud').addEventListener('click', async () => {
-    if(!currentUser.unlimitedCoins && currentUser.coins < 50){ alert('Du brauchst 50 Coins!'); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 50;
+    const cost = getActualPrice(50);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.boosts.noDud = Date.now() + (10 * 60 * 1000);
-    addLog(currentUser.name, '🛡️ Pechschutz gekauft', -50);
+    addLog(currentUser.name, '🛡️ Pechschutz gekauft', -cost);
     await saveState(); renderShopItems(); alert('🛡️ Pechschutz für 10 Min aktiviert!');
   });
 
   $('buyBoostDiscount').addEventListener('click', async () => {
-    if(!currentUser.unlimitedCoins && currentUser.coins < 60){ alert('Du brauchst 60 Coins!'); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 60;
+    const cost = getActualPrice(60);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.boosts.discount = Date.now() + (20 * 60 * 1000);
-    addLog(currentUser.name, '🏷️ Rabatt-Pass gekauft', -60);
+    addLog(currentUser.name, '🏷️ Rabatt-Pass gekauft', -cost);
     await saveState(); renderShopItems(); alert('🏷️ 15% Rabatt-Pass für 20 Min aktiviert!');
   });
 
-  // ACCOUNTS TAB: NACHRICHT & GESCHENKE
   $('buyAnnounceBtn').addEventListener('click', async () => {
     const text = $('buyAnnounceText').value.trim();
     if(!text) return;
-    if(!currentUser.unlimitedCoins && currentUser.coins < 20){ alert('Du brauchst 20 Coins!'); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= 20;
+    const cost = getActualPrice(20);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     state.globalAnnouncement = `${currentUser.name}: ${text}`;
-    addLog(currentUser.name, '📢 Globale Nachricht gekauft', -20);
+    addLog(currentUser.name, '📢 Globale Nachricht gekauft', -cost);
     await saveState(); renderShopItems(); alert('📢 Nachricht veröffentlicht!'); $('buyAnnounceText').value = '';
   });
 
@@ -1138,19 +1219,11 @@
     await saveState(); renderShopItems(); alert(`🎁 Geschenk an ${targetUser.name} gesendet!`);
   });
 
-  // ==========================================
-  // UNBOXING LOGIK INKL. VIP KISTE & PECHSCHUTZ
-  // ==========================================
+  // UNBOXING LOGIK WITH ANIMATIONS FX & MULTIPLIER DISPLAY
   window.start3dUnboxing = function(key){
     const cfg = BOX_CONFIGS[key];
-    if(cfg.vipOnly && !isVip(currentUser)){
-      alert('Diese Kiste ist exklusiv für VIP-Mitglieder!');
-      return;
-    }
-    if(currentUser.tickets < cfg.costTickets){
-      alert(`Du brauchst ${cfg.costTickets} Ticket(s) für diese Box!`);
-      return;
-    }
+    if(cfg.vipOnly && !isVip(currentUser)){ alert('Diese Kiste ist exklusiv für VIP-Mitglieder!'); return; }
+    if(currentUser.tickets < cfg.costTickets){ alert(`Du brauchst ${cfg.costTickets} Ticket(s) für diese Box!`); return; }
 
     currentUser.tickets -= cfg.costTickets;
     addLog(currentUser.name, `📦 Lootbox: ${cfg.name}`, -cfg.costTickets, '🎟️');
@@ -1169,19 +1242,24 @@
         result = cfg.open(r, hasNoDud);
     }
 
-    // MULTIPLIKATOR BOOST PRÜFEN
+    unboxingBaseCoins = result.coins;
+    unboxingBoostedCoins = result.coins;
+
     if(result.coins > 0 && isBoostActive(currentUser, 'multi')){
-      result.coins = Math.round(result.coins * 1.25);
+      unboxingBoostedCoins = Math.round(result.coins * 1.25);
     }
 
-    if(result.coins > 0){ revealSteps = splitIntoRandomChunks(result.coins); }
+    if(unboxingBoostedCoins > 0){ revealSteps = splitIntoRandomChunks(unboxingBoostedCoins); }
     else if(result.tickets > 0){ revealSteps = [{type: 'ticket', val: result.tickets}]; }
     else { revealSteps = [{type: 'niete', val: 0}]; }
 
     saveState(); renderAll();
 
     const backdrop = $('unboxingFullscreen');
-    backdrop.className = 'unboxing-fullscreen-backdrop active shaking';
+    // ANIMATIONS EFFEKT ANWENDEN
+    const activeAnim = currentUser.currentAnim || 'anim_standard';
+    backdrop.className = `unboxing-fullscreen-backdrop active shaking anim-fx-${activeAnim}`;
+    
     $('unboxingTitle').textContent = `BOX WIRD GEÖFFNET...`;
     $('revealDropBox').style.display = 'none'; $('summaryBox').style.display = 'none';
 
@@ -1200,18 +1278,32 @@
   function showNextDropStep(){
     if(currentStepIndex < revealSteps.length){
       const step = revealSteps[currentStepIndex];
-      if(step.type === 'coin'){ accumulatedCoins += step.val; $('revealItemText').textContent = `+${step.val} Münzen 🪙`; }
+      if(step.type === 'coin'){ 
+        accumulatedCoins += step.val; 
+        if(isBoostActive(currentUser, 'multi') && unboxingBaseCoins > 0){
+          const origPart = Math.round(step.val / 1.25);
+          $('revealItemText').innerHTML = `<s style="opacity:0.5; font-size:16px;">+${origPart} 🪙</s><br><span style="color:var(--gold); font-size:24px;">+${step.val} Münzen (+25% Multi) 🪙</span>`;
+        } else {
+          $('revealItemText').textContent = `+${step.val} Münzen 🪙`; 
+        }
+      }
       else if(step.type === 'ticket'){ accumulatedTickets += step.val; $('revealItemText').textContent = `+${step.val} Tickets 🎟️`; }
       else { $('revealItemText').textContent = `Leider Niete! ❌`; }
       $('revealDropBox').style.display = 'block';
     } else {
       $('revealDropBox').style.display = 'none';
       let summaryText = "";
-      if(accumulatedCoins > 0) summaryText = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
+      if(accumulatedCoins > 0){
+        if(isBoostActive(currentUser, 'multi') && unboxingBaseCoins > 0){
+          summaryText = `<s style="opacity:0.5; font-size:16px;">+${unboxingBaseCoins} 🪙</s><br><span style="color:var(--gold); font-size:20px;">+${accumulatedCoins} Münzen (+25% Multiplikator)! 🪙</span>`;
+        } else {
+          summaryText = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
+        }
+      }
       else if(accumulatedTickets > 0) summaryText = `+${accumulatedTickets} Tickets Gesamtausbeute! 🎟️`;
       else summaryText = "Leider kein Gewinn diesmal! 😭";
       
-      $('summaryItemsList').textContent = summaryText; $('summaryBox').style.display = 'block';
+      $('summaryItemsList').innerHTML = summaryText; $('summaryBox').style.display = 'block';
 
       if(accumulatedCoins > 0){ currentUser.coins += accumulatedCoins; addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedCoins); }
       if(accumulatedTickets > 0){ currentUser.tickets += accumulatedTickets; addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedTickets, '🎟️'); }
@@ -1228,14 +1320,12 @@
   });
 
   $('finishUnboxingBtn').addEventListener('click', () => {
-    $('unboxingFullscreen').classList.remove('active', 'shaking', 'opened');
+    $('unboxingFullscreen').className = 'unboxing-fullscreen-backdrop';
     if($('epicShopFullscreen').classList.contains('active')) renderShopItems();
     else showScreen('screen-home');
   });
 
-  // ==========================================
-  // ADMIN TERMINAL SCHENKEN (ALLES VERSCHENKEN)
-  // ==========================================
+  // ADMIN TERMINAL SCHENKEN & ZURÜCKSETZEN
   function renderGiftSelects(){
     const uSelect = $('giftTargetUserSelect'); uSelect.innerHTML = '';
     state.users.filter(u => u.approved).forEach(u => {
@@ -1254,7 +1344,9 @@
       itemGroup.style.display = 'none'; amountGroup.style.display = val === 'vip' ? 'none' : 'block';
     } else {
       amountGroup.style.display = 'none'; itemGroup.style.display = 'block';
-      if(val === 'animation'){
+      if(val === 'theme'){
+        THEMES.forEach(t => { const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.name; itemSelect.appendChild(opt); });
+      } else if(val === 'animation'){
         ANIMATIONS.forEach(a => { const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name; itemSelect.appendChild(opt); });
       } else if(val === 'nameColor'){
         NAME_COLORS.forEach(c => { const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; itemSelect.appendChild(opt); });
@@ -1277,6 +1369,10 @@
       targetUser.tickets = (targetUser.tickets || 0) + amount; addLog(targetUser.name, `🎁 Admin-Geschenk Tickets`, amount, '🎟️'); alert(`${amount} Tickets an ${targetUser.name} geschenkt!`);
     } else if(giftType === 'vip'){
       targetUser.vipUntil = Date.now() + (7 * 24 * 60 * 60 * 1000); addLog(targetUser.name, `🎁 Admin-Geschenk VIP Pass (7 Tage)`, 0); alert(`VIP-Pass an ${targetUser.name} geschenkt!`);
+    } else if(giftType === 'theme'){
+      if(!targetUser.unlockedThemes) targetUser.unlockedThemes = ['default'];
+      if(!targetUser.unlockedThemes.includes(itemId)) targetUser.unlockedThemes.push(itemId);
+      addLog(targetUser.name, `🎁 Admin-Geschenk Theme`, 0); alert(`Theme an ${targetUser.name} geschenkt!`);
     } else if(giftType === 'animation'){
       if(!targetUser.unlockedAnims) targetUser.unlockedAnims = ['default'];
       if(!targetUser.unlockedAnims.includes(itemId)) targetUser.unlockedAnims.push(itemId);
@@ -1293,7 +1389,42 @@
     await saveState(); renderAll();
   });
 
-  // RESTLICHE SYSTEM-FUNKTIONEN (SPIELZEIT, LOGS, ACCOUNTS)
+  // ADMIN BUTTONS: ZURÜCKSETZEN
+  $('resetVipBtn').addEventListener('click', async () => {
+    if(!selectedUserForEdit) return;
+    selectedUserForEdit.vipUntil = 0;
+    await saveState(); renderAll(); alert(`VIP-Status von ${selectedUserForEdit.name} entfernt!`);
+  });
+  $('resetThemeBtn').addEventListener('click', async () => {
+    if(!selectedUserForEdit) return;
+    selectedUserForEdit.currentTheme = 'default';
+    selectedUserForEdit.unlockedThemes = ['default'];
+    await saveState(); renderAll(); alert(`Theme von ${selectedUserForEdit.name} zurückgesetzt!`);
+  });
+  $('resetNameColorBtn').addEventListener('click', async () => {
+    if(!selectedUserForEdit) return;
+    selectedUserForEdit.currentNameColor = 'default';
+    selectedUserForEdit.unlockedNameColors = ['default'];
+    await saveState(); renderAll(); alert(`Namensfarben von ${selectedUserForEdit.name} zurückgesetzt!`);
+  });
+  $('resetAnimBtn').addEventListener('click', async () => {
+    if(!selectedUserForEdit) return;
+    selectedUserForEdit.currentAnim = 'default';
+    selectedUserForEdit.unlockedAnims = ['default'];
+    await saveState(); renderAll(); alert(`Animationen von ${selectedUserForEdit.name} zurückgesetzt!`);
+  });
+  $('resetBadgeBtn').addEventListener('click', async () => {
+    if(!selectedUserForEdit) return;
+    selectedUserForEdit.currentBadge = 'none';
+    selectedUserForEdit.unlockedBadges = ['none'];
+    await saveState(); renderAll(); alert(`Badges von ${selectedUserForEdit.name} zurückgesetzt!`);
+  });
+  $('clearBoostsBtn').addEventListener('click', async () => {
+    if(!selectedUserForEdit) return;
+    selectedUserForEdit.boosts = { multi: 0, noDud: 0, discount: 0 };
+    await saveState(); renderAll(); alert(`Aktive Boosts von ${selectedUserForEdit.name} gelöscht!`);
+  });
+
   function renderUserAchievementsList(){
     const list = $('userAchievementsList'); list.innerHTML = '';
     const completed = currentUser.completedAchievements || [];
@@ -1495,9 +1626,17 @@
 
   function updateStopwatchUI(){
     $('sessionStopwatchDisplay').textContent = formatSeconds(sessionSeconds);
-    let cost = Math.max(3, Math.ceil(sessionSeconds / 60) * 3);
-    if(isBoostActive(currentUser, 'discount')) cost = Math.max(1, Math.floor(cost * 0.85));
-    $('currentCalculatedCost').textContent = currentUser.unlimitedCoins ? 0 : cost;
+    const baseCost = Math.max(3, Math.ceil(sessionSeconds / 60) * 3);
+    if(currentUser.unlimitedCoins) {
+      $('currentCalculatedCost').textContent = "0 🪙";
+      return;
+    }
+    if(isBoostActive(currentUser, 'discount')) {
+      const discCost = Math.max(1, Math.floor(baseCost * 0.85));
+      $('currentCalculatedCost').innerHTML = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">${discCost} 🪙 (-15%)</span>`;
+    } else {
+      $('currentCalculatedCost').textContent = `${baseCost} 🪙`;
+    }
   }
 
   $('reopenGameBtn').addEventListener('click', () => { if(selectedGame) window.open(selectedGame.url, '_blank'); });
@@ -1505,8 +1644,8 @@
   $('stopAndBillBtn').addEventListener('click', async () => {
     clearInterval(stopwatchInterval);
     const playedMinutes = sessionSeconds / 60;
-    let costCoins = Math.max(3, Math.ceil(playedMinutes) * 3);
-    if(isBoostActive(currentUser, 'discount')) costCoins = Math.max(1, Math.floor(costCoins * 0.85));
+    const baseCost = Math.max(3, Math.ceil(playedMinutes) * 3);
+    let costCoins = getActualPrice(baseCost);
 
     if(!currentUser.unlimitedCoins) {
       currentUser.coins -= costCoins; addLog(currentUser.name, `🎮 Spielzeit: ${selectedGame.name}`, -costCoins);
