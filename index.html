@@ -159,7 +159,6 @@
   .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; animation: pulseLight 2s infinite alternate; }
   @keyframes pulseLight { 0%{opacity:0.8;} 100%{opacity:1;} }
 
-  /* EFFEKTE FÜR KAUFBARE ANIMATIONEN BEIM UNBOXING */
   .anim-fx-anim_neon .box-face { border-color:#00f2fe; box-shadow:0 0 25px #00f2fe; }
   .anim-fx-anim_fire .light-beam { background:linear-gradient(0deg, #ff0000 0%, #ff7700 60%, transparent 100%); }
   .anim-fx-anim_matrix .box-face { border-color:#00ff41; background:#051405; }
@@ -339,30 +338,36 @@
       <div class="brawl-row-scroll" id="shopBadgesList"></div>
     </div>
 
-    <!-- SUBKATEGORIE: BOOSTS -->
+    <!-- SUBKATEGORIE: BOOSTS (INVENTAR + KAUFLADEN) -->
     <div class="brawl-section" id="brawl-sub-boosts">
-      <div class="brawl-section-title">⚡ AKTIVE BOOSTS & OPERATOREN</div>
+      <div class="brawl-section-title">⚡ INVENTAR & AKTIVE BOOSTS</div>
       <div id="boostsStatusContainer"></div>
       
-      <div class="brawl-section-title" style="margin-top:15px;">🛍️ BOOST SHOP</div>
+      <div class="brawl-section-title" style="margin-top:15px;">🛍️ BOOST STORE (KAUFEN FÜRS INVENTAR)</div>
       <div class="brawl-row-scroll">
         <div class="brawl-card">
           <div class="card-icon">⚡</div>
           <div class="card-title">1,25x Multiplikator</div>
-          <div class="card-desc">Gilt 12 Std. lang auf alle Coin-Belohnungen.</div>
+          <div class="card-desc">Kauf fürs Inventar (Gilt 12 Std)</div>
           <button class="buy-btn" id="buyBoostMulti"></button>
         </div>
         <div class="brawl-card">
           <div class="card-icon">🛡️</div>
           <div class="card-title">Pechschutz</div>
-          <div class="card-desc">Keine Nieten beim Kistenöffnen für 10 Min!</div>
+          <div class="card-desc">Kauf fürs Inventar (Gilt 10 Min)</div>
           <button class="buy-btn" id="buyBoostNoDud"></button>
         </div>
         <div class="brawl-card">
           <div class="card-icon">🏷️</div>
           <div class="card-title">Rabatt-Pass (15%)</div>
-          <div class="card-desc">15% Rabatt auf Spielzeit-Kosten für 20 Min!</div>
+          <div class="card-desc">Kauf fürs Inventar (Gilt 20 Min)</div>
           <button class="buy-btn" id="buyBoostDiscount"></button>
+        </div>
+        <div class="brawl-card">
+          <div class="card-icon">♾️</div>
+          <div class="card-title">Unendlich Spielen</div>
+          <div class="card-desc">Kauf fürs Inventar (Gilt 12 Std)</div>
+          <button class="buy-btn" id="buyBoostInfinite"></button>
         </div>
       </div>
     </div>
@@ -531,7 +536,6 @@
               <label class="perm-item"><input type="checkbox" id="permUnlimited"> ♾️ Unendliche Coins</label>
             </div>
 
-            <!-- EFFEKTE & STATUS ENTFERNEN (ADMIN NEU) -->
             <div class="perm-box" style="border:1px solid var(--danger);">
               <label style="color:var(--danger); font-weight:bold; font-size:12px;">🚫 Ausrüstung & Status zurücksetzen</label>
               <button class="btn btn-danger btn-sm" id="resetVipBtn">VIP entfernen</button>
@@ -659,10 +663,11 @@
       isAdmin: true, unlimitedCoins: true,
       coins: 100, tickets: 5, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '',
       unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
-      vipUntil: 0, currentAnim: 'default', unlockedAnims: ['default'],
+      vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'],
       currentNameColor: 'default', unlockedNameColors: ['default'],
       currentBadge: 'none', unlockedBadges: ['none'],
-      boosts: { multi: 0, noDud: 0, discount: 0 }
+      inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 },
+      boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
     }
   ];
 
@@ -681,7 +686,6 @@
     { id: 'ach_100coins', title: '👑 100 Coins erreicht', reward: 30 }
   ];
 
-  // 7 THEMEN (2 VIP EXKLUSIV)
   const THEMES = [
     { id: 'default', name: '👾 Retro Arcade', cost: 0, icon: '👾', vip: false },
     { id: 'theme-cyberpunk', name: '🏎️ Cyberpunk', cost: 100, icon: '🏎️', vip: false },
@@ -692,7 +696,6 @@
     { id: 'theme-cosmic', name: '🌌 Cosmic Void', cost: 220, icon: '🌌', vip: true }
   ];
 
-  // 7 ANIMATIONEN (2 VIP EXKLUSIV)
   const ANIMATIONS = [
     { id: 'anim_standard', name: 'Standard Light', cost: 50, icon: '✨', vip: false },
     { id: 'anim_neon', name: 'Neon Flash', cost: 70, icon: '⚡', vip: false },
@@ -815,17 +818,21 @@
   function loadLocalBackup(){ try { const loc = localStorage.getItem('arcade_state_backup'); if(loc) return JSON.parse(loc); } catch(e){} return null; }
   function saveLocalBackup(){ try { localStorage.setItem('arcade_state_backup', JSON.stringify(state)); } catch(e){} }
 
+  // REPARIERTER SERVER SYNC BEI LOAD & INTERVALL
   async function loadState(){
-    const localData = loadLocalBackup();
-    if(localData && localData.users && localData.users.length) state = localData;
-
     try {
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
       if(res.ok){
         const data = await res.json();
-        if(data.record && data.record.users && data.record.users.length >= state.users.length) state = Object.assign({}, state, data.record);
+        if(data.record && data.record.users) {
+          state = data.record;
+          saveLocalBackup();
+        }
       }
-    } catch(e) {}
+    } catch(e) {
+      const localData = loadLocalBackup();
+      if(localData && localData.users) state = localData;
+    }
 
     if(!state.users) state.users = DEFAULT_USERS;
     if(!state.games) state.games = DEFAULT_GAMES;
@@ -833,9 +840,12 @@
     if(!state.history) state.history = [];
     if(!state.logs) state.logs = [];
 
-    saveLocalBackup();
     renderAll();
   }
+
+  // AUTOMATISCHER HINTERGRUND SYNC SORGE DAFÜR DASS GERÄTE IMMER MATCHEN
+  setInterval(() => { loadState(); }, 10000);
+  window.addEventListener('focus', () => { loadState(); });
 
   async function saveState(){
     saveLocalBackup();
@@ -868,8 +878,9 @@
       if(!currentUser.unlockedThemes) currentUser.unlockedThemes = ['default'];
       if(!currentUser.currentTheme) currentUser.currentTheme = 'default';
       if(!currentUser.completedAchievements) currentUser.completedAchievements = [];
-      if(!currentUser.boosts) currentUser.boosts = { multi: 0, noDud: 0, discount: 0 };
-      if(!currentUser.unlockedAnims) currentUser.unlockedAnims = ['default'];
+      if(!currentUser.inventory) currentUser.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
+      if(!currentUser.boosts) currentUser.boosts = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
+      if(!currentUser.unlockedAnims) currentUser.unlockedAnims = ['anim_standard'];
       if(!currentUser.unlockedNameColors) currentUser.unlockedNameColors = ['default'];
       if(!currentUser.unlockedBadges) currentUser.unlockedBadges = ['none'];
 
@@ -929,18 +940,19 @@
     const now = Date.now();
     if(currentUser.boosts.multi > now){
       hasBoost = true;
-      const min = Math.ceil((currentUser.boosts.multi - now)/60000);
-      box.innerHTML += `<div class="boost-active-badge"><span>⚡ 1,25x Coin-Multiplikator</span><span>${min} Min</span></div>`;
+      box.innerHTML += `<div class="boost-active-badge"><span>⚡ 1,25x Coin-Multiplikator</span><span>${Math.ceil((currentUser.boosts.multi - now)/60000)} Min</span></div>`;
     }
     if(currentUser.boosts.noDud > now){
       hasBoost = true;
-      const min = Math.ceil((currentUser.boosts.noDud - now)/60000);
-      box.innerHTML += `<div class="boost-active-badge"><span>🛡️ Pechschutz (Keine Nieten)</span><span>${min} Min</span></div>`;
+      box.innerHTML += `<div class="boost-active-badge"><span>🛡️ Pechschutz (Keine Nieten)</span><span>${Math.ceil((currentUser.boosts.noDud - now)/60000)} Min</span></div>`;
     }
     if(currentUser.boosts.discount > now){
       hasBoost = true;
-      const min = Math.ceil((currentUser.boosts.discount - now)/60000);
-      box.innerHTML += `<div class="boost-active-badge"><span>🏷️ 15% Rabatt-Pass</span><span>${min} Min</span></div>`;
+      box.innerHTML += `<div class="boost-active-badge"><span>🏷️ 15% Rabatt-Pass</span><span>${Math.ceil((currentUser.boosts.discount - now)/60000)} Min</span></div>`;
+    }
+    if(currentUser.boosts.infinite > now){
+      hasBoost = true;
+      box.innerHTML += `<div class="boost-active-badge"><span>♾️ Unendlich Spielen Pass</span><span>${Math.ceil((currentUser.boosts.infinite - now)/60000)} Min</span></div>`;
     }
     box.style.display = hasBoost ? 'flex' : 'none';
   }
@@ -991,7 +1003,9 @@
     state.users.push({
       id: 'u_' + Date.now(), name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false,
       coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
-      vipUntil: 0, currentAnim: 'default', unlockedAnims: ['default'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'], boosts: { multi: 0, noDud: 0, discount: 0 }
+      vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
+      inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 },
+      boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
     });
     await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
   });
@@ -1017,9 +1031,10 @@
 
     $('buyVipBtn').innerHTML = `Kaufen (${getPriceHtml(200)})`;
     $('buyTicketBrawlBtn').innerHTML = `Kaufen (${getPriceHtml(70)})`;
-    $('buyBoostMulti').innerHTML = `Aktivieren (${getPriceHtml(80)})`;
-    $('buyBoostNoDud').innerHTML = `Aktivieren (${getPriceHtml(50)})`;
-    $('buyBoostDiscount').innerHTML = `Aktivieren (${getPriceHtml(60)})`;
+    $('buyBoostMulti').innerHTML = `Kaufen (${getPriceHtml(80)})`;
+    $('buyBoostNoDud').innerHTML = `Kaufen (${getPriceHtml(50)})`;
+    $('buyBoostDiscount').innerHTML = `Kaufen (${getPriceHtml(60)})`;
+    $('buyBoostInfinite').innerHTML = `Kaufen (${getPriceHtml(25)})`;
     $('buyAnnounceBtn').innerHTML = `📢 Senden (${getPriceHtml(20)})`;
 
     // THEMEN RENDER (7 STÜCK INKL 2 VIP)
@@ -1126,12 +1141,29 @@
       badgeBox.appendChild(card);
     });
 
-    // BOOSTS TAB STATUS
+    // BOOSTS TAB (INVENTAR + AKTIVATION)
     const bStatus = $('boostsStatusContainer'); bStatus.innerHTML = '';
     const now = Date.now();
-    if(currentUser.boosts.multi > now) bStatus.innerHTML += `<div class="boost-active-badge">⚡ 1,25x Multiplikator AKTIV (${Math.ceil((currentUser.boosts.multi-now)/60000)} Min)</div>`;
-    if(currentUser.boosts.noDud > now) bStatus.innerHTML += `<div class="boost-active-badge">🛡️ Pechschutz AKTIV (${Math.ceil((currentUser.boosts.noDud-now)/60000)} Min)</div>`;
-    if(currentUser.boosts.discount > now) bStatus.innerHTML += `<div class="boost-active-badge">🏷️ Rabatt-Pass AKTIV (${Math.ceil((currentUser.boosts.discount-now)/60000)} Min)</div>`;
+    const inv = currentUser.inventory || { multi: 0, noDud: 0, discount: 0, infinite: 0 };
+
+    bStatus.innerHTML += `<div style="background:#1c1536; padding:14px; border-radius:14px; border:2px solid #3d2f66; margin-bottom:15px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><b>⚡ 1,25x Multiplikator</b> (Lager: ${inv.multi||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.multi > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.multi-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
+        <button class="btn btn-secondary btn-sm" onclick="activateBoost('multi', 12*3600000)">Aktivieren</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3d2f66; padding-top:10px;">
+        <div><b>🛡️ Pechschutz</b> (Lager: ${inv.noDud||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.noDud > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.noDud-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
+        <button class="btn btn-secondary btn-sm" onclick="activateBoost('noDud', 600000)">Aktivieren</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3d2f66; padding-top:10px;">
+        <div><b>🏷️ 15% Rabatt-Pass</b> (Lager: ${inv.discount||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.discount > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.discount-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
+        <button class="btn btn-secondary btn-sm" onclick="activateBoost('discount', 1200000)">Aktivieren</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3d2f66; padding-top:10px;">
+        <div><b>♾️ Unendlich Spielen Pass</b> (Lager: ${inv.infinite||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.infinite > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.infinite-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
+        <button class="btn btn-secondary btn-sm" onclick="activateBoost('infinite', 12*3600000)">Aktivieren</button>
+      </div>
+    </div>`;
 
     const sendSelect = $('sendGiftTargetUser'); sendSelect.innerHTML = '';
     state.users.filter(u => u.approved && u.id !== currentUser.id).forEach(u => {
@@ -1140,7 +1172,21 @@
     });
   }
 
-  // SHOP KÄUFE
+  // BOOST ACTIVATION FUNCTION FROM INVENTORY
+  window.activateBoost = async function(type, durationMs) {
+    if(!currentUser.inventory) currentUser.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
+    if((currentUser.inventory[type] || 0) <= 0) {
+      alert('Du besitzt diesen Pass nicht im Inventar! Kaufe ihn zuerst im Store.');
+      return;
+    }
+    currentUser.inventory[type] -= 1;
+    currentUser.boosts[type] = Date.now() + durationMs;
+    await saveState();
+    renderAll();
+    alert('🎉 Pass erfolgreich aktiviert!');
+  };
+
+  // SHOP KÄUFE (LANDEN IM INVENTAR)
   $('buyVipBtn').addEventListener('click', async () => {
     const cost = getActualPrice(200);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
@@ -1163,27 +1209,36 @@
     const cost = getActualPrice(80);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.boosts.multi = Date.now() + (12 * 60 * 60 * 1000);
-    addLog(currentUser.name, '⚡ Boost 1,25x gekauft', -cost);
-    await saveState(); renderShopItems(); alert('⚡ 1,25x Multiplikator für 12 Std aktiviert!');
+    currentUser.inventory.multi = (currentUser.inventory.multi || 0) + 1;
+    addLog(currentUser.name, '⚡ Boost 1,25x gekauft (Inventar)', -cost);
+    await saveState(); renderShopItems(); alert('⚡ 1,25x Multiplikator im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
   $('buyBoostNoDud').addEventListener('click', async () => {
     const cost = getActualPrice(50);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.boosts.noDud = Date.now() + (10 * 60 * 1000);
-    addLog(currentUser.name, '🛡️ Pechschutz gekauft', -cost);
-    await saveState(); renderShopItems(); alert('🛡️ Pechschutz für 10 Min aktiviert!');
+    currentUser.inventory.noDud = (currentUser.inventory.noDud || 0) + 1;
+    addLog(currentUser.name, '🛡️ Pechschutz gekauft (Inventar)', -cost);
+    await saveState(); renderShopItems(); alert('🛡️ Pechschutz im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
   $('buyBoostDiscount').addEventListener('click', async () => {
     const cost = getActualPrice(60);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.boosts.discount = Date.now() + (20 * 60 * 1000);
-    addLog(currentUser.name, '🏷️ Rabatt-Pass gekauft', -cost);
-    await saveState(); renderShopItems(); alert('🏷️ 15% Rabatt-Pass für 20 Min aktiviert!');
+    currentUser.inventory.discount = (currentUser.inventory.discount || 0) + 1;
+    addLog(currentUser.name, '🏷️ Rabatt-Pass gekauft (Inventar)', -cost);
+    await saveState(); renderShopItems(); alert('🏷️ 15% Rabatt-Pass im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
+  });
+
+  $('buyBoostInfinite').addEventListener('click', async () => {
+    const cost = getActualPrice(25);
+    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
+    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
+    currentUser.inventory.infinite = (currentUser.inventory.infinite || 0) + 1;
+    addLog(currentUser.name, '♾️ Unendlich Spielen Pass gekauft (Inventar)', -cost);
+    await saveState(); renderShopItems(); alert('♾️ Unendlich Spielen Pass im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
   $('buyAnnounceBtn').addEventListener('click', async () => {
@@ -1219,7 +1274,7 @@
     await saveState(); renderShopItems(); alert(`🎁 Geschenk an ${targetUser.name} gesendet!`);
   });
 
-  // UNBOXING LOGIK WITH ANIMATIONS FX & MULTIPLIER DISPLAY
+  // UNBOXING LOGIK
   window.start3dUnboxing = function(key){
     const cfg = BOX_CONFIGS[key];
     if(cfg.vipOnly && !isVip(currentUser)){ alert('Diese Kiste ist exklusiv für VIP-Mitglieder!'); return; }
@@ -1256,7 +1311,6 @@
     saveState(); renderAll();
 
     const backdrop = $('unboxingFullscreen');
-    // ANIMATIONS EFFEKT ANWENDEN
     const activeAnim = currentUser.currentAnim || 'anim_standard';
     backdrop.className = `unboxing-fullscreen-backdrop active shaking anim-fx-${activeAnim}`;
     
@@ -1374,7 +1428,7 @@
       if(!targetUser.unlockedThemes.includes(itemId)) targetUser.unlockedThemes.push(itemId);
       addLog(targetUser.name, `🎁 Admin-Geschenk Theme`, 0); alert(`Theme an ${targetUser.name} geschenkt!`);
     } else if(giftType === 'animation'){
-      if(!targetUser.unlockedAnims) targetUser.unlockedAnims = ['default'];
+      if(!targetUser.unlockedAnims) targetUser.unlockedAnims = ['anim_standard'];
       if(!targetUser.unlockedAnims.includes(itemId)) targetUser.unlockedAnims.push(itemId);
       addLog(targetUser.name, `🎁 Admin-Geschenk Animation`, 0); alert(`Animation an ${targetUser.name} geschenkt!`);
     } else if(giftType === 'nameColor'){
@@ -1409,8 +1463,8 @@
   });
   $('resetAnimBtn').addEventListener('click', async () => {
     if(!selectedUserForEdit) return;
-    selectedUserForEdit.currentAnim = 'default';
-    selectedUserForEdit.unlockedAnims = ['default'];
+    selectedUserForEdit.currentAnim = 'anim_standard';
+    selectedUserForEdit.unlockedAnims = ['anim_standard'];
     await saveState(); renderAll(); alert(`Animationen von ${selectedUserForEdit.name} zurückgesetzt!`);
   });
   $('resetBadgeBtn').addEventListener('click', async () => {
@@ -1421,8 +1475,9 @@
   });
   $('clearBoostsBtn').addEventListener('click', async () => {
     if(!selectedUserForEdit) return;
-    selectedUserForEdit.boosts = { multi: 0, noDud: 0, discount: 0 };
-    await saveState(); renderAll(); alert(`Aktive Boosts von ${selectedUserForEdit.name} gelöscht!`);
+    selectedUserForEdit.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
+    selectedUserForEdit.boosts = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
+    await saveState(); renderAll(); alert(`Aktive Boosts & Inventar von ${selectedUserForEdit.name} gelöscht!`);
   });
 
   function renderUserAchievementsList(){
@@ -1627,8 +1682,9 @@
   function updateStopwatchUI(){
     $('sessionStopwatchDisplay').textContent = formatSeconds(sessionSeconds);
     const baseCost = Math.max(3, Math.ceil(sessionSeconds / 60) * 3);
-    if(currentUser.unlimitedCoins) {
-      $('currentCalculatedCost').textContent = "0 🪙";
+    
+    if(currentUser.unlimitedCoins || isBoostActive(currentUser, 'infinite')) {
+      $('currentCalculatedCost').innerHTML = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">0 🪙 (Unendlich Pass)</span>`;
       return;
     }
     if(isBoostActive(currentUser, 'discount')) {
@@ -1646,6 +1702,10 @@
     const playedMinutes = sessionSeconds / 60;
     const baseCost = Math.max(3, Math.ceil(playedMinutes) * 3);
     let costCoins = getActualPrice(baseCost);
+
+    if(isBoostActive(currentUser, 'infinite')) {
+      costCoins = 0;
+    }
 
     if(!currentUser.unlimitedCoins) {
       currentUser.coins -= costCoins; addLog(currentUser.name, `🎮 Spielzeit: ${selectedGame.name}`, -costCoins);
