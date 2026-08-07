@@ -793,7 +793,8 @@
   let currentUser = null, selectedUserForAuth = null, selectedUserForEdit = null, selectedGame = null;
   let currentUnboxingKey = 1, revealSteps = [], currentStepIndex = 0, accumulatedCoins = 0, accumulatedTickets = 0;
   let unboxingBaseCoins = 0, unboxingBoostedCoins = 0;
-  let stopwatchInterval = null, sessionSeconds = 0;
+  let stopwatchInterval = null, sessionSeconds = 0, activeSessionStartTime = 0;
+  let lastStateHash = '';
 
   const $ = id => document.getElementById(id);
 
@@ -818,20 +819,34 @@
   function loadLocalBackup(){ try { const loc = localStorage.getItem('arcade_state_backup'); if(loc) return JSON.parse(loc); } catch(e){} return null; }
   function saveLocalBackup(){ try { localStorage.setItem('arcade_state_backup', JSON.stringify(state)); } catch(e){} }
 
-  // REPARIERTER SERVER SYNC BEI LOAD & INTERVALL
+  // REPARIERTER SERVER SYNC MIT HASH-PRÜFUNG GEGEN UI-FLICKER
   async function loadState(){
     try {
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
       if(res.ok){
         const data = await res.json();
         if(data.record && data.record.users) {
-          state = data.record;
-          saveLocalBackup();
+          const newHash = JSON.stringify(data.record);
+          if (newHash !== lastStateHash) {
+            state = data.record;
+            lastStateHash = newHash;
+            saveLocalBackup();
+            renderAll();
+            checkLockStatus();
+          }
         }
       }
     } catch(e) {
       const localData = loadLocalBackup();
-      if(localData && localData.users) state = localData;
+      if(localData && localData.users) {
+        const newHash = JSON.stringify(localData);
+        if (newHash !== lastStateHash) {
+          state = localData;
+          lastStateHash = newHash;
+          renderAll();
+          checkLockStatus();
+        }
+      }
     }
 
     if(!state.users) state.users = DEFAULT_USERS;
@@ -840,14 +855,30 @@
     if(!state.history) state.history = [];
     if(!state.logs) state.logs = [];
 
-    renderAll();
+    if(!lastStateHash) {
+      lastStateHash = JSON.stringify(state);
+      renderAll();
+      checkLockStatus();
+    }
   }
 
-  // AUTOMATISCHER HINTERGRUND SYNC SORGE DAFÜR DASS GERÄTE IMMER MATCHEN
-  setInterval(() => { loadState(); }, 10000);
-  window.addEventListener('focus', () => { loadState(); });
+  // SCHNELLES POLLING FÜR ECHTZEIT-SYNC OHNE UI RE-LOADS (3 Sek)
+  setInterval(() => { loadState(); }, 3000);
+  
+  // iOS SYNC-SCHUTZ & FOREGROUND WIEDERAUFNAHME
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      loadState();
+      if (activeSessionStartTime) sessionTick();
+    }
+  });
+  window.addEventListener('pageshow', () => {
+    loadState();
+    if (activeSessionStartTime) sessionTick();
+  });
 
   async function saveState(){
+    lastStateHash = JSON.stringify(state);
     saveLocalBackup();
     try {
       await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
@@ -865,6 +896,46 @@
 
   function applyTheme(themeId){ document.body.className = themeId === 'default' ? '' : themeId; }
   function showScreen(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); }
+
+  function checkLockStatus() {
+    if (currentUser) {
+      const freshUser = state.users.find(u => u.id === currentUser.id);
+      if (freshUser && freshUser.isLocked) {
+        currentUser = freshUser;
+        clearInterval(stopwatchInterval);
+        clearSessionStorage();
+        $('lockedReasonText').textContent = currentUser.lockReason || 'Gesperrt.';
+        showScreen('screen-locked');
+      }
+    }
+  }
+
+  function checkActiveSession() {
+    if (!currentUser) return;
+    const savedUser = localStorage.getItem('activeSessionUser');
+    if (savedUser === currentUser.id) {
+      const savedStart = localStorage.getItem('activeSessionStart');
+      const savedGame = localStorage.getItem('activeSessionGame');
+      if (savedStart && savedGame) {
+        activeSessionStartTime = parseInt(savedStart, 10);
+        selectedGame = JSON.parse(savedGame);
+        $('activeGameTitle').textContent = selectedGame.name;
+        showScreen('screen-active-session');
+        
+        sessionSeconds = Math.floor((Date.now() - activeSessionStartTime) / 1000);
+        updateStopwatchUI();
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = setInterval(sessionTick, 1000);
+      }
+    }
+  }
+
+  function clearSessionStorage() {
+    localStorage.removeItem('activeSessionStart');
+    localStorage.removeItem('activeSessionGame');
+    localStorage.removeItem('activeSessionUser');
+    activeSessionStartTime = 0;
+  }
 
   function renderAll(){
     renderUserSelectList();
@@ -974,7 +1045,13 @@
     });
   }
 
-  function loginAsUser(user){ currentUser = user; showScreen('screen-home'); renderAll(); }
+  function loginAsUser(user){ 
+    currentUser = user; 
+    showScreen('screen-home'); 
+    renderAll(); 
+    checkLockStatus();
+    checkActiveSession();
+  }
 
   $('dailyRewardBtn').addEventListener('click', async () => {
     if(!currentUser) return;
@@ -1674,9 +1751,44 @@
     $('activeGameTitle').textContent = selectedGame.name;
     showScreen('screen-active-session');
     window.open(selectedGame.url, '_blank');
+    
+    activeSessionStartTime = Date.now();
+    localStorage.setItem('activeSessionStart', activeSessionStartTime);
+    localStorage.setItem('activeSessionGame', JSON.stringify(selectedGame));
+    if(currentUser) localStorage.setItem('activeSessionUser', currentUser.id);
+
     sessionSeconds = 0; updateStopwatchUI();
     clearInterval(stopwatchInterval);
-    stopwatchInterval = setInterval(() => { sessionSeconds += 1; updateStopwatchUI(); }, 1000);
+    stopwatchInterval = setInterval(sessionTick, 1000);
+  }
+
+  function sessionTick() {
+    if (!activeSessionStartTime) activeSessionStartTime = Date.now();
+    sessionSeconds = Math.floor((Date.now() - activeSessionStartTime) / 1000);
+    updateStopwatchUI();
+
+    if (currentUser && !currentUser.unlimitedCoins && !isBoostActive(currentUser, 'infinite')) {
+      const playedMinutes = sessionSeconds / 60;
+      const baseCost = Math.max(3, Math.ceil(playedMinutes) * 3);
+      let currentCost = getActualPrice(baseCost);
+      if (currentUser.coins - currentCost < 0) {
+        clearInterval(stopwatchInterval);
+        currentUser.coins -= currentCost; 
+        currentUser.isLocked = true;
+        currentUser.lockReason = 'Guthaben während des Spielens aufgebraucht.';
+        if(!state.history) state.history = [];
+        state.history.push({ userName: currentUser.name, gameName: selectedGame.name, minutes: playedMinutes, timestamp: Date.now() });
+        
+        clearSessionStorage();
+        saveState().then(() => {
+          renderAll();
+          checkLockStatus();
+        });
+        
+        $('lockedReasonText').textContent = currentUser.lockReason;
+        showScreen('screen-locked');
+      }
+    }
   }
 
   function updateStopwatchUI(){
@@ -1714,9 +1826,11 @@
     if(!state.history) state.history = [];
     state.history.push({ userName: currentUser.name, gameName: selectedGame.name, minutes: playedMinutes, timestamp: Date.now() });
 
+    clearSessionStorage();
+
     await saveState(); renderAll();
     if(currentUser.isLocked) { $('lockedReasonText').textContent = currentUser.lockReason; showScreen('screen-locked'); } 
-    else { alert(`Spielzeit beendet! Abgezogen: ${currentUser.unlimitedCoins ? 0 : costCoins} 🪙`); showScreen('screen-home'); }
+    else { showScreen('screen-home'); }
   });
 
   $('openAdminDashboardBtn').addEventListener('click', () => { renderAll(); $('adminPanelBackdrop').classList.add('active'); });
