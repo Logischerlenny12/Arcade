@@ -97,11 +97,6 @@
   .game-card .emoji{font-size:28px; display:block; margin-bottom:8px;}
   .game-card .name{font-size:13px; font-weight:600;}
 
-  .user-list { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
-  .user-card { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:14px; cursor:pointer; }
-  .user-card.locked { border-color: var(--danger); opacity: 0.8; }
-  .user-info { font-weight:bold; font-size:15px; }
-
   .tasks-container { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; max-height:300px; overflow-y:auto; }
   .task-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:1px solid #3d2f66; border-radius:10px; padding:10px 12px; }
   .task-item.completed { opacity: 0.5; }
@@ -214,8 +209,21 @@
       <div class="title">📢 BENACHRICHTIGUNG</div>
       <div class="text" id="globalAnnouncementText">...</div>
     </div>
-    <h2 class="step-title">BENUTZER WÄHLEN</h2>
-    <div class="user-list" id="userSelectList"></div>
+    
+    <h2 class="step-title">LOGIN</h2>
+    <div style="background:#1c1536; padding:20px; border-radius:14px; border:2px solid #3d2f66; margin-bottom:18px;">
+      <div class="field"><label>Benutzername</label><input type="text" id="loginUsernameInput" placeholder="Dein Name"></div>
+      <div class="field"><label>Passwort</label><input type="password" id="loginPasswordInput" placeholder="••••••"></div>
+      
+      <div style="margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="keepLoggedInCheck" checked style="width:auto; margin:0; cursor:pointer;">
+        <label for="keepLoggedInCheck" style="font-size:12px; color:var(--cream-dim); cursor:pointer; margin:0;">Auf diesem Gerät 7 Tage angemeldet bleiben</label>
+      </div>
+
+      <div style="color:var(--danger); font-size:12px; margin-bottom:10px; font-weight:bold;" id="loginMsg"></div>
+      <button class="btn btn-primary" id="loginSubmitBtn">Einloggen</button>
+    </div>
+    
     <button class="btn btn-secondary" id="registerBtn">➕ Neuen Account erstellen</button>
   </div>
 
@@ -468,19 +476,7 @@
   </div>
 </div>
 
-<!-- LOGIN & REGISTER MODALS -->
-<div class="modal-backdrop" id="passwordModal">
-  <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
-    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;" id="passwordModalTitle">PASSWORT</h3>
-    <div class="field"><input type="password" id="userPasswordInput" placeholder="Passwort eingeben"></div>
-    <div style="color:var(--danger); font-size:12px; margin-bottom:10px;" id="passwordModalMsg"></div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn btn-ghost" id="passwordModalCancel">Abbrechen</button>
-      <button class="btn btn-primary" id="passwordModalSubmit">Einloggen</button>
-    </div>
-  </div>
-</div>
-
+<!-- REGISTER MODAL -->
 <div class="modal-backdrop" id="registerModal">
   <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
     <h3 style="font-family:var(--font-display); color:var(--cyan); font-size:14px; margin-top:0;">ACCOUNT ANFRAGEN</h3>
@@ -790,7 +786,7 @@
   };
 
   let state = { users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], logs: [], globalAnnouncement: '' };
-  let currentUser = null, selectedUserForAuth = null, selectedUserForEdit = null, selectedGame = null;
+  let currentUser = null, selectedUserForEdit = null, selectedGame = null;
   let currentUnboxingKey = 1, revealSteps = [], currentStepIndex = 0, accumulatedCoins = 0, accumulatedTickets = 0;
   let unboxingBaseCoins = 0, unboxingBoostedCoins = 0;
   let stopwatchInterval = null, sessionSeconds = 0, activeSessionStartTime = 0;
@@ -831,7 +827,7 @@
             state = data.record;
             lastStateHash = newHash;
             saveLocalBackup();
-            renderAll();
+            if(currentUser) renderAll();
             checkLockStatus();
           }
         }
@@ -843,7 +839,7 @@
         if (newHash !== lastStateHash) {
           state = localData;
           lastStateHash = newHash;
-          renderAll();
+          if(currentUser) renderAll();
           checkLockStatus();
         }
       }
@@ -857,8 +853,10 @@
 
     if(!lastStateHash) {
       lastStateHash = JSON.stringify(state);
-      renderAll();
-      checkLockStatus();
+      if(!checkAuthSession()) {
+        renderAll();
+        checkLockStatus();
+      }
     }
   }
 
@@ -938,7 +936,6 @@
   }
 
   function renderAll(){
-    renderUserSelectList();
     if(state.globalAnnouncement) { $('globalAnnouncementBox').style.display = 'block'; $('globalAnnouncementText').textContent = state.globalAnnouncement; }
     else $('globalAnnouncementBox').style.display = 'none';
 
@@ -1028,30 +1025,90 @@
     box.style.display = hasBoost ? 'flex' : 'none';
   }
 
-  function renderUserSelectList(){
-    const list = $('userSelectList'); list.innerHTML = '';
-    state.users.filter(u => u.approved).forEach(u => {
-      const card = document.createElement('div'); card.className = 'user-card' + (u.isLocked ? ' locked' : '');
-      let statusText = u.isAdmin ? '👑 Admin' : '🪙 ' + (u.unlimitedCoins ? '♾️' : u.coins);
-      if(u.isLocked) statusText = '🔒 Gesperrt';
-      card.innerHTML = `<span class="user-info">👤 ${escapeHtml(u.name)} ${isVip(u)?'👑':''}</span><span>${statusText}</span>`;
-      card.addEventListener('click', () => {
-        selectedUserForAuth = u;
-        if(u.isLocked) { $('lockedReasonText').textContent = u.lockReason || 'Gesperrt.'; showScreen('screen-locked'); return; }
-        if(u.password) { $('passwordModalTitle').textContent = `PASSWORT FÜR ${u.name.toUpperCase()}`; $('userPasswordInput').value = ''; $('passwordModalMsg').textContent = ''; $('passwordModal').classList.add('active'); }
-        else loginAsUser(u);
-      });
-      list.appendChild(card);
-    });
-  }
+  // --- LOGIN LOGIK: BENUTZERNAME, PASSWORT & ANGEMELDET BLEIBEN ---
+  $('loginSubmitBtn').addEventListener('click', () => {
+    const uname = $('loginUsernameInput').value.trim();
+    const pwd = $('loginPasswordInput').value.trim();
+    if(!uname || !pwd) { $('loginMsg').textContent = 'Bitte fülle beide Felder aus!'; return; }
 
-  function loginAsUser(user){ 
-    currentUser = user; 
-    showScreen('screen-home'); 
-    renderAll(); 
+    const user = state.users.find(u => u.name.toLowerCase() === uname.toLowerCase());
+    if(!user) { $('loginMsg').textContent = 'Benutzer nicht gefunden!'; return; }
+    if(!user.approved) { $('loginMsg').textContent = 'Account wurde noch nicht freigegeben!'; return; }
+    if(user.password !== pwd) { $('loginMsg').textContent = 'Falsches Passwort!'; return; }
+
+    const keepLoggedIn = $('keepLoggedInCheck').checked;
+    loginAsUser(user, keepLoggedIn);
+  });
+
+  function loginAsUser(user, keepLoggedIn = true){
+    currentUser = user;
+
+    const expiry = Date.now() + (7 * 24 * 60 * 60 * 1000);
+    const sessionData = JSON.stringify({ id: user.id, expiry: expiry });
+
+    if(keepLoggedIn) {
+      localStorage.setItem('arcade_auth_session', sessionData);
+      sessionStorage.removeItem('arcade_auth_session');
+    } else {
+      sessionStorage.setItem('arcade_auth_session', sessionData);
+      localStorage.removeItem('arcade_auth_session');
+    }
+
+    $('loginMsg').textContent = '';
+    $('loginUsernameInput').value = '';
+    $('loginPasswordInput').value = '';
+
+    showScreen('screen-home');
+    renderAll();
     checkLockStatus();
     checkActiveSession();
   }
+
+  function checkAuthSession() {
+    const localData = localStorage.getItem('arcade_auth_session');
+    const sessionData = sessionStorage.getItem('arcade_auth_session');
+    const authData = sessionData || localData;
+
+    if(authData) {
+      try {
+        const session = JSON.parse(authData);
+        // Prüfen, ob abgelaufen. Wenn im sessionStorage, ignorieren wir das strikte Datum meist, 
+        // prüfen es hier aber sicherheitshalber trotzdem.
+        if(session.expiry > Date.now() || sessionData) {
+          const user = state.users.find(u => u.id === session.id);
+          if(user && user.approved && !user.isLocked) {
+            loginAsUser(user, !!localData);
+            return true;
+          } else if (user && user.isLocked) {
+            currentUser = user;
+            $('lockedReasonText').textContent = user.lockReason || 'Gesperrt.';
+            showScreen('screen-locked');
+            return true;
+          }
+        } else {
+          localStorage.removeItem('arcade_auth_session');
+          sessionStorage.removeItem('arcade_auth_session');
+        }
+      } catch(e) {}
+    }
+    return false;
+  }
+
+  $('logoutBtn').addEventListener('click', () => {
+    currentUser = null;
+    localStorage.removeItem('arcade_auth_session');
+    sessionStorage.removeItem('arcade_auth_session');
+    showScreen('screen-auth');
+    renderAll();
+  });
+
+  $('backFromLocked').addEventListener('click', () => {
+      currentUser = null;
+      localStorage.removeItem('arcade_auth_session');
+      sessionStorage.removeItem('arcade_auth_session');
+      showScreen('screen-auth');
+  });
+  // -------------------------------------------------------------
 
   $('dailyRewardBtn').addEventListener('click', async () => {
     if(!currentUser) return;
@@ -1063,20 +1120,11 @@
     await saveState(); renderAll(); alert(`🎉 Du hast ${reward} Coins erhalten!`);
   });
 
-  $('backFromLocked').addEventListener('click', () => showScreen('screen-auth'));
-  $('passwordModalCancel').addEventListener('click', () => $('passwordModal').classList.remove('active'));
-  $('passwordModalSubmit').addEventListener('click', () => {
-    if(selectedUserForAuth && $('userPasswordInput').value === selectedUserForAuth.password) {
-      $('passwordModal').classList.remove('active'); loginAsUser(selectedUserForAuth);
-    } else $('passwordModalMsg').textContent = 'Falsches Passwort!';
-  });
-
-  $('logoutBtn').addEventListener('click', () => { currentUser = null; showScreen('screen-auth'); renderAll(); });
   $('registerBtn').addEventListener('click', () => { $('regNameInput').value = ''; $('regPasswordInput').value = ''; $('registerMsg').textContent = ''; $('registerModal').classList.add('active'); });
   $('registerCancel').addEventListener('click', () => $('registerModal').classList.remove('active'));
   $('registerSubmit').addEventListener('click', async () => {
     const name = $('regNameInput').value.trim(); const pw = $('regPasswordInput').value.trim();
-    if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
+    if(!name || !pw){ $('registerMsg').textContent = 'Bitte Name und Passwort eingeben!'; return; }
     state.users.push({
       id: 'u_' + Date.now(), name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false,
       coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
