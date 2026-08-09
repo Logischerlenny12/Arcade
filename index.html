@@ -18,9 +18,6 @@
   body.theme-cyberpunk { --bg-deep:#03001e; --bg-panel:#7303c0; --bg-panel-2:#03001e; --gold:#00f2fe; --gold-dim:#00828b; --magenta:#ec38bc; --cyan:#00f2fe; --cream:#f4efff; --cream-dim:#b89bd6; }
   body.theme-matrix { --bg-deep:#051405; --bg-panel:#0d260d; --bg-panel-2:#051405; --gold:#00ff41; --gold-dim:#00661a; --magenta:#008f11; --cyan:#00ff41; --cream:#d0ffd0; --cream-dim:#66b366; }
   body.theme-gold { --bg-deep:#1f1900; --bg-panel:#382d00; --bg-panel-2:#1f1900; --gold:#ffd700; --gold-dim:#8b7500; --magenta:#ffae00; --cyan:#fff099; --cream:#fffdf0; --cream-dim:#c2b574; }
-  body.theme-candy { --bg-deep:#2b1020; --bg-panel:#4a1c38; --bg-panel-2:#2b1020; --gold:#ffb7c5; --gold-dim:#99626d; --magenta:#ff6584; --cyan:#a8e6cf; --cream:#fff0f5; --cream-dim:#d69fb2; }
-  body.theme-sunset { --bg-deep:#1f0c1b; --bg-panel:#3d142b; --bg-panel-2:#1f0c1b; --gold:#ff7e5f; --gold-dim:#994b39; --magenta:#feb47b; --cyan:#ff7e5f; --cream:#fff5f0; --cream-dim:#d6a393; }
-  body.theme-cosmic { --bg-deep:#090014; --bg-panel:#19002e; --bg-panel-2:#240046; --gold:#e0aaff; --gold-dim:#7b2cbf; --magenta:#c77dff; --cyan:#9d4edd; --cream:#f72585; --cream-dim:#b5179e; }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%; margin:0;}
@@ -202,8 +199,6 @@
       </div>
     </div>
 
-    <div id="activeBoostsHomeBox" style="display:none; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
-
     <button class="btn btn-primary" id="playBtn">▶ Spielen</button>
     <button class="btn btn-secondary row-gap" id="openEpicShopBtn" style="background:linear-gradient(135deg, var(--magenta), #d63bff); border:none;">🛒 Arcade Store</button>
     <button class="btn btn-secondary row-gap" id="tasksBtn">📝 Aufgaben & Erfolge</button>
@@ -220,9 +215,7 @@
         <input type="password" id="newPasswordInput" placeholder="Neues Passwort">
       </div>
       <button class="btn btn-primary btn-sm row-gap" id="savePasswordBtn">Speichern</button>
-      
       <hr style="border:0; border-top:1px solid #3d2f66; margin:20px 0;">
-      
       <button class="btn btn-danger" id="fullLogoutBtn">🚪 Komplett Abmelden</button>
       <button class="btn btn-ghost row-gap" id="closeSettingsBtn">Zurück</button>
     </div>
@@ -287,17 +280,11 @@
     <div class="brawl-section active" id="brawl-sub-store">
       <div class="brawl-section-title">👑 VIP & TICKETS</div>
       <div class="brawl-row-scroll">
-        <div class="brawl-card vip-card"><div class="vip-badge">VIP</div><div class="card-icon">👑</div><div class="card-title">VIP-Pass (7 Tage)</div><div class="card-desc">Kosten: 50 Coins</div><button class="buy-btn vip-buy" id="buyVipBtn">50 🪙 Kaufen</button></div>
-        <div class="brawl-card"><div class="card-icon">🎟️</div><div class="card-title">1 Arcade Ticket</div><div class="card-desc">Kosten: 10 Coins</div><button class="buy-btn" id="buyTicketBrawlBtn">10 🪙 Kaufen</button></div>
+        <div class="brawl-card vip-card"><div class="vip-badge">VIP</div><div class="card-icon">👑</div><div class="card-title">VIP-Pass (7 Tage)</div><div class="card-desc">Kosten: 200 Coins</div><button class="buy-btn vip-buy" id="buyVipBtn">200 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">🎟️</div><div class="card-title">1 Arcade Ticket</div><div class="card-desc">Kosten: 7 Coins</div><button class="buy-btn" id="buyTicketBrawlBtn">7 🪙 Kaufen</button></div>
       </div>
       <div class="brawl-section-title" style="margin-top:20px;">🎨 FARBIGE DESIGN-THEMEN</div>
       <div class="brawl-row-scroll" id="shopThemesList"></div>
-      <div class="brawl-section-title" style="margin-top:20px;">🎬 EXKLUSIVE ANIMATIONEN</div>
-      <div class="brawl-row-scroll" id="shopAnimList"></div>
-      <div class="brawl-section-title" style="margin-top:20px;">🎨 FARBIGE NAMEN & EFFEKTE</div>
-      <div class="brawl-row-scroll" id="shopNameColorsList"></div>
-      <div class="brawl-section-title" style="margin-top:20px;">🏆 PROFIL BADGES</div>
-      <div class="brawl-row-scroll" id="shopBadgesList"></div>
     </div>
 
     <!-- SUBKATEGORIE: BOOSTS -->
@@ -306,10 +293,10 @@
       <div id="boostsStatusContainer"></div>
       <div class="brawl-section-title" style="margin-top:15px;">🛍️ BOOST STORE</div>
       <div class="brawl-row-scroll">
-        <div class="brawl-card"><div class="card-icon">⚡</div><div class="card-title">1,25x Multiplikator</div><div class="card-desc">Kosten: 30 Coins</div><button class="buy-btn" id="buyBoostMulti">30 🪙 Kaufen</button></div>
-        <div class="brawl-card"><div class="card-icon">🛡️</div><div class="card-title">Pechschutz</div><div class="card-desc">Kosten: 15 Coins</div><button class="buy-btn" id="buyBoostNoDud">15 🪙 Kaufen</button></div>
-        <div class="brawl-card"><div class="card-icon">🏷️</div><div class="card-title">Rabatt-Pass (15%)</div><div class="card-desc">Kosten: 20 Coins</div><button class="buy-btn" id="buyBoostDiscount">20 🪙 Kaufen</button></div>
-        <div class="brawl-card"><div class="card-icon">♾️</div><div class="card-title">Unendlich Spielen</div><div class="card-desc">Kosten: 100 Coins</div><button class="buy-btn" id="buyBoostInfinite">100 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">⚡</div><div class="card-title">1,25x Multiplikator</div><div class="card-desc">Kosten: 50 Coins</div><button class="buy-btn" id="buyBoostMulti">50 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">🛡️</div><div class="card-title">Pechschutz</div><div class="card-desc">Kosten: 25 Coins</div><button class="buy-btn" id="buyBoostNoDud">25 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">🏷️</div><div class="card-title">Rabatt-Pass (15%)</div><div class="card-desc">Kosten: 35 Coins</div><button class="buy-btn" id="buyBoostDiscount">35 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">♾️</div><div class="card-title">Unendlich Spielen</div><div class="card-desc">Kosten: 150 Coins</div><button class="buy-btn" id="buyBoostInfinite">150 🪙 Kaufen</button></div>
       </div>
     </div>
 
@@ -328,7 +315,7 @@
     <div class="brawl-section" id="brawl-sub-accounts">
       <div class="brawl-section-title">🎁 ITEMS & COINS VERSCHICKEN</div>
       <div style="background:#1c1536; padding:16px; border-radius:14px; border:2px solid #3d2f66; max-width:500px;">
-        <div class="field"><label>Empfänger wählen</label><select id="sendGiftTargetUser"></select></div>
+        <div class="field"><label>Empfänger wählen</label><select id="sendGiftTargetUser"><option value="">Wird geladen...</option></select></div>
         <div class="field"><label>Was senden?</label><select id="sendGiftType"><option value="coins">🪙 Münzen</option><option value="tickets">🎟️ Tickets</option></select></div>
         <div class="field"><label>Anzahl</label><input type="number" id="sendGiftAmount" min="1" value="10"></div>
         <button class="btn btn-secondary btn-sm" id="sendGiftSubmitBtn">🎁 Verschicken</button>
@@ -520,9 +507,7 @@
 
 <script>
 (function(){
-  // ==========================================
-  // PUSH NOTIFICATION PROMPT FIX
-  // ==========================================
+  // PUSH NOTIFICATION PROMPT
   let pushPrompted = false;
   function requestPush() {
     if (!pushPrompted && "Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -530,12 +515,10 @@
         pushPrompted = true;
     }
   }
-  requestPush(); // Try directly on load
-  document.body.addEventListener('click', requestPush, { once: true }); // Fallback on first click
+  requestPush();
+  document.body.addEventListener('click', requestPush, { once: true });
 
-  // ==========================================
   // FIREBASE CONFIG
-  // ==========================================
   const firebaseConfig = {
     apiKey: "AIzaSyD8jAY5lHaUAtbbpO0SXUPl6FWFnDGcCio",
     authDomain: "arcade-8e0b7.firebaseapp.com",
@@ -554,9 +537,7 @@
     id: 'u_admin', name: 'Admin', password: '1234', approved: true, isAdmin: true, unlimitedCoins: true,
     coins: 100, tickets: 5, lastDailyClaim: 0, isLocked: false, lockReason: '',
     unlockedThemes: ['default'], currentTheme: 'default', completedTasks: [],
-    vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'],
-    currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
-    inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
+    vipUntil: 0, inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
   }];
 
   let state = { users: DEFAULT_USERS, games: [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal' }], tasks: [], history: [], logs: [], notifications: [] };
@@ -567,9 +548,15 @@
   let rememberedUsers = JSON.parse(localStorage.getItem('arcade_remembered') || '[]');
 
   const $ = id => document.getElementById(id);
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  
   function isVip(user) { return user && user.vipUntil && user.vipUntil > Date.now(); }
   function isBoostActive(user, type) { return user && user.boosts && user.boosts[type] && user.boosts[type] > Date.now(); }
-  function getActualPrice(origPrice) { return isBoostActive(currentUser, 'discount') ? Math.max(1, Math.floor(origPrice * 0.85)) : origPrice; }
+  function getActualPrice(origPrice) { 
+      let price = origPrice;
+      if (isBoostActive(currentUser, 'discount')) price = Math.max(1, Math.floor(price * 0.85));
+      return price;
+  }
 
   let lastNotifCount = 0;
 
@@ -579,7 +566,6 @@
       state = data;
       if(!state.users || !Array.isArray(state.users) || state.users.length === 0) state.users = DEFAULT_USERS;
       if(!state.games) state.games = [];
-      if(!state.tasks) state.tasks = [];
       if(!state.history) state.history = [];
       if(!state.logs) state.logs = [];
       if(!state.notifications) state.notifications = [];
@@ -644,7 +630,7 @@
       $('ticketsHome').textContent = currentUser.tickets || 0;
       $('openAdminDashboardBtn').style.display = currentUser.isAdmin ? 'block' : 'none';
 
-      // Daily Reward Button Status Check
+      // Daily Reward 
       const timeSinceClaim = Date.now() - (currentUser.lastDailyClaim || 0);
       if(timeSinceClaim > 86400000) {
          $('dailyRewardBtn').textContent = '🎁 Tägliche Belohnung abholen (20 🪙)';
@@ -662,7 +648,7 @@
   }
 
   // ==========================
-  // SHOP & UNBOXING & REWARDS
+  // SHOP & BOOSTS & GIFTS
   // ==========================
   $('dailyRewardBtn').addEventListener('click', () => {
     const now = Date.now();
@@ -670,16 +656,98 @@
        currentUser.coins += 20;
        currentUser.lastDailyClaim = now;
        addLog(currentUser.id, currentUser.name, 'shop', 'Tägliche Belohnung', 20);
-       saveState().then(() => {
-           alert('Glückwunsch! +20 Coins erhalten.');
-           renderAll();
-       });
+       saveState().then(() => { alert('Glückwunsch! +20 Coins erhalten.'); renderAll(); });
     }
   });
+
+  function renderShopContents() {
+      // 1. Render Send-Gift Users Dropdown
+      const giftSelect = $('sendGiftTargetUser');
+      giftSelect.innerHTML = '<option value="">Bitte wählen...</option>';
+      state.users.forEach(u => {
+          if (u.id !== currentUser.id && u.approved !== false) {
+              giftSelect.innerHTML += `<option value="${u.id}">${escapeHtml(u.name)}</option>`;
+          }
+      });
+
+      // 2. Render Boosts im Inventar (Zum Aktivieren)
+      const bCont = $('boostsStatusContainer');
+      bCont.innerHTML = '';
+      const boostDefs = [
+          {id: 'multi', name: '1,25x Multiplikator', ms: 12*3600000, emoji: '⚡'},
+          {id: 'noDud', name: 'Pechschutz', ms: 10*60000, emoji: '🛡️'},
+          {id: 'discount', name: 'Rabatt-Pass (15%)', ms: 20*60000, emoji: '🏷️'},
+          {id: 'infinite', name: 'Unendlich Spielen', ms: 12*3600000, emoji: '♾️'}
+      ];
+      
+      let foundBoosts = false;
+      boostDefs.forEach(b => {
+          const invCount = currentUser.inventory[b.id] || 0;
+          const activeUntil = currentUser.boosts[b.id] || 0;
+          const isActive = activeUntil > Date.now();
+
+          if (invCount > 0 || isActive) {
+              foundBoosts = true;
+              let html = `<div style="background:#1c1536; padding:10px; border-radius:8px; border:1px solid #3d2f66; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>${b.emoji} <b>${b.name}</b> <small style="color:var(--cream-dim)">(Lager: ${invCount})</small></div>`;
+              
+              if (isActive) {
+                  const leftMin = Math.ceil((activeUntil - Date.now()) / 60000);
+                  html += `<span style="color:var(--cyan); font-weight:bold;">Aktiv (${leftMin}m)</span>`;
+              } else {
+                  html += `<button class="btn-sm btn-primary" onclick="activateBoost('${b.id}', ${b.ms})">Aktivieren</button>`;
+              }
+              html += `</div>`;
+              bCont.innerHTML += html;
+          }
+      });
+      if (!foundBoosts) bCont.innerHTML = '<div style="color:var(--cream-dim); font-size:12px;">Keine Boosts im Inventar.</div>';
+
+      // 3. Render Themes (Shop Inhalte auffüllen)
+      const themesCont = $('shopThemesList');
+      themesCont.innerHTML = '';
+      const themes = [
+          {id: 'theme-cyberpunk', name: 'Cyberpunk', cost: 100, icon: '🌆'},
+          {id: 'theme-matrix', name: 'Matrix', cost: 150, icon: '💻'},
+          {id: 'theme-gold', name: 'Gold-Edition', cost: 200, icon: '🏆'}
+      ];
+      themes.forEach(t => {
+          const unlocked = currentUser.unlockedThemes.includes(t.id);
+          themesCont.innerHTML += `<div class="brawl-card">
+              <div class="card-icon">${t.icon}</div>
+              <div class="card-title">${t.name}</div>
+              <div class="card-desc">Theme freischalten</div>
+              ${unlocked 
+                  ? `<button class="buy-btn" style="background:#555" onclick="equipTheme('${t.id}')">Anwenden</button>`
+                  : `<button class="buy-btn" onclick="buyTheme('${t.id}', ${t.cost})">${getActualPrice(t.cost)} 🪙 Kaufen</button>`
+              }
+          </div>`;
+      });
+  }
+
+  window.activateBoost = function(id, durationMs) {
+      if(currentUser.inventory[id] > 0) {
+          currentUser.inventory[id]--;
+          currentUser.boosts[id] = Date.now() + durationMs;
+          saveState().then(() => { renderShopContents(); alert('Boost aktiviert!'); });
+      }
+  };
+
+  window.buyTheme = function(id, cost) {
+      buyItem(cost, () => {
+          currentUser.unlockedThemes.push(id);
+      }, "Theme gekauft");
+  };
+
+  window.equipTheme = function(id) {
+      currentUser.currentTheme = id;
+      saveState().then(() => { applyTheme(id); renderShopContents(); alert('Theme angewendet!'); });
+  };
 
   $('openEpicShopBtn').addEventListener('click', () => {
      $('shopCoinsVal').textContent = currentUser.coins;
      $('shopTicketsVal').textContent = currentUser.tickets || 0;
+     renderShopContents();
      $('epicShopFullscreen').classList.add('active');
   });
 
@@ -698,26 +766,61 @@
   });
 
   function buyItem(cost, action, name) {
-     if(currentUser.coins >= cost || currentUser.unlimitedCoins) {
-         if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
+     const actualCost = getActualPrice(cost);
+     if(currentUser.coins >= actualCost || currentUser.unlimitedCoins) {
+         if(!currentUser.unlimitedCoins) currentUser.coins -= actualCost;
          action();
-         addLog(currentUser.id, currentUser.name, 'shop', name + ' gekauft', -cost);
+         addLog(currentUser.id, currentUser.name, 'shop', name, -actualCost);
          saveState().then(() => {
              $('shopCoinsVal').textContent = currentUser.coins;
              $('shopTicketsVal').textContent = currentUser.tickets;
+             renderShopContents();
              alert(name + " erfolgreich gekauft!");
          });
-     } else {
-         alert("Nicht genug Münzen!");
-     }
+     } else { alert("Nicht genug Münzen!"); }
   }
 
-  $('buyVipBtn').addEventListener('click', () => buyItem(50, () => { currentUser.vipUntil = Date.now() + 7*86400000; }, "VIP-Pass"));
-  $('buyTicketBrawlBtn').addEventListener('click', () => buyItem(10, () => { currentUser.tickets = (currentUser.tickets||0) + 1; }, "1 Ticket"));
-  $('buyBoostMulti').addEventListener('click', () => buyItem(30, () => { currentUser.inventory.multi = (currentUser.inventory.multi||0) + 1; }, "Multiplikator-Boost"));
-  $('buyBoostNoDud').addEventListener('click', () => buyItem(15, () => { currentUser.inventory.noDud = (currentUser.inventory.noDud||0) + 1; }, "Pechschutz-Boost"));
-  $('buyBoostDiscount').addEventListener('click', () => buyItem(20, () => { currentUser.inventory.discount = (currentUser.inventory.discount||0) + 1; }, "Rabatt-Boost"));
-  $('buyBoostInfinite').addEventListener('click', () => buyItem(100, () => { currentUser.inventory.infinite = (currentUser.inventory.infinite||0) + 1; }, "Unendlich-Boost"));
+  $('buyVipBtn').addEventListener('click', () => buyItem(200, () => { currentUser.vipUntil = Date.now() + 7*86400000; }, "VIP-Pass (7 Tage)"));
+  $('buyTicketBrawlBtn').addEventListener('click', () => buyItem(7, () => { currentUser.tickets = (currentUser.tickets||0) + 1; }, "1 Ticket"));
+  
+  $('buyBoostMulti').addEventListener('click', () => buyItem(50, () => { currentUser.inventory.multi = (currentUser.inventory.multi||0) + 1; }, "1,25x Multiplikator"));
+  $('buyBoostNoDud').addEventListener('click', () => buyItem(25, () => { currentUser.inventory.noDud = (currentUser.inventory.noDud||0) + 1; }, "Pechschutz"));
+  $('buyBoostDiscount').addEventListener('click', () => buyItem(35, () => { currentUser.inventory.discount = (currentUser.inventory.discount||0) + 1; }, "Rabatt-Pass"));
+  $('buyBoostInfinite').addEventListener('click', () => buyItem(150, () => { currentUser.inventory.infinite = (currentUser.inventory.infinite||0) + 1; }, "Unendlich Spielen"));
+
+  // GESCHENKE VERSENDEN LOGIK
+  $('sendGiftSubmitBtn').addEventListener('click', () => {
+      const targetId = $('sendGiftTargetUser').value;
+      const type = $('sendGiftType').value;
+      const amount = parseInt($('sendGiftAmount').value, 10);
+
+      if(!targetId) return alert('Bitte einen Empfänger auswählen!');
+      if(isNaN(amount) || amount <= 0) return alert('Ungültige Anzahl!');
+
+      const targetUser = state.users.find(u => u.id === targetId);
+      if(!targetUser) return alert('Empfänger nicht gefunden!');
+
+      if(!currentUser.unlimitedCoins) {
+          if(type === 'coins' && currentUser.coins < amount) return alert('Nicht genug Coins!');
+          if(type === 'tickets' && (currentUser.tickets||0) < amount) return alert('Nicht genug Tickets!');
+          
+          if(type === 'coins') currentUser.coins -= amount;
+          if(type === 'tickets') currentUser.tickets -= amount;
+      }
+
+      if(type === 'coins') targetUser.coins += amount;
+      if(type === 'tickets') targetUser.tickets = (targetUser.tickets||0) + amount;
+
+      addLog(currentUser.id, currentUser.name, 'gift', `An ${targetUser.name} gesendet`, -amount, type === 'coins' ? '🪙' : '🎟️');
+      addLog(targetUser.id, targetUser.name, 'gift', `Von ${currentUser.name} erhalten`, amount, type === 'coins' ? '🪙' : '🎟️');
+
+      saveState().then(() => {
+          $('shopCoinsVal').textContent = currentUser.coins;
+          $('shopTicketsVal').textContent = currentUser.tickets;
+          alert(`Erfolgreich ${amount} ${type} an ${targetUser.name} versendet!`);
+          $('sendGiftAmount').value = 10;
+      });
+  });
 
   window.start3dUnboxing = function(tier) {
      const costs = [0, 1, 2, 4, 6];
@@ -745,8 +848,16 @@
   function showLoot(tier) {
      $('box3dContainer').style.display = 'none';
      $('revealDropBox').style.display = 'block';
-     // Random Coins calculation based on Tier
-     const coinsWon = tier * 10 + Math.floor(Math.random() * (tier * 15));
+     
+     // Pechschutz (Mindestgewinn erhöhen)
+     let minCoins = tier * 10;
+     if(isBoostActive(currentUser, 'noDud')) minCoins = tier * 15;
+     
+     let coinsWon = minCoins + Math.floor(Math.random() * (tier * 15));
+     
+     // Multiplikator
+     if(isBoostActive(currentUser, 'multi')) coinsWon = Math.floor(coinsWon * 1.25);
+
      $('revealItemText').textContent = `+${coinsWon} Münzen 🪙`;
      currentUser.coins += coinsWon;
      addLog(currentUser.id, currentUser.name, 'lootbox', `Tier ${tier} Kiste geöffnet`, coinsWon);
@@ -777,7 +888,6 @@
      const tList = $('userTasksList'); tList.innerHTML = '';
      if(!currentUser.completedTasks) currentUser.completedTasks = [];
 
-     // 1. Calculate Playtime per Game for the Current User
      const userHist = (state.history || []).filter(h => h.userId === currentUser.id && h.type === 'game');
      const gameTimes = {};
      userHist.forEach(h => {
@@ -794,7 +904,6 @@
 
      let availableTasks = [];
 
-     // 2. Generate tasks dynamically for ALL games in the database
      (state.games || []).forEach(g => {
          const played = gameTimes[g.id] || 0;
          timeMilestones.forEach(ms => {
@@ -805,7 +914,6 @@
          });
      });
 
-     // 3. Ten (10) Additional Special Tasks
      const totalGameMins = Object.values(gameTimes).reduce((a,b)=>a+b, 0);
      const extraTasks = [
          { id: 't_vip', title: 'Werde VIP', reward: 50, done: isVip(currentUser), type: 'ach' },
@@ -825,7 +933,6 @@
          availableTasks.push(t);
      });
 
-     // 4. Render all generated tasks
      availableTasks.forEach(t => {
          const div = document.createElement('div');
          div.className = 'task-item' + (t.claimed ? ' completed' : '');
@@ -850,13 +957,17 @@
 
   function claimTask(tId, reward) {
      if(!currentUser.completedTasks) currentUser.completedTasks = [];
+     
+     let finalReward = reward;
+     if(isBoostActive(currentUser, 'multi')) finalReward = Math.floor(finalReward * 1.25);
+     
      currentUser.completedTasks.push(tId);
-     currentUser.coins += reward;
-     addLog(currentUser.id, currentUser.name, 'tasks', `Aufgabe erledigt`, reward);
+     currentUser.coins += finalReward;
+     addLog(currentUser.id, currentUser.name, 'tasks', `Aufgabe erledigt`, finalReward);
      saveState().then(() => {
          renderTasks();
          renderAll();
-         alert(`Glückwunsch! +${reward} 🪙 erhalten.`);
+         alert(`Glückwunsch! +${finalReward} 🪙 erhalten.`);
      });
   }
 
@@ -1143,14 +1254,12 @@
     if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
     state.users.push({
       id: 'u_' + Date.now(), name, password: pw, approved: true, isAdmin: false, unlimitedCoins: false,
-      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedTasks: [], forcedLoot: null,
-      vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
-      inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
+      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedTasks: [],
+      vipUntil: 0, inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
     });
     saveState(); $('registerModal').classList.remove('active'); alert('Account erstellt!'); renderAll();
   });
 
-  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
   $('playBtn').addEventListener('click', () => showScreen('screen-game'));
   $('backFromTasks').addEventListener('click', () => showScreen('screen-home'));
   $('backFromGame').addEventListener('click', () => showScreen('screen-home'));
