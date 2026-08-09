@@ -69,7 +69,9 @@
   .user-card.locked { border-color: var(--danger); opacity: 0.8; }
   .user-info { font-weight:bold; font-size:15px; }
 
-  .tasks-container { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; max-height:300px; overflow-y:auto; }
+  .tasks-container { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; max-height:300px; overflow-y:auto; padding-right:5px; }
+  .tasks-container::-webkit-scrollbar { width: 6px; }
+  .tasks-container::-webkit-scrollbar-thumb { background: #3d2f66; border-radius: 4px; }
   .task-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:1px solid #3d2f66; border-radius:10px; padding:10px 12px; }
   .task-item.completed { opacity: 0.5; }
   .task-claim-btn { background:var(--gold-dim); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; }
@@ -100,7 +102,6 @@
   .brawl-card .card-desc { font-size:11px; color:var(--cream-dim); text-align:center; margin-bottom:12px; }
   .brawl-card .buy-btn { width:100%; border:none; border-radius:12px; padding:12px; background:linear-gradient(135deg, #00f2fe, #4facfe); color:black; font-weight:bold; font-family:var(--font-display); font-size:11px; cursor:pointer; text-align:center; }
   .brawl-card .buy-btn.vip-buy { background:linear-gradient(135deg, var(--gold), #ffae00); }
-  .boost-active-badge { background:rgba(63,224,208,0.2); border:1px solid var(--cyan); border-radius:10px; padding:8px 12px; color:var(--cyan); font-size:12px; font-weight:bold; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
 
   /* 3D UNBOXING STYLES & ANIMATIONS */
   .unboxing-fullscreen-backdrop { display:none; position:fixed; inset:0; z-index:100; background:radial-gradient(circle at center, #11151f 0%, #06080d 100%); flex-direction:column; align-items:center; justify-content:center; overflow:hidden; }
@@ -124,17 +125,11 @@
   .unboxing-fullscreen-backdrop.opened .box-lid-3d { transform:rotateX(-120deg); }
   .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; animation: pulseLight 2s infinite alternate; }
   @keyframes pulseLight { 0%{opacity:0.8;} 100%{opacity:1;} }
-  .anim-fx-anim_neon .box-face { border-color:#00f2fe; box-shadow:0 0 25px #00f2fe; }
-  .anim-fx-anim_fire .light-beam { background:linear-gradient(0deg, #ff0000 0%, #ff7700 60%, transparent 100%); }
-  .anim-fx-anim_matrix .box-face { border-color:#00ff41; background:#051405; }
-  .anim-fx-anim_matrix .light-beam { background:linear-gradient(0deg, #00ff41 0%, rgba(0,255,65,0.4) 60%, transparent 100%); }
-  .anim-fx-anim_hyper .light-beam { background:linear-gradient(0deg, #ff0000, #ff7700, #00ff41, #00f2fe, #d63bff); animation:rainbowBeam 0.5s linear infinite; }
-  @keyframes rainbowBeam { 0%{filter:hue-rotate(0deg);} 100%{filter:hue-rotate(360deg);} }
 
   .reveal-drop-box { text-align:center; display:none; animation: popUpDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:20; position:relative; }
   @keyframes popUpDrop { from{opacity:0; transform:scale(0.3) translateY(40px);} to{opacity:1; transform:scale(1) translateY(0);} }
   .reveal-item-text { font-family:var(--font-display); font-size:20px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 20px var(--gold); }
-  .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; font-weight:bold; }
+  .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; font-weight:bold; cursor:pointer;}
   @keyframes blinkPrompt { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
   .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:30px; max-width:340px; width:100%; z-index:20; position:relative; }
 
@@ -236,10 +231,10 @@
   <!-- TASKS SCREEN -->
   <div class="screen" id="screen-tasks">
     <h2 class="step-title">AUFGABEN & ERFOLGE</h2>
-    <div class="section-subtitle">🏆 Tägliche Erfolge</div>
-    <div class="tasks-container" id="userAchievementsList"></div>
-    <div class="section-subtitle">📝 Individuelle Aufgaben</div>
+    <div class="section-subtitle">🎮 Spielzeit-Belohnungen</div>
     <div class="tasks-container" id="userTasksList"></div>
+    <div class="section-subtitle">🏆 Allgemeine Erfolge</div>
+    <div class="tasks-container" id="userAchievementsList"></div>
     <button class="btn btn-ghost" id="backFromTasks">← Zurück</button>
   </div>
 
@@ -292,8 +287,8 @@
     <div class="brawl-section active" id="brawl-sub-store">
       <div class="brawl-section-title">👑 VIP & TICKETS</div>
       <div class="brawl-row-scroll">
-        <div class="brawl-card vip-card"><div class="vip-badge">VIP</div><div class="card-icon">👑</div><div class="card-title">VIP-Pass (7 Tage)</div><div class="card-desc">Schaltet exklusive VIP-Items & Kisten frei!</div><button class="buy-btn vip-buy" id="buyVipBtn"></button></div>
-        <div class="brawl-card"><div class="card-icon">🎟️</div><div class="card-title">1 Arcade Ticket</div><div class="card-desc">Zum Öffnen von Kisten im Store.</div><button class="buy-btn" id="buyTicketBrawlBtn"></button></div>
+        <div class="brawl-card vip-card"><div class="vip-badge">VIP</div><div class="card-icon">👑</div><div class="card-title">VIP-Pass (7 Tage)</div><div class="card-desc">Kosten: 50 Coins</div><button class="buy-btn vip-buy" id="buyVipBtn">50 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">🎟️</div><div class="card-title">1 Arcade Ticket</div><div class="card-desc">Kosten: 10 Coins</div><button class="buy-btn" id="buyTicketBrawlBtn">10 🪙 Kaufen</button></div>
       </div>
       <div class="brawl-section-title" style="margin-top:20px;">🎨 FARBIGE DESIGN-THEMEN</div>
       <div class="brawl-row-scroll" id="shopThemesList"></div>
@@ -311,10 +306,10 @@
       <div id="boostsStatusContainer"></div>
       <div class="brawl-section-title" style="margin-top:15px;">🛍️ BOOST STORE</div>
       <div class="brawl-row-scroll">
-        <div class="brawl-card"><div class="card-icon">⚡</div><div class="card-title">1,25x Multiplikator</div><div class="card-desc">Lager (12 Std)</div><button class="buy-btn" id="buyBoostMulti"></button></div>
-        <div class="brawl-card"><div class="card-icon">🛡️</div><div class="card-title">Pechschutz</div><div class="card-desc">Lager (10 Min)</div><button class="buy-btn" id="buyBoostNoDud"></button></div>
-        <div class="brawl-card"><div class="card-icon">🏷️</div><div class="card-title">Rabatt-Pass (15%)</div><div class="card-desc">Lager (20 Min)</div><button class="buy-btn" id="buyBoostDiscount"></button></div>
-        <div class="brawl-card"><div class="card-icon">♾️</div><div class="card-title">Unendlich Spielen</div><div class="card-desc">Lager (12 Std)</div><button class="buy-btn" id="buyBoostInfinite"></button></div>
+        <div class="brawl-card"><div class="card-icon">⚡</div><div class="card-title">1,25x Multiplikator</div><div class="card-desc">Kosten: 30 Coins</div><button class="buy-btn" id="buyBoostMulti">30 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">🛡️</div><div class="card-title">Pechschutz</div><div class="card-desc">Kosten: 15 Coins</div><button class="buy-btn" id="buyBoostNoDud">15 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">🏷️</div><div class="card-title">Rabatt-Pass (15%)</div><div class="card-desc">Kosten: 20 Coins</div><button class="buy-btn" id="buyBoostDiscount">20 🪙 Kaufen</button></div>
+        <div class="brawl-card"><div class="card-icon">♾️</div><div class="card-title">Unendlich Spielen</div><div class="card-desc">Kosten: 100 Coins</div><button class="buy-btn" id="buyBoostInfinite">100 🪙 Kaufen</button></div>
       </div>
     </div>
 
@@ -359,7 +354,7 @@
       <div class="box-lid-3d"><div class="box-lid-face lid-top"></div><div class="box-lid-face lid-front"></div></div>
     </div>
   </div>
-  <div class="reveal-drop-box" id="revealDropBox"><div class="reveal-item-text" id="revealItemText">+10 Münzen 🪙</div><div class="tap-prompt">Klicke weiter, um den Rest zu looten!</div></div>
+  <div class="reveal-drop-box" id="revealDropBox"><div class="reveal-item-text" id="revealItemText">+10 Münzen 🪙</div><div class="tap-prompt" id="continueUnboxingBtn">Klicke hier, um abzuschließen!</div></div>
   <div class="summary-box" id="summaryBox">
     <h3 style="font-family:var(--font-display); color:var(--gold); margin-top:0;">LOOT ÜBERSICHT</h3>
     <div id="summaryItemsList" style="font-size:18px; margin:24px 0; font-weight:bold; color:var(--cyan); text-shadow:0 0 10px rgba(63,224,208,0.5);"></div>
@@ -459,11 +454,7 @@
           <h3 style="margin-top:20px;">Spieleliste</h3><div id="adminGamesList"></div>
         </div>
         <div style="flex:1; min-width:280px;">
-          <h3>Neue Aufgabe</h3>
-          <div class="field"><input type="text" id="newTaskName" placeholder="Beschreibung"></div>
-          <div class="field"><input type="number" id="newTaskReward" placeholder="Belohnung"></div>
-          <button class="btn btn-secondary btn-sm" id="addTaskBtn">+ Hinzufügen</button>
-          <h3 style="margin-top:20px;">Aufgabenliste</h3><div id="adminTasksList"></div>
+          <h3 style="color:var(--cream-dim); font-size:12px;">(Aufgaben werden dynamisch generiert)</h3>
         </div>
       </div>
     </div>
@@ -530,6 +521,19 @@
 <script>
 (function(){
   // ==========================================
+  // PUSH NOTIFICATION PROMPT FIX
+  // ==========================================
+  let pushPrompted = false;
+  function requestPush() {
+    if (!pushPrompted && "Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+        pushPrompted = true;
+    }
+  }
+  requestPush(); // Try directly on load
+  document.body.addEventListener('click', requestPush, { once: true }); // Fallback on first click
+
+  // ==========================================
   // FIREBASE CONFIG
   // ==========================================
   const firebaseConfig = {
@@ -546,14 +550,10 @@
   const db = firebase.database();
   const stateRef = db.ref('arcade_state');
 
-  if ("Notification" in window && Notification.permission !== "denied") {
-    Notification.requestPermission();
-  }
-
   const DEFAULT_USERS = [{
     id: 'u_admin', name: 'Admin', password: '1234', approved: true, isAdmin: true, unlimitedCoins: true,
     coins: 100, tickets: 5, lastDailyClaim: 0, isLocked: false, lockReason: '',
-    unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [],
+    unlockedThemes: ['default'], currentTheme: 'default', completedTasks: [],
     vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'],
     currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
     inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
@@ -577,7 +577,6 @@
     const data = snapshot.val();
     if (data) {
       state = data;
-      // SICHERSTELLEN DASS ADMIN UND ARRAYS IMMER EXISTIEREN
       if(!state.users || !Array.isArray(state.users) || state.users.length === 0) state.users = DEFAULT_USERS;
       if(!state.games) state.games = [];
       if(!state.tasks) state.tasks = [];
@@ -585,7 +584,6 @@
       if(!state.logs) state.logs = [];
       if(!state.notifications) state.notifications = [];
 
-      // Check Push Notifications
       if(state.notifications.length > lastNotifCount && lastNotifCount > 0) {
         const newest = state.notifications[state.notifications.length - 1];
         if("Notification" in window && Notification.permission === "granted") {
@@ -635,6 +633,7 @@
       if(!currentUser.unlockedThemes) currentUser.unlockedThemes = ['default'];
       if(!currentUser.inventory) currentUser.inventory = { multi:0, noDud:0, discount:0, infinite:0 };
       if(!currentUser.boosts) currentUser.boosts = { multi:0, noDud:0, discount:0, infinite:0 };
+      if(!currentUser.completedTasks) currentUser.completedTasks = [];
 
       applyTheme(currentUser.currentTheme || 'default');
       
@@ -645,16 +644,227 @@
       $('ticketsHome').textContent = currentUser.tickets || 0;
       $('openAdminDashboardBtn').style.display = currentUser.isAdmin ? 'block' : 'none';
 
+      // Daily Reward Button Status Check
+      const timeSinceClaim = Date.now() - (currentUser.lastDailyClaim || 0);
+      if(timeSinceClaim > 86400000) {
+         $('dailyRewardBtn').textContent = '🎁 Tägliche Belohnung abholen (20 🪙)';
+         $('dailyRewardBtn').disabled = false;
+         $('dailyRewardBtn').style.opacity = '1';
+      } else {
+         const left = Math.ceil((86400000 - timeSinceClaim) / 3600000);
+         $('dailyRewardBtn').textContent = `⏳ Belohnung in ${left} Std.`;
+         $('dailyRewardBtn').disabled = true;
+         $('dailyRewardBtn').style.opacity = '0.5';
+      }
+
       renderGameGrid(); renderLogsTab(); renderAnalyticsTab(); renderAdminAccounts();
     } else { applyTheme('default'); }
   }
 
   // ==========================
-  // LOGIN / LOGOUT LOGIC (REPARIERT)
+  // SHOP & UNBOXING & REWARDS
+  // ==========================
+  $('dailyRewardBtn').addEventListener('click', () => {
+    const now = Date.now();
+    if (now - (currentUser.lastDailyClaim || 0) > 86400000) {
+       currentUser.coins += 20;
+       currentUser.lastDailyClaim = now;
+       addLog(currentUser.id, currentUser.name, 'shop', 'Tägliche Belohnung', 20);
+       saveState().then(() => {
+           alert('Glückwunsch! +20 Coins erhalten.');
+           renderAll();
+       });
+    }
+  });
+
+  $('openEpicShopBtn').addEventListener('click', () => {
+     $('shopCoinsVal').textContent = currentUser.coins;
+     $('shopTicketsVal').textContent = currentUser.tickets || 0;
+     $('epicShopFullscreen').classList.add('active');
+  });
+
+  $('closeEpicShopBtn').addEventListener('click', () => {
+     $('epicShopFullscreen').classList.remove('active');
+     renderAll();
+  });
+
+  document.querySelectorAll('.shop-sidebar-btn').forEach(btn => {
+     btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.shop-sidebar-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.brawl-section').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        $(btn.dataset.brawltab).classList.add('active');
+     });
+  });
+
+  function buyItem(cost, action, name) {
+     if(currentUser.coins >= cost || currentUser.unlimitedCoins) {
+         if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
+         action();
+         addLog(currentUser.id, currentUser.name, 'shop', name + ' gekauft', -cost);
+         saveState().then(() => {
+             $('shopCoinsVal').textContent = currentUser.coins;
+             $('shopTicketsVal').textContent = currentUser.tickets;
+             alert(name + " erfolgreich gekauft!");
+         });
+     } else {
+         alert("Nicht genug Münzen!");
+     }
+  }
+
+  $('buyVipBtn').addEventListener('click', () => buyItem(50, () => { currentUser.vipUntil = Date.now() + 7*86400000; }, "VIP-Pass"));
+  $('buyTicketBrawlBtn').addEventListener('click', () => buyItem(10, () => { currentUser.tickets = (currentUser.tickets||0) + 1; }, "1 Ticket"));
+  $('buyBoostMulti').addEventListener('click', () => buyItem(30, () => { currentUser.inventory.multi = (currentUser.inventory.multi||0) + 1; }, "Multiplikator-Boost"));
+  $('buyBoostNoDud').addEventListener('click', () => buyItem(15, () => { currentUser.inventory.noDud = (currentUser.inventory.noDud||0) + 1; }, "Pechschutz-Boost"));
+  $('buyBoostDiscount').addEventListener('click', () => buyItem(20, () => { currentUser.inventory.discount = (currentUser.inventory.discount||0) + 1; }, "Rabatt-Boost"));
+  $('buyBoostInfinite').addEventListener('click', () => buyItem(100, () => { currentUser.inventory.infinite = (currentUser.inventory.infinite||0) + 1; }, "Unendlich-Boost"));
+
+  window.start3dUnboxing = function(tier) {
+     const costs = [0, 1, 2, 4, 6];
+     if((currentUser.tickets||0) < costs[tier] && !currentUser.unlimitedCoins) {
+         alert("Nicht genug Tickets!"); return;
+     }
+     if(!currentUser.unlimitedCoins) currentUser.tickets -= costs[tier];
+
+     $('epicShopFullscreen').classList.remove('active');
+     $('unboxingFullscreen').classList.add('active');
+     $('unboxingFullscreen').classList.add('shaking');
+     $('unboxingFullscreen').classList.remove('opened');
+     $('box3dContainer').style.display = 'block';
+     $('revealDropBox').style.display = 'none';
+     $('summaryBox').style.display = 'none';
+     $('unboxingTitle').textContent = "BOX WIRD GEÖFFNET...";
+
+     setTimeout(() => {
+         $('unboxingFullscreen').classList.remove('shaking');
+         $('unboxingFullscreen').classList.add('opened');
+         setTimeout(() => showLoot(tier), 800);
+     }, 1500);
+  };
+
+  function showLoot(tier) {
+     $('box3dContainer').style.display = 'none';
+     $('revealDropBox').style.display = 'block';
+     // Random Coins calculation based on Tier
+     const coinsWon = tier * 10 + Math.floor(Math.random() * (tier * 15));
+     $('revealItemText').textContent = `+${coinsWon} Münzen 🪙`;
+     currentUser.coins += coinsWon;
+     addLog(currentUser.id, currentUser.name, 'lootbox', `Tier ${tier} Kiste geöffnet`, coinsWon);
+     saveState();
+
+     $('continueUnboxingBtn').onclick = () => {
+         $('revealDropBox').style.display = 'none';
+         $('summaryBox').style.display = 'block';
+         $('summaryItemsList').innerHTML = `${coinsWon} Münzen 🪙<br><small style="color:var(--cream-dim)">Zum Account hinzugefügt!</small>`;
+     };
+  }
+
+  $('finishUnboxingBtn').addEventListener('click', () => {
+     $('unboxingFullscreen').classList.remove('active');
+     renderAll();
+  });
+
+  // ==========================
+  // DYNAMIC TASKS & ACHIEVEMENTS
+  // ==========================
+  $('tasksBtn').addEventListener('click', () => {
+    renderTasks();
+    showScreen('screen-tasks');
+  });
+
+  function renderTasks() {
+     const achList = $('userAchievementsList'); achList.innerHTML = '';
+     const tList = $('userTasksList'); tList.innerHTML = '';
+     if(!currentUser.completedTasks) currentUser.completedTasks = [];
+
+     // 1. Calculate Playtime per Game for the Current User
+     const userHist = (state.history || []).filter(h => h.userId === currentUser.id && h.type === 'game');
+     const gameTimes = {};
+     userHist.forEach(h => {
+         if(!gameTimes[h.metadata.gameId]) gameTimes[h.metadata.gameId] = 0;
+         gameTimes[h.metadata.gameId] += h.durationMin;
+     });
+
+     const timeMilestones = [
+         { min: 10, reward: 2 },
+         { min: 30, reward: 5 },
+         { min: 60, reward: 10 },
+         { min: 120, reward: 25 }
+     ];
+
+     let availableTasks = [];
+
+     // 2. Generate tasks dynamically for ALL games in the database
+     (state.games || []).forEach(g => {
+         const played = gameTimes[g.id] || 0;
+         timeMilestones.forEach(ms => {
+             const tId = `play_${g.id}_${ms.min}`;
+             const done = played >= ms.min;
+             const claimed = currentUser.completedTasks.includes(tId);
+             availableTasks.push({ id: tId, title: `${g.name}: ${ms.min} Min. spielen`, reward: ms.reward, done, claimed, type: 'game' });
+         });
+     });
+
+     // 3. Ten (10) Additional Special Tasks
+     const totalGameMins = Object.values(gameTimes).reduce((a,b)=>a+b, 0);
+     const extraTasks = [
+         { id: 't_vip', title: 'Werde VIP', reward: 50, done: isVip(currentUser), type: 'ach' },
+         { id: 't_first_game', title: 'Erstes Spiel starten', reward: 5, done: userHist.length > 0, type: 'ach' },
+         { id: 't_theme', title: 'Ein Theme freischalten', reward: 10, done: currentUser.unlockedThemes.length > 1, type: 'ach' },
+         { id: 't_hoarder', title: 'Sammle insgesamt 100 Coins', reward: 20, done: currentUser.coins >= 100 || currentUser.unlimitedCoins, type: 'ach' },
+         { id: 't_ticket', title: 'Besitze 5 Tickets', reward: 10, done: (currentUser.tickets||0) >= 5, type: 'ach' },
+         { id: 't_expert', title: 'Ein Spiel für 1 Std. spielen', reward: 15, done: Object.values(gameTimes).some(t => t >= 60), type: 'ach' },
+         { id: 't_dedication', title: 'Spiele 5 Sessions', reward: 10, done: userHist.length >= 5, type: 'ach' },
+         { id: 't_variety', title: 'Spiele 3 versch. Spiele', reward: 15, done: Object.keys(gameTimes).length >= 3, type: 'ach' },
+         { id: 't_rich', title: 'Sammle insgesamt 200 Coins', reward: 30, done: currentUser.coins >= 200 || currentUser.unlimitedCoins, type: 'ach' },
+         { id: 't_ultra', title: 'Insgesamt 5 Stunden spielen', reward: 50, done: totalGameMins >= 300, type: 'ach' }
+     ];
+
+     extraTasks.forEach(t => {
+         t.claimed = currentUser.completedTasks.includes(t.id);
+         availableTasks.push(t);
+     });
+
+     // 4. Render all generated tasks
+     availableTasks.forEach(t => {
+         const div = document.createElement('div');
+         div.className = 'task-item' + (t.claimed ? ' completed' : '');
+         div.innerHTML = `<div><b>${t.title}</b><br><small>Belohnung: ${t.reward} 🪙</small></div>`;
+         
+         if(t.claimed) {
+             div.innerHTML += `<button class="task-claim-btn" disabled style="background:#555">✓</button>`;
+         } else if (t.done) {
+             const btn = document.createElement('button');
+             btn.className = 'task-claim-btn';
+             btn.textContent = 'Abholen';
+             btn.onclick = () => claimTask(t.id, t.reward);
+             div.appendChild(btn);
+         } else {
+             div.innerHTML += `<button class="task-claim-btn" disabled style="background:#4a3a75">🔒</button>`;
+         }
+
+         if(t.type === 'game') tList.appendChild(div);
+         else achList.appendChild(div);
+     });
+  }
+
+  function claimTask(tId, reward) {
+     if(!currentUser.completedTasks) currentUser.completedTasks = [];
+     currentUser.completedTasks.push(tId);
+     currentUser.coins += reward;
+     addLog(currentUser.id, currentUser.name, 'tasks', `Aufgabe erledigt`, reward);
+     saveState().then(() => {
+         renderTasks();
+         renderAll();
+         alert(`Glückwunsch! +${reward} 🪙 erhalten.`);
+     });
+  }
+
+  // ==========================
+  // LOGIN / LOGOUT LOGIC
   // ==========================
   function renderUserSelectList(){
     const list = $('userSelectList'); list.innerHTML = '';
-    // FILTER GEFIXT: Zeigt alle an, es sei denn approved ist explizit false
     const validUsers = (state.users || []).filter(u => u.approved !== false);
 
     validUsers.forEach(u => {
@@ -662,7 +872,6 @@
       card.innerHTML = `<span class="user-info">👤 ${escapeHtml(u.name)} ${isVip(u)?'👑':''}</span><span>${u.isAdmin ? '👑 Admin' : '🪙 '+(u.unlimitedCoins?'♾️':u.coins)}</span>`;
       card.addEventListener('click', () => {
         if(u.isLocked) { $('lockedReasonText').textContent = u.lockReason || 'Gesperrt.'; showScreen('screen-locked'); return; }
-        // Gemerkte Logins direkt reinlassen
         if(rememberedUsers.includes(u.id)) { loginAsUser(u); }
         else {
           $('userPasswordInput').value = ''; $('passwordModalMsg').textContent = '';
@@ -685,7 +894,6 @@
     showScreen('screen-home'); renderAll(); 
   }
 
-  // SETTINGS MODAL & LOGOUT
   $('openSettingsBtn').addEventListener('click', () => { $('newPasswordInput').value = ''; $('settingsModal').classList.add('active'); });
   $('closeSettingsBtn').addEventListener('click', () => $('settingsModal').classList.remove('active'));
   
@@ -935,7 +1143,7 @@
     if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
     state.users.push({
       id: 'u_' + Date.now(), name, password: pw, approved: true, isAdmin: false, unlimitedCoins: false,
-      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
+      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedTasks: [], forcedLoot: null,
       vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
       inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
     });
@@ -944,7 +1152,6 @@
 
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
   $('playBtn').addEventListener('click', () => showScreen('screen-game'));
-  $('tasksBtn').addEventListener('click', () => showScreen('screen-tasks'));
   $('backFromTasks').addEventListener('click', () => showScreen('screen-home'));
   $('backFromGame').addEventListener('click', () => showScreen('screen-home'));
   $('backFromLocked').addEventListener('click', () => showScreen('screen-auth'));
