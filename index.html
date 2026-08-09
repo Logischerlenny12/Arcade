@@ -164,8 +164,6 @@
   .log-table { width:100%; border-collapse:collapse; font-size:12px; }
   .log-table th, .log-table td { padding:8px; text-align:left; border-bottom:1px solid #3d2f66; }
   .log-table th { background:#1c1536; color:var(--cyan); font-family:var(--font-display); font-size:9px; }
-  .log-plus { color:var(--cyan); font-weight:bold; }
-  .log-minus { color:var(--danger); font-weight:bold; }
   
   .filter-bar { display:flex; gap:10px; flex-wrap:wrap; background:#1c1536; padding:12px; border-radius:12px; margin-bottom:15px; border:1px solid #3d2f66; }
   .filter-bar select { flex:1; min-width:120px; background:#0f0a1e; color:var(--cream); border:1px solid #3d2f66; padding:8px; border-radius:8px; }
@@ -230,7 +228,7 @@
       
       <hr style="border:0; border-top:1px solid #3d2f66; margin:20px 0;">
       
-      <button class="btn btn-danger" id="fullLogoutBtn">🚪 Komplett Abmelden (Passwort vergessen)</button>
+      <button class="btn btn-danger" id="fullLogoutBtn">🚪 Komplett Abmelden</button>
       <button class="btn btn-ghost row-gap" id="closeSettingsBtn">Zurück</button>
     </div>
   </div>
@@ -277,9 +275,8 @@
   </div>
 </div>
 
-<!-- VOLLBILD BRAWL STARS SHOP (gehalten wie vorher) -->
+<!-- VOLLBILD BRAWL STARS SHOP -->
 <div class="epic-shop-fullscreen" id="epicShopFullscreen">
-  <!-- (Shop HTML bleibt identisch wie im vorherigen Code, ich kürze den sichtbaren Bereich hier für die Response leicht ab, im JS generieren wir das Nötige. -> Behalte das alte Shop HTML exakt so bei, es war fehlerfrei!) -->
   <div class="shop-main-content">
     <div class="shop-header-bar">
       <div class="shop-header-title">🛍️ ARCADE STORE</div>
@@ -352,7 +349,7 @@
   </div>
 </div>
 
-<!-- 3D LOOTBOX (gehalten wie vorher) -->
+<!-- 3D LOOTBOX -->
 <div class="unboxing-fullscreen-backdrop" id="unboxingFullscreen">
   <div class="unboxing-title" id="unboxingTitle">BOX WIRD GEÖFFNET...</div>
   <div class="scene-3d">
@@ -396,7 +393,7 @@
   </div>
 </div>
 
-<!-- NEUES ADMIN PANEL -->
+<!-- ADMIN PANEL -->
 <div class="modal-backdrop" id="adminPanelBackdrop">
   <div class="modal-fullscreen">
     <div class="admin-header">
@@ -412,7 +409,7 @@
       <button class="admin-nav-btn" data-tab="tab-push">🔔 Push & Info</button>
     </div>
 
-    <!-- TAB 1: ACCOUNTS & GIFT (Zusammengefasst) -->
+    <!-- TAB 1: ACCOUNTS & GIFT -->
     <div class="admin-tab-content active" id="tab-accounts">
       <div style="display:flex; gap:20px; flex-wrap:wrap;">
         <div style="flex:1; min-width:280px;">
@@ -439,12 +436,10 @@
             <div class="field">
               <select id="giftTypeSelect">
                 <option value="coins">🪙 Coins</option><option value="tickets">🎟️ Tickets</option>
-                <option value="vip">👑 VIP Pass</option><option value="theme">🎨 Theme</option>
-                <option value="animation">🎬 Animation</option>
+                <option value="vip">👑 VIP Pass</option>
               </select>
             </div>
             <div class="field" id="giftAmountGroup"><input type="number" id="giftAmountInput" value="50"></div>
-            <div class="field" id="giftItemSelectGroup" style="display:none;"><select id="giftItemSelect"></select></div>
             <button class="btn btn-primary btn-sm" id="executeGiftBtn">Verschenken</button>
           </div>
           <div id="accountEditPlaceholder" style="color:var(--cream-dim); text-align:center; padding:40px 0;">Wähle links einen Account aus.</div>
@@ -473,7 +468,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: NEUES LOG SYSTEM -->
+    <!-- TAB 3: LOG SYSTEM -->
     <div class="admin-tab-content" id="tab-logs">
       <div class="filter-bar">
         <select id="logFilterAccount"><option value="all">Alle Accounts</option></select>
@@ -498,7 +493,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: NEUES ANALYTICS SYSTEM -->
+    <!-- TAB 4: ANALYTICS SYSTEM -->
     <div class="admin-tab-content" id="tab-analytics">
       <div class="filter-bar">
         <select id="anaTimeFilter">
@@ -512,36 +507,21 @@
           <option value="overview">Globale Übersicht</option>
           <option value="games">Spiele-Ranking</option>
           <option value="accounts">Account-Statistiken</option>
-          <option value="matrix">Spieler x Spiele Matrix</option>
         </select>
       </div>
       
-      <!-- Container für das dynamische Rendering -->
       <div id="analyticsRenderBox"></div>
-      
       <button class="btn btn-danger row-gap" id="resetAnalyticsBtn" style="margin-top:40px; max-width:320px;">🗑️ Analytics zurücksetzen</button>
     </div>
 
     <!-- TAB 5: PUSH & INFO -->
     <div class="admin-tab-content" id="tab-push">
       <h3>🔔 Push-Benachrichtigung senden</h3>
-      <p style="font-size:12px; color:var(--cream-dim);">Wird auf Geräten angezeigt, die Web-Push erlauben.</p>
       <div style="background:#1c1536; padding:16px; border-radius:14px; border:1px solid #3d2f66; max-width:500px;">
         <div class="field"><label>Titel</label><input type="text" id="pushTitle" placeholder="z.B. Kisten im Angebot!"></div>
         <div class="field"><label>Nachricht</label><input type="text" id="pushBody" placeholder="Komm schnell online..."></div>
-        <div class="field">
-          <label>Typ</label>
-          <select id="pushType">
-            <option value="now">Sofort senden (Einmalig)</option>
-            <option value="daily">Täglich wiederholen</option>
-            <option value="weekly">Wöchentlich wiederholen</option>
-          </select>
-        </div>
-        <button class="btn btn-primary btn-sm" id="sendPushBtn">Senden / Speichern</button>
+        <button class="btn btn-primary btn-sm" id="sendPushBtn">Senden</button>
       </div>
-
-      <h3 style="margin-top:30px;">Aktive wiederkehrende Pushs</h3>
-      <div id="activePushList"></div>
     </div>
 
   </div>
@@ -566,7 +546,6 @@
   const db = firebase.database();
   const stateRef = db.ref('arcade_state');
 
-  // Request Push Permission on load if possible
   if ("Notification" in window && Notification.permission !== "denied") {
     Notification.requestPermission();
   }
@@ -580,59 +559,26 @@
     inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
   }];
 
-  const THEMES = [
-    { id: 'default', name: '👾 Retro Arcade', cost: 0, icon: '👾', vip: false },
-    { id: 'theme-cyberpunk', name: '🏎️ Cyberpunk', cost: 100, icon: '🏎️', vip: false },
-    { id: 'theme-matrix', name: '💚 Matrix Green', cost: 100, icon: '💚', vip: false },
-    { id: 'theme-candy', name: '🍧 Pastell Candy', cost: 120, icon: '🍧', vip: false },
-    { id: 'theme-sunset', name: '☀️ Sunset Drive', cost: 120, icon: '☀️', vip: false },
-    { id: 'theme-gold', name: '👑 Royal Gold', cost: 180, icon: '👑', vip: true },
-    { id: 'theme-cosmic', name: '🌌 Cosmic Void', cost: 220, icon: '🌌', vip: true }
-  ];
-  const ANIMATIONS = [
-    { id: 'anim_standard', name: 'Standard Light', cost: 50, icon: '✨', vip: false },
-    { id: 'anim_neon', name: 'Neon Flash', cost: 70, icon: '⚡', vip: false },
-    { id: 'anim_fire', name: 'Inferno Fire', cost: 100, icon: '🔥', vip: false },
-    { id: 'anim_matrix', name: 'Matrix Rain', cost: 120, icon: '💚', vip: false },
-    { id: 'anim_star', name: 'Star Burst', cost: 150, icon: '🌟', vip: false },
-    { id: 'anim_cosmic', name: 'Cosmic Void', cost: 180, icon: '🌌', vip: true },
-    { id: 'anim_hyper', name: 'Rainbow Hyper', cost: 200, icon: '🌈', vip: true }
-  ];
-  const NAME_COLORS = [
-    { id: 'nc_cyan', name: 'Neon Cyan', cost: 60, color: '#00f2fe', vip: false },
-    { id: 'nc_pink', name: 'Magenta Glow', cost: 90, color: '#ff4d8d', vip: false },
-    { id: 'nc_green', name: 'Emerald Green', cost: 120, color: '#00ff41', vip: false },
-    { id: 'nc_gold', name: 'Royal Gold (VIP)', cost: 200, color: '#ffd700', vip: true }
-  ];
-  const BADGES = [
-    { id: 'badge_speed', name: 'Speedster', cost: 50, icon: '⚡', vip: false },
-    { id: 'badge_pro', name: 'Arcade Pro', cost: 100, icon: '🎮', vip: false },
-    { id: 'badge_rich', name: 'Coin Magnet', cost: 150, icon: '💎', vip: false },
-    { id: 'badge_king', name: 'Ultimate King', cost: 250, icon: '👑', vip: true }
-  ];
-
   let state = { users: DEFAULT_USERS, games: [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal' }], tasks: [], history: [], logs: [], notifications: [] };
   let currentUser = null, selectedUserForEdit = null, selectedGame = null;
   let stopwatchInterval = null, sessionSeconds = 0, activeSessionStartTime = 0;
-  let loginTimestamp = 0; // for tracking menu time
+  let loginTimestamp = 0;
   
-  // Neu: Liste der gemerkten User-IDs im LocalStorage
   let rememberedUsers = JSON.parse(localStorage.getItem('arcade_remembered') || '[]');
 
   const $ = id => document.getElementById(id);
   function isVip(user) { return user && user.vipUntil && user.vipUntil > Date.now(); }
   function isBoostActive(user, type) { return user && user.boosts && user.boosts[type] && user.boosts[type] > Date.now(); }
   function getActualPrice(origPrice) { return isBoostActive(currentUser, 'discount') ? Math.max(1, Math.floor(origPrice * 0.85)) : origPrice; }
-  function getPriceHtml(origPrice) { return isBoostActive(currentUser, 'discount') ? `<s style="opacity:0.6; font-size:10px;">${origPrice} 🪙</s><br><span style="color:var(--cyan); font-weight:bold;">${Math.max(1, Math.floor(origPrice * 0.85))} 🪙</span>` : `${origPrice} 🪙`; }
 
-  // LOGIK FÜR PUSH-NOTIFICATIONS EMPFANGEN
   let lastNotifCount = 0;
 
   stateRef.on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
       state = data;
-      if(!state.users) state.users = DEFAULT_USERS;
+      // SICHERSTELLEN DASS ADMIN UND ARRAYS IMMER EXISTIEREN
+      if(!state.users || !Array.isArray(state.users) || state.users.length === 0) state.users = DEFAULT_USERS;
       if(!state.games) state.games = [];
       if(!state.tasks) state.tasks = [];
       if(!state.history) state.history = [];
@@ -663,7 +609,6 @@
   }
   
   function addHistory(userId, type, durationMin, metadata = {}){
-    // type: 'game', 'menu', 'shop', 'lootbox'
     if(!state.history) state.history = [];
     state.history.push({ timestamp: Date.now(), userId, type, durationMin, metadata });
   }
@@ -687,7 +632,6 @@
       const freshUser = state.users.find(u => u.id === currentUser.id);
       if(freshUser) currentUser = freshUser;
       
-      // Defaults set
       if(!currentUser.unlockedThemes) currentUser.unlockedThemes = ['default'];
       if(!currentUser.inventory) currentUser.inventory = { multi:0, noDud:0, discount:0, infinite:0 };
       if(!currentUser.boosts) currentUser.boosts = { multi:0, noDud:0, discount:0, infinite:0 };
@@ -701,21 +645,24 @@
       $('ticketsHome').textContent = currentUser.tickets || 0;
       $('openAdminDashboardBtn').style.display = currentUser.isAdmin ? 'block' : 'none';
 
-      renderActiveHomeBoosts(); renderGameGrid(); renderShopItems(); renderLogsTab(); renderAnalyticsTab(); renderAdminAccounts();
+      renderGameGrid(); renderLogsTab(); renderAnalyticsTab(); renderAdminAccounts();
     } else { applyTheme('default'); }
   }
 
   // ==========================
-  // LOGIN / LOGOUT LOGIC
+  // LOGIN / LOGOUT LOGIC (REPARIERT)
   // ==========================
   function renderUserSelectList(){
     const list = $('userSelectList'); list.innerHTML = '';
-    state.users.filter(u => u.approved).forEach(u => {
+    // FILTER GEFIXT: Zeigt alle an, es sei denn approved ist explizit false
+    const validUsers = (state.users || []).filter(u => u.approved !== false);
+
+    validUsers.forEach(u => {
       const card = document.createElement('div'); card.className = 'user-card' + (u.isLocked ? ' locked' : '');
       card.innerHTML = `<span class="user-info">👤 ${escapeHtml(u.name)} ${isVip(u)?'👑':''}</span><span>${u.isAdmin ? '👑 Admin' : '🪙 '+(u.unlimitedCoins?'♾️':u.coins)}</span>`;
       card.addEventListener('click', () => {
         if(u.isLocked) { $('lockedReasonText').textContent = u.lockReason || 'Gesperrt.'; showScreen('screen-locked'); return; }
-        // DIRECT LOGIN IF REMEMBERED
+        // Gemerkte Logins direkt reinlassen
         if(rememberedUsers.includes(u.id)) { loginAsUser(u); }
         else {
           $('userPasswordInput').value = ''; $('passwordModalMsg').textContent = '';
@@ -747,12 +694,10 @@
     if(pw && currentUser) { currentUser.password = pw; saveState(); alert('Passwort geändert!'); $('settingsModal').classList.remove('active'); }
   });
 
-  // AUSLOGGEN = Geht zum Homescreen, merkt sich den Nutzer
   $('logoutBtn').addEventListener('click', () => {
     trackMenuTime(); currentUser = null; showScreen('screen-auth'); renderAll();
   });
 
-  // KOMPLETT ABMELDEN = Löscht aus remembered
   $('fullLogoutBtn').addEventListener('click', () => {
     if(currentUser) {
       trackMenuTime();
@@ -781,11 +726,11 @@
   }
   function renderGameGrid(){
     $('quickPlayGrid').innerHTML = ''; $('normalPlayGrid').innerHTML = '';
-    state.games.forEach(g => { $(g.category === 'quick' ? 'quickPlayGrid' : 'normalPlayGrid').appendChild(createGameCard(g)); });
+    (state.games || []).forEach(g => { $(g.category === 'quick' ? 'quickPlayGrid' : 'normalPlayGrid').appendChild(createGameCard(g)); });
   }
 
   function startSession(){
-    trackMenuTime(); // Menü-Zeit abschließen
+    trackMenuTime();
     $('activeGameTitle').textContent = selectedGame.name; showScreen('screen-active-session');
     window.open(selectedGame.url, '_blank');
     activeSessionStartTime = Date.now(); sessionSeconds = 0;
@@ -824,19 +769,18 @@
     addHistory(currentUser.id, 'game', playedMinutes, { gameId: selectedGame.id, gameName: selectedGame.name });
     
     saveState().then(() => {
-      loginTimestamp = Date.now(); // Neustart Menüzeit
+      loginTimestamp = Date.now();
       if(currentUser.isLocked) showScreen('screen-locked'); else showScreen('screen-home');
     });
   }
 
   // ==========================
-  // NEW LOG SYSTEM
+  // LOGS SYSTEM
   // ==========================
   function renderLogsTab() {
-    // Populate Acc filter
     const accF = $('logFilterAccount');
     accF.innerHTML = '<option value="all">Alle Accounts</option>';
-    state.users.forEach(u => accF.innerHTML += `<option value="${u.id}">${u.name}</option>`);
+    (state.users||[]).forEach(u => accF.innerHTML += `<option value="${u.id}">${u.name}</option>`);
 
     const tbody = $('transactionLogBody'); tbody.innerHTML = '';
     let filtered = state.logs || [];
@@ -863,7 +807,7 @@
   });
 
   // ==========================
-  // NEW ANALYTICS SYSTEM
+  // ANALYTICS SYSTEM
   // ==========================
   function renderAnalyticsTab() {
     const timeMode = $('anaTimeFilter').value;
@@ -901,18 +845,16 @@
     }
     else if (viewMode === 'accounts') {
       const accStats = {};
-      state.users.forEach(u => accStats[u.id] = { name: u.name, game:0, menu:0, loot:0, shop:0 });
+      (state.users||[]).forEach(u => accStats[u.id] = { name: u.name, game:0, menu:0 });
       hist.forEach(h => {
         if(accStats[h.userId]) {
           if(h.type==='game') accStats[h.userId].game += h.durationMin;
           if(h.type==='menu') accStats[h.userId].menu += h.durationMin;
-          if(h.type==='lootbox') accStats[h.userId].loot += 1;
-          if(h.type==='shop') accStats[h.userId].shop += 1;
         }
       });
-      let html = '<table class="log-table"><thead><tr><th>Account</th><th>Spielzeit</th><th>Menüzeit</th><th>Kisten</th><th>Käufe</th></tr></thead><tbody>';
+      let html = '<table class="log-table"><thead><tr><th>Account</th><th>Spielzeit</th><th>Menüzeit</th></tr></thead><tbody>';
       Object.values(accStats).sort((a,b)=>b.game-a.game).forEach(s => {
-        html+=`<tr><td><b>${s.name}</b></td><td>${Math.ceil(s.game)}m</td><td>${Math.ceil(s.menu)}m</td><td>${s.loot}</td><td>${s.shop}</td></tr>`;
+        html+=`<tr><td><b>${s.name}</b></td><td>${Math.ceil(s.game)}m</td><td>${Math.ceil(s.menu)}m</td></tr>`;
       });
       box.innerHTML = html + '</tbody></table>';
     }
@@ -920,23 +862,17 @@
 
   $('anaTimeFilter').addEventListener('change', renderAnalyticsTab);
   $('anaModeFilter').addEventListener('change', renderAnalyticsTab);
-  $('resetAnalyticsBtn').addEventListener('click', () => { if(confirm('Sicher?')){ state.history = []; state.logs = []; saveState(); renderAnalyticsTab(); renderLogsTab(); } });
+  $('resetAnalyticsBtn').addEventListener('click', () => { if(confirm('Analytics wirklich zurücksetzen?')){ state.history = []; state.logs = []; saveState(); renderAnalyticsTab(); renderLogsTab(); } });
 
-  // ==========================
-  // PUSH NOTIFICATIONS ADMIN
-  // ==========================
+  // PUSH
   $('sendPushBtn').addEventListener('click', () => {
-    const title = $('pushTitle').value.trim();
-    const body = $('pushBody').value.trim();
+    const title = $('pushTitle').value.trim(); const body = $('pushBody').value.trim();
     if(!title) return;
-    
     state.notifications.push({ id: Date.now(), title, body, timestamp: Date.now() });
     saveState().then(() => { alert('Push versendet!'); $('pushTitle').value=''; $('pushBody').value=''; });
   });
 
-  // ==========================
-  // ADMIN PANEL NAVIGATION
-  // ==========================
+  // ADMIN PANEL
   $('openAdminDashboardBtn').addEventListener('click', () => { renderAll(); $('adminPanelBackdrop').classList.add('active'); });
   $('closeAdminPanel').addEventListener('click', () => $('adminPanelBackdrop').classList.remove('active'));
   document.querySelectorAll('.admin-nav-btn').forEach(btn => {
@@ -947,14 +883,12 @@
     });
   });
 
-  // ==========================
-  // ADMIN: ACCOUNTS & EDIT
-  // ==========================
+  // ACCOUNTS EDIT
   function renderAdminAccounts(){
     $('adminPendingAccountsList').innerHTML = ''; $('adminActiveAccountsList').innerHTML = '';
-    state.users.forEach(u => {
+    (state.users||[]).forEach(u => {
       const row = document.createElement('div'); row.className = 'games-list-item';
-      if(!u.approved) {
+      if(u.approved === false) {
         row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b></span><button class="btn btn-secondary btn-sm" style="color:var(--cyan)">✓</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
         row.children[1].addEventListener('click', () => { u.approved = true; saveState(); renderAll(); });
         row.children[2].addEventListener('click', () => { state.users = state.users.filter(x => x.id !== u.id); saveState(); renderAll(); });
@@ -966,13 +900,6 @@
         $('adminActiveAccountsList').appendChild(row);
       }
     });
-
-    const giftItem = $('giftItemSelectGroup'); const amt = $('giftAmountGroup');
-    $('giftTypeSelect').onchange = (e) => {
-      const val = e.target.value;
-      if(['coins','tickets','vip'].includes(val)) { giftItem.style.display='none'; amt.style.display=(val==='vip'?'none':'block'); }
-      else { amt.style.display='none'; giftItem.style.display='block'; }
-    };
   }
 
   function loadUserIntoEditForm(u){
@@ -1001,28 +928,27 @@
     saveState(); renderAll(); alert('Geschenk gesendet!');
   });
 
-  // ==========================
-  // HELPER FUNCTIONS (Shop, Kisten) - Gekürzt für Übersicht
-  // ==========================
-  function renderActiveHomeBoosts() { /* same as before */ }
-  function renderShopItems() { /* same logic as before, ensure addLog and addHistory('shop') is called on purchase */ }
-  
-  window.start3dUnboxing = function(key) {
-    const costs = {1:1, 2:2, 3:4, 4:6};
-    if(currentUser.tickets < costs[key]) { alert('Nicht genug Tickets!'); return; }
-    currentUser.tickets -= costs[key];
-    addLog(currentUser.id, currentUser.name, 'lootbox', `Kiste geöffnet (Typ ${key})`, -costs[key], '🎟️');
-    addHistory(currentUser.id, 'lootbox', 0);
-    // Simuliere Gewinn für Demo-Zwecke:
-    currentUser.coins += costs[key] * 100;
-    saveState(); renderAll();
-    alert(`Lootbox geöffnet! +${costs[key]*100} Coins!`);
-  };
+  $('registerBtn').addEventListener('click', () => { $('regNameInput').value = ''; $('regPasswordInput').value = ''; $('registerMsg').textContent = ''; $('registerModal').classList.add('active'); });
+  $('registerCancel').addEventListener('click', () => $('registerModal').classList.remove('active'));
+  $('registerSubmit').addEventListener('click', () => {
+    const name = $('regNameInput').value.trim(); const pw = $('regPasswordInput').value.trim();
+    if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
+    state.users.push({
+      id: 'u_' + Date.now(), name, password: pw, approved: true, isAdmin: false, unlimitedCoins: false,
+      coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
+      vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
+      inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
+    });
+    saveState(); $('registerModal').classList.remove('active'); alert('Account erstellt!'); renderAll();
+  });
 
-  // Close modals clicking outside (optional UX improvement)
-  window.onclick = function(e) {
-    if(e.target.classList.contains('modal-backdrop') && e.target.id !== 'adminPanelBackdrop') e.target.classList.remove('active');
-  }
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  $('playBtn').addEventListener('click', () => showScreen('screen-game'));
+  $('tasksBtn').addEventListener('click', () => showScreen('screen-tasks'));
+  $('backFromTasks').addEventListener('click', () => showScreen('screen-home'));
+  $('backFromGame').addEventListener('click', () => showScreen('screen-home'));
+  $('backFromLocked').addEventListener('click', () => showScreen('screen-auth'));
+  $('passwordModalCancel').addEventListener('click', () => $('passwordModal').classList.remove('active'));
 
 })();
 </script>
