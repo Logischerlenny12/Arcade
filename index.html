@@ -223,7 +223,10 @@
   <div class="screen" id="screen-home">
     <div class="user-badge-header">
       <span id="userBadgeSpan">👤 <b id="currentUserName">Name</b></span>
-      <button class="btn btn-ghost btn-sm" id="logoutBtn">Abmelden</button>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-ghost btn-sm" id="settingsBtn" title="Einstellungen">⚙️</button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Abmelden</button>
+      </div>
     </div>
 
     <div class="user-msg-box" id="userPersonalMsgBox" style="display:none;">
@@ -473,6 +476,9 @@
   <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
     <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;" id="passwordModalTitle">PASSWORT</h3>
     <div class="field"><input type="password" id="userPasswordInput" placeholder="Passwort eingeben"></div>
+    <div class="perm-box" style="margin-bottom:14px; background:transparent; padding:0;">
+      <label class="perm-item" style="color:var(--cream);"><input type="checkbox" id="rememberMeInput" checked> Angemeldet bleiben</label>
+    </div>
     <div style="color:var(--danger); font-size:12px; margin-bottom:10px;" id="passwordModalMsg"></div>
     <div style="display:flex; gap:8px;">
       <button class="btn btn-ghost" id="passwordModalCancel">Abbrechen</button>
@@ -486,11 +492,30 @@
     <h3 style="font-family:var(--font-display); color:var(--cyan); font-size:14px; margin-top:0;">ACCOUNT ANFRAGEN</h3>
     <div class="field"><label>Dein Name</label><input type="text" id="regNameInput" placeholder="z. B. Lisa"></div>
     <div class="field"><label>Passwort</label><input type="password" id="regPasswordInput" placeholder="••••••"></div>
+    <div class="perm-box" style="margin-bottom:14px; background:transparent; padding:0;">
+      <label class="perm-item" style="color:var(--cream);"><input type="checkbox" id="regRememberMeInput" checked> Angemeldet bleiben</label>
+    </div>
     <div style="color:var(--danger); font-size:12px; margin-bottom:10px;" id="registerMsg"></div>
     <div style="display:flex; gap:8px;">
       <button class="btn btn-ghost" id="registerCancel">Abbrechen</button>
       <button class="btn btn-primary" id="registerSubmit">Anfragen</button>
     </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="userSettingsModal">
+  <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
+    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;">⚙️ EINSTELLUNGEN</h3>
+    <div class="field">
+      <label>Neues Passwort festlegen</label>
+      <input type="password" id="changePasswordInput" placeholder="Neues Passwort">
+    </div>
+    <button class="btn btn-secondary btn-sm" id="saveNewPasswordBtn" style="width:100%; margin-bottom:18px;">Passwort ändern</button>
+    <div style="border-top:1px solid #3d2f66; padding-top:14px;">
+      <button class="btn btn-danger" id="fullLogoutBtn">Vollständig abmelden</button>
+    </div>
+    <button class="btn btn-ghost row-gap" id="closeSettingsBtn">Schließen</button>
   </div>
 </div>
 
@@ -859,6 +884,20 @@
       lastStateHash = JSON.stringify(state);
       renderAll();
       checkLockStatus();
+      checkSavedLogin();
+    }
+  }
+
+  // AUTOMATISCHER LOGIN BEIM LOHEN ("ANGEMELDET BLEIBEN")
+  function checkSavedLogin() {
+    if (!currentUser) {
+      const savedUserId = localStorage.getItem('arcade_remembered_user');
+      if (savedUserId) {
+        const user = state.users.find(u => u.id === savedUserId && u.approved);
+        if (user) {
+          loginAsUser(user);
+        }
+      }
     }
   }
 
@@ -1038,6 +1077,13 @@
       card.addEventListener('click', () => {
         selectedUserForAuth = u;
         if(u.isLocked) { $('lockedReasonText').textContent = u.lockReason || 'Gesperrt.'; showScreen('screen-locked'); return; }
+        
+        const savedUserId = localStorage.getItem('arcade_remembered_user');
+        if(savedUserId === u.id) {
+          loginAsUser(u);
+          return;
+        }
+
         if(u.password) { $('passwordModalTitle').textContent = `PASSWORT FÜR ${u.name.toUpperCase()}`; $('userPasswordInput').value = ''; $('passwordModalMsg').textContent = ''; $('passwordModal').classList.add('active'); }
         else loginAsUser(u);
       });
@@ -1067,18 +1113,50 @@
   $('passwordModalCancel').addEventListener('click', () => $('passwordModal').classList.remove('active'));
   $('passwordModalSubmit').addEventListener('click', () => {
     if(selectedUserForAuth && $('userPasswordInput').value === selectedUserForAuth.password) {
+      if($('rememberMeInput').checked) {
+        localStorage.setItem('arcade_remembered_user', selectedUserForAuth.id);
+      }
       $('passwordModal').classList.remove('active'); loginAsUser(selectedUserForAuth);
     } else $('passwordModalMsg').textContent = 'Falsches Passwort!';
   });
 
   $('logoutBtn').addEventListener('click', () => { currentUser = null; showScreen('screen-auth'); renderAll(); });
+  
+  // EINSTELLUNGEN & PASSWORT ÄNDERN / VOLLSTÄNDIGES ABMELDEN
+  $('settingsBtn').addEventListener('click', () => {
+    $('changePasswordInput').value = '';
+    $('userSettingsModal').classList.add('active');
+  });
+  $('closeSettingsBtn').addEventListener('click', () => {
+    $('userSettingsModal').classList.remove('active');
+  });
+  $('saveNewPasswordBtn').addEventListener('click', async () => {
+    const newPw = $('changePasswordInput').value.trim();
+    if(!newPw) { alert('Bitte ein neues Passwort eingeben.'); return; }
+    currentUser.password = newPw;
+    await saveState();
+    alert('Passwort erfolgreich geändert!');
+    $('userSettingsModal').classList.remove('active');
+  });
+  $('fullLogoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('arcade_remembered_user');
+    currentUser = null;
+    $('userSettingsModal').classList.remove('active');
+    showScreen('screen-auth');
+    renderAll();
+  });
+
   $('registerBtn').addEventListener('click', () => { $('regNameInput').value = ''; $('regPasswordInput').value = ''; $('registerMsg').textContent = ''; $('registerModal').classList.add('active'); });
   $('registerCancel').addEventListener('click', () => $('registerModal').classList.remove('active'));
   $('registerSubmit').addEventListener('click', async () => {
     const name = $('regNameInput').value.trim(); const pw = $('regPasswordInput').value.trim();
     if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
+    const newId = 'u_' + Date.now();
+    if($('regRememberMeInput').checked) {
+      localStorage.setItem('arcade_remembered_user', newId);
+    }
     state.users.push({
-      id: 'u_' + Date.now(), name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false,
+      id: newId, name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false,
       coins: 10, tickets: 0, lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
       vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
       inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 },
