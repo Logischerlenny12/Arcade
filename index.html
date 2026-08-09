@@ -6,6 +6,9 @@
 <title>Münz-Arcade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase SDKs laden -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <style>
   :root{
     --bg-deep:#160f2b; --bg-panel:#221a3d; --bg-panel-2:#2b2150;
@@ -473,6 +476,15 @@
   <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
     <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;" id="passwordModalTitle">PASSWORT</h3>
     <div class="field"><input type="password" id="userPasswordInput" placeholder="Passwort eingeben"></div>
+    
+    <!-- NEU: Angemeldet bleiben Checkbox -->
+    <div class="field" style="margin-top:10px;">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="stayLoggedIn" checked style="width:auto; margin:0;">
+        7 Tage angemeldet bleiben
+      </label>
+    </div>
+
     <div style="color:var(--danger); font-size:12px; margin-bottom:10px;" id="passwordModalMsg"></div>
     <div style="display:flex; gap:8px;">
       <button class="btn btn-ghost" id="passwordModalCancel">Abbrechen</button>
@@ -654,8 +666,25 @@
 
 <script>
 (function(){
-  const BIN_ID = '6a63656bda38895dfe89ebb2';
-  const API_KEY = '$2a$10$i3rOp5dtA.tkNcFKJKitYOAOFN/Vq19.quCdvKZDif0UZem2.ScqG';
+  // ==========================================
+  // HIER IST DEINE EINGETRAGENE FIREBASE CONFIG:
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyD8jAY5lHaUAtbbpO0SXUPl6FWFnDGcCio",
+    authDomain: "arcade-8e0b7.firebaseapp.com",
+    // WICHTIG: Sollte die Seite hängen bleiben, schau in Firebase bei "Realtime Database" nach der genauen URL!
+    databaseURL: "https://arcade-8e0b7-default-rtdb.europe-west1.firebasedatabase.app", 
+    projectId: "arcade-8e0b7",
+    storageBucket: "arcade-8e0b7.firebasestorage.app",
+    messagingSenderId: "35930889282",
+    appId: "1:35930889282:web:2c97fc843d5b7a1508a1db",
+    measurementId: "G-BW96THEDH6"
+  };
+
+  // Firebase initialisieren
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const stateRef = db.ref('arcade_state');
 
   const DEFAULT_USERS = [
     {
@@ -794,7 +823,6 @@
   let currentUnboxingKey = 1, revealSteps = [], currentStepIndex = 0, accumulatedCoins = 0, accumulatedTickets = 0;
   let unboxingBaseCoins = 0, unboxingBoostedCoins = 0;
   let stopwatchInterval = null, sessionSeconds = 0, activeSessionStartTime = 0;
-  let lastStateHash = '';
 
   const $ = id => document.getElementById(id);
 
@@ -802,9 +830,7 @@
   function isBoostActive(user, type) { return user && user.boosts && user.boosts[type] && user.boosts[type] > Date.now(); }
 
   function getActualPrice(origPrice) {
-    if(isBoostActive(currentUser, 'discount')) {
-      return Math.max(1, Math.floor(origPrice * 0.85));
-    }
+    if(isBoostActive(currentUser, 'discount')) return Math.max(1, Math.floor(origPrice * 0.85));
     return origPrice;
   }
 
@@ -816,77 +842,51 @@
     return `${origPrice} 🪙`;
   }
 
-  function loadLocalBackup(){ try { const loc = localStorage.getItem('arcade_state_backup'); if(loc) return JSON.parse(loc); } catch(e){} return null; }
-  function saveLocalBackup(){ try { localStorage.setItem('arcade_state_backup', JSON.stringify(state)); } catch(e){} }
+  // FIREBASE REAL-TIME SYNC
+  stateRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      state = data;
+      
+      // Defaults sicherstellen
+      if(!state.users) state.users = DEFAULT_USERS;
+      if(!state.games) state.games = DEFAULT_GAMES;
+      if(!state.tasks) state.tasks = [];
+      if(!state.history) state.history = [];
+      if(!state.logs) state.logs = [];
 
-  // REPARIERTER SERVER SYNC MIT HASH-PRÜFUNG GEGEN UI-FLICKER
-  async function loadState(){
-    try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
-      if(res.ok){
-        const data = await res.json();
-        if(data.record && data.record.users) {
-          const newHash = JSON.stringify(data.record);
-          if (newHash !== lastStateHash) {
-            state = data.record;
-            lastStateHash = newHash;
-            saveLocalBackup();
-            renderAll();
-            checkLockStatus();
-          }
-        }
-      }
-    } catch(e) {
-      const localData = loadLocalBackup();
-      if(localData && localData.users) {
-        const newHash = JSON.stringify(localData);
-        if (newHash !== lastStateHash) {
-          state = localData;
-          lastStateHash = newHash;
-          renderAll();
-          checkLockStatus();
-        }
-      }
-    }
-
-    if(!state.users) state.users = DEFAULT_USERS;
-    if(!state.games) state.games = DEFAULT_GAMES;
-    if(!state.tasks) state.tasks = [];
-    if(!state.history) state.history = [];
-    if(!state.logs) state.logs = [];
-
-    if(!lastStateHash) {
-      lastStateHash = JSON.stringify(state);
       renderAll();
       checkLockStatus();
+      
+      // Versuche Auto-Login falls noch niemand eingeloggt ist
+      if(!currentUser) checkAutoLogin();
+    } else {
+      // Wenn die DB komplett leer ist, initialisiere sie
+      saveState();
     }
+  });
+
+  // Speichern in Firebase
+  function saveState(){
+    return stateRef.set(state);
   }
 
-  // SCHNELLES POLLING FÜR ECHTZEIT-SYNC OHNE UI RE-LOADS (3 Sek)
-  setInterval(() => { loadState(); }, 3000);
-  
-  // iOS SYNC-SCHUTZ & FOREGROUND WIEDERAUFNAHME
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      loadState();
-      if (activeSessionStartTime) sessionTick();
+  // Auto-Login Logik (7 Tage Angemeldet Bleiben)
+  function checkAutoLogin() {
+    const sessionStr = localStorage.getItem('arcade_session');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        if (Date.now() < session.expires) {
+          const user = state.users.find(u => u.id === session.userId);
+          if (user && !user.isLocked) {
+            loginAsUser(user);
+          }
+        } else {
+          localStorage.removeItem('arcade_session'); // Abgelaufen
+        }
+      } catch(e) {}
     }
-  });
-  window.addEventListener('pageshow', () => {
-    loadState();
-    if (activeSessionStartTime) sessionTick();
-  });
-
-  async function saveState(){
-    lastStateHash = JSON.stringify(state);
-    saveLocalBackup();
-    try {
-      await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-        body: JSON.stringify(state)
-      });
-    } catch(e) {}
   }
 
   function addLog(userName, typeReason, amount, unit='🪙'){
@@ -1060,21 +1060,39 @@
     currentUser.coins += reward;
     currentUser.lastDailyClaim = Date.now();
     addLog(currentUser.name, '🎁 Tägliche Belohnung', reward);
-    await saveState(); renderAll(); alert(`🎉 Du hast ${reward} Coins erhalten!`);
+    saveState(); renderAll(); alert(`🎉 Du hast ${reward} Coins erhalten!`);
   });
 
   $('backFromLocked').addEventListener('click', () => showScreen('screen-auth'));
   $('passwordModalCancel').addEventListener('click', () => $('passwordModal').classList.remove('active'));
+  
+  // LOGIN SUBMIT (inkl. 7-Tage-Check)
   $('passwordModalSubmit').addEventListener('click', () => {
     if(selectedUserForAuth && $('userPasswordInput').value === selectedUserForAuth.password) {
-      $('passwordModal').classList.remove('active'); loginAsUser(selectedUserForAuth);
+      if ($('stayLoggedIn').checked) {
+        localStorage.setItem('arcade_session', JSON.stringify({ 
+          userId: selectedUserForAuth.id, 
+          expires: Date.now() + (7 * 24 * 60 * 60 * 1000) 
+        }));
+      } else {
+        localStorage.removeItem('arcade_session');
+      }
+      $('passwordModal').classList.remove('active'); 
+      loginAsUser(selectedUserForAuth);
     } else $('passwordModalMsg').textContent = 'Falsches Passwort!';
   });
 
-  $('logoutBtn').addEventListener('click', () => { currentUser = null; showScreen('screen-auth'); renderAll(); });
+  // VOLLSTÄNDIGES ABMELDEN (Löscht Session)
+  $('logoutBtn').addEventListener('click', () => { 
+    localStorage.removeItem('arcade_session'); 
+    currentUser = null; 
+    showScreen('screen-auth'); 
+    renderAll(); 
+  });
+
   $('registerBtn').addEventListener('click', () => { $('regNameInput').value = ''; $('regPasswordInput').value = ''; $('registerMsg').textContent = ''; $('registerModal').classList.add('active'); });
   $('registerCancel').addEventListener('click', () => $('registerModal').classList.remove('active'));
-  $('registerSubmit').addEventListener('click', async () => {
+  $('registerSubmit').addEventListener('click', () => {
     const name = $('regNameInput').value.trim(); const pw = $('regPasswordInput').value.trim();
     if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
     state.users.push({
@@ -1084,7 +1102,7 @@
       inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 },
       boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
     });
-    await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
+    saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
   });
 
   // SHOP LOGIK
@@ -1114,7 +1132,7 @@
     $('buyBoostInfinite').innerHTML = `Kaufen (${getPriceHtml(25)})`;
     $('buyAnnounceBtn').innerHTML = `📢 Senden (${getPriceHtml(20)})`;
 
-    // THEMEN RENDER (7 STÜCK INKL 2 VIP)
+    // THEMEN RENDER
     const themeBox = $('shopThemesList'); themeBox.innerHTML = '';
     THEMES.forEach(t => {
       const isUnlocked = (currentUser.unlockedThemes || []).includes(t.id);
@@ -1126,16 +1144,16 @@
         <div class="card-title">${t.name}</div>
         <div class="card-desc">Farb-Design für die App</div>
         <button class="buy-btn ${t.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
+      card.querySelector('button').addEventListener('click', () => {
         if(isActive) return;
-        if(isUnlocked || t.cost === 0){ currentUser.currentTheme = t.id; applyTheme(t.id); await saveState(); renderShopItems(); return; }
+        if(isUnlocked || t.cost === 0){ currentUser.currentTheme = t.id; applyTheme(t.id); saveState(); renderShopItems(); return; }
         if(t.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
         const finalPrice = getActualPrice(t.cost);
         if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
         if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedThemes.push(t.id); currentUser.currentTheme = t.id; applyTheme(t.id);
         addLog(currentUser.name, `🎨 Theme gekauft: ${t.name}`, -finalPrice);
-        await saveState(); renderShopItems(); alert(`🎉 Theme "${t.name}" freigeschaltet!`);
+        saveState(); renderShopItems(); alert(`🎉 Theme "${t.name}" freigeschaltet!`);
       });
       themeBox.appendChild(card);
     });
@@ -1152,16 +1170,16 @@
         <div class="card-title">${a.name}</div>
         <div class="card-desc">Lootbox-Animation</div>
         <button class="buy-btn ${a.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
+      card.querySelector('button').addEventListener('click', () => {
         if(isActive) return;
-        if(isUnlocked){ currentUser.currentAnim = a.id; await saveState(); renderShopItems(); return; }
+        if(isUnlocked){ currentUser.currentAnim = a.id; saveState(); renderShopItems(); return; }
         if(a.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
         const finalPrice = getActualPrice(a.cost);
         if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
         if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedAnims.push(a.id); currentUser.currentAnim = a.id;
         addLog(currentUser.name, `🎬 Animation gekauft: ${a.name}`, -finalPrice);
-        await saveState(); renderShopItems(); alert(`🎉 Animation "${a.name}" freigeschaltet!`);
+        saveState(); renderShopItems(); alert(`🎉 Animation "${a.name}" freigeschaltet!`);
       });
       animBox.appendChild(card);
     });
@@ -1178,16 +1196,16 @@
         <div class="card-title" style="color:${c.color}">${c.name}</div>
         <div class="card-desc">Namensfarbe im Profil</div>
         <button class="buy-btn ${c.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
+      card.querySelector('button').addEventListener('click', () => {
         if(isActive) return;
-        if(isUnlocked){ currentUser.currentNameColor = c.id; await saveState(); renderShopItems(); return; }
+        if(isUnlocked){ currentUser.currentNameColor = c.id; saveState(); renderShopItems(); return; }
         if(c.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
         const finalPrice = getActualPrice(c.cost);
         if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
         if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedNameColors.push(c.id); currentUser.currentNameColor = c.id;
         addLog(currentUser.name, `🎨 Namensfarbe gekauft: ${c.name}`, -finalPrice);
-        await saveState(); renderShopItems(); alert(`🎉 Namensfarbe "${c.name}" freigeschaltet!`);
+        saveState(); renderShopItems(); alert(`🎉 Namensfarbe "${c.name}" freigeschaltet!`);
       });
       colorBox.appendChild(card);
     });
@@ -1204,21 +1222,21 @@
         <div class="card-title">${b.name}</div>
         <div class="card-desc">Icon vor deinem Namen</div>
         <button class="buy-btn ${b.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
+      card.querySelector('button').addEventListener('click', () => {
         if(isActive) return;
-        if(isUnlocked){ currentUser.currentBadge = b.id; await saveState(); renderShopItems(); return; }
+        if(isUnlocked){ currentUser.currentBadge = b.id; saveState(); renderShopItems(); return; }
         if(b.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
         const finalPrice = getActualPrice(b.cost);
         if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
         if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
         currentUser.unlockedBadges.push(b.id); currentUser.currentBadge = b.id;
         addLog(currentUser.name, `🏆 Badge gekauft: ${b.name}`, -finalPrice);
-        await saveState(); renderShopItems(); alert(`🎉 Badge "${b.name}" freigeschaltet!`);
+        saveState(); renderShopItems(); alert(`🎉 Badge "${b.name}" freigeschaltet!`);
       });
       badgeBox.appendChild(card);
     });
 
-    // BOOSTS TAB (INVENTAR + AKTIVATION)
+    // BOOSTS TAB
     const bStatus = $('boostsStatusContainer'); bStatus.innerHTML = '';
     const now = Date.now();
     const inv = currentUser.inventory || { multi: 0, noDud: 0, discount: 0, infinite: 0 };
@@ -1249,8 +1267,8 @@
     });
   }
 
-  // BOOST ACTIVATION FUNCTION FROM INVENTORY
-  window.activateBoost = async function(type, durationMs) {
+  // BOOST ACTIVATION
+  window.activateBoost = function(type, durationMs) {
     if(!currentUser.inventory) currentUser.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
     if((currentUser.inventory[type] || 0) <= 0) {
       alert('Du besitzt diesen Pass nicht im Inventar! Kaufe ihn zuerst im Store.');
@@ -1258,67 +1276,67 @@
     }
     currentUser.inventory[type] -= 1;
     currentUser.boosts[type] = Date.now() + durationMs;
-    await saveState();
+    saveState();
     renderAll();
     alert('🎉 Pass erfolgreich aktiviert!');
   };
 
-  // SHOP KÄUFE (LANDEN IM INVENTAR)
-  $('buyVipBtn').addEventListener('click', async () => {
+  // SHOP KÄUFE
+  $('buyVipBtn').addEventListener('click', () => {
     const cost = getActualPrice(200);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.vipUntil = Date.now() + (7 * 24 * 60 * 60 * 1000);
     addLog(currentUser.name, '👑 VIP-Pass gekauft (7 Tage)', -cost);
-    await saveState(); renderShopItems(); alert('🎉 VIP-Pass für 7 Tage aktiviert!');
+    saveState(); renderShopItems(); alert('🎉 VIP-Pass für 7 Tage aktiviert!');
   });
 
-  $('buyTicketBrawlBtn').addEventListener('click', async () => {
+  $('buyTicketBrawlBtn').addEventListener('click', () => {
     const cost = getActualPrice(70);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.tickets = (currentUser.tickets || 0) + 1;
     addLog(currentUser.name, '🎟️ Ticket gekauft', -cost);
-    await saveState(); renderShopItems(); alert('🎉 1 Ticket gekauft!');
+    saveState(); renderShopItems(); alert('🎉 1 Ticket gekauft!');
   });
 
-  $('buyBoostMulti').addEventListener('click', async () => {
+  $('buyBoostMulti').addEventListener('click', () => {
     const cost = getActualPrice(80);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.inventory.multi = (currentUser.inventory.multi || 0) + 1;
     addLog(currentUser.name, '⚡ Boost 1,25x gekauft (Inventar)', -cost);
-    await saveState(); renderShopItems(); alert('⚡ 1,25x Multiplikator im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
+    saveState(); renderShopItems(); alert('⚡ 1,25x Multiplikator im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
-  $('buyBoostNoDud').addEventListener('click', async () => {
+  $('buyBoostNoDud').addEventListener('click', () => {
     const cost = getActualPrice(50);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.inventory.noDud = (currentUser.inventory.noDud || 0) + 1;
     addLog(currentUser.name, '🛡️ Pechschutz gekauft (Inventar)', -cost);
-    await saveState(); renderShopItems(); alert('🛡️ Pechschutz im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
+    saveState(); renderShopItems(); alert('🛡️ Pechschutz im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
-  $('buyBoostDiscount').addEventListener('click', async () => {
+  $('buyBoostDiscount').addEventListener('click', () => {
     const cost = getActualPrice(60);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.inventory.discount = (currentUser.inventory.discount || 0) + 1;
     addLog(currentUser.name, '🏷️ Rabatt-Pass gekauft (Inventar)', -cost);
-    await saveState(); renderShopItems(); alert('🏷️ 15% Rabatt-Pass im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
+    saveState(); renderShopItems(); alert('🏷️ 15% Rabatt-Pass im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
-  $('buyBoostInfinite').addEventListener('click', async () => {
+  $('buyBoostInfinite').addEventListener('click', () => {
     const cost = getActualPrice(25);
     if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     currentUser.inventory.infinite = (currentUser.inventory.infinite || 0) + 1;
     addLog(currentUser.name, '♾️ Unendlich Spielen Pass gekauft (Inventar)', -cost);
-    await saveState(); renderShopItems(); alert('♾️ Unendlich Spielen Pass im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
+    saveState(); renderShopItems(); alert('♾️ Unendlich Spielen Pass im Inventar abgelegt! Aktivierte ihn im Boosts-Tab.');
   });
 
-  $('buyAnnounceBtn').addEventListener('click', async () => {
+  $('buyAnnounceBtn').addEventListener('click', () => {
     const text = $('buyAnnounceText').value.trim();
     if(!text) return;
     const cost = getActualPrice(20);
@@ -1326,10 +1344,10 @@
     if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
     state.globalAnnouncement = `${currentUser.name}: ${text}`;
     addLog(currentUser.name, '📢 Globale Nachricht gekauft', -cost);
-    await saveState(); renderShopItems(); alert('📢 Nachricht veröffentlicht!'); $('buyAnnounceText').value = '';
+    saveState(); renderShopItems(); alert('📢 Nachricht veröffentlicht!'); $('buyAnnounceText').value = '';
   });
 
-  $('sendGiftSubmitBtn').addEventListener('click', async () => {
+  $('sendGiftSubmitBtn').addEventListener('click', () => {
     const targetId = $('sendGiftTargetUser').value;
     const targetUser = state.users.find(u => u.id === targetId);
     if(!targetUser) return;
@@ -1348,7 +1366,7 @@
       targetUser.tickets = (targetUser.tickets || 0) + amount;
       addLog(currentUser.name, `🎁 Geschenk an ${targetUser.name}: Tickets`, -amount, '🎟️');
     }
-    await saveState(); renderShopItems(); alert(`🎁 Geschenk an ${targetUser.name} gesendet!`);
+    saveState(); renderShopItems(); alert(`🎁 Geschenk an ${targetUser.name} gesendet!`);
   });
 
   // UNBOXING LOGIK
@@ -1487,7 +1505,7 @@
     }
   });
 
-  $('executeGiftBtn').addEventListener('click', async () => {
+  $('executeGiftBtn').addEventListener('click', () => {
     const targetId = $('giftTargetUserSelect').value; const targetUser = state.users.find(u => u.id === targetId);
     if(!targetUser) return;
     const giftType = $('giftTypeSelect').value;
@@ -1517,44 +1535,44 @@
       if(!targetUser.unlockedBadges.includes(itemId)) targetUser.unlockedBadges.push(itemId);
       addLog(targetUser.name, `🎁 Admin-Geschenk Badge`, 0); alert(`Badge an ${targetUser.name} geschenkt!`);
     }
-    await saveState(); renderAll();
+    saveState(); renderAll();
   });
 
   // ADMIN BUTTONS: ZURÜCKSETZEN
-  $('resetVipBtn').addEventListener('click', async () => {
+  $('resetVipBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     selectedUserForEdit.vipUntil = 0;
-    await saveState(); renderAll(); alert(`VIP-Status von ${selectedUserForEdit.name} entfernt!`);
+    saveState(); renderAll(); alert(`VIP-Status von ${selectedUserForEdit.name} entfernt!`);
   });
-  $('resetThemeBtn').addEventListener('click', async () => {
+  $('resetThemeBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     selectedUserForEdit.currentTheme = 'default';
     selectedUserForEdit.unlockedThemes = ['default'];
-    await saveState(); renderAll(); alert(`Theme von ${selectedUserForEdit.name} zurückgesetzt!`);
+    saveState(); renderAll(); alert(`Theme von ${selectedUserForEdit.name} zurückgesetzt!`);
   });
-  $('resetNameColorBtn').addEventListener('click', async () => {
+  $('resetNameColorBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     selectedUserForEdit.currentNameColor = 'default';
     selectedUserForEdit.unlockedNameColors = ['default'];
-    await saveState(); renderAll(); alert(`Namensfarben von ${selectedUserForEdit.name} zurückgesetzt!`);
+    saveState(); renderAll(); alert(`Namensfarben von ${selectedUserForEdit.name} zurückgesetzt!`);
   });
-  $('resetAnimBtn').addEventListener('click', async () => {
+  $('resetAnimBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     selectedUserForEdit.currentAnim = 'anim_standard';
     selectedUserForEdit.unlockedAnims = ['anim_standard'];
-    await saveState(); renderAll(); alert(`Animationen von ${selectedUserForEdit.name} zurückgesetzt!`);
+    saveState(); renderAll(); alert(`Animationen von ${selectedUserForEdit.name} zurückgesetzt!`);
   });
-  $('resetBadgeBtn').addEventListener('click', async () => {
+  $('resetBadgeBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     selectedUserForEdit.currentBadge = 'none';
     selectedUserForEdit.unlockedBadges = ['none'];
-    await saveState(); renderAll(); alert(`Badges von ${selectedUserForEdit.name} zurückgesetzt!`);
+    saveState(); renderAll(); alert(`Badges von ${selectedUserForEdit.name} zurückgesetzt!`);
   });
-  $('clearBoostsBtn').addEventListener('click', async () => {
+  $('clearBoostsBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     selectedUserForEdit.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
     selectedUserForEdit.boosts = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
-    await saveState(); renderAll(); alert(`Aktive Boosts & Inventar von ${selectedUserForEdit.name} gelöscht!`);
+    saveState(); renderAll(); alert(`Aktive Boosts & Inventar von ${selectedUserForEdit.name} gelöscht!`);
   });
 
   function renderUserAchievementsList(){
@@ -1565,13 +1583,13 @@
       const item = document.createElement('div'); item.className = 'task-item' + (isDone ? ' completed' : '');
       item.innerHTML = `<div>${ach.title}</div><div>${isDone ? '<span style="color:var(--cyan); font-weight:bold; font-size:12px;">✓ Erledigt</span>' : `<button class="task-claim-btn">+${ach.reward} 🪙</button>`}</div>`;
       if(!isDone){
-        item.querySelector('button').addEventListener('click', async () => {
+        item.querySelector('button').addEventListener('click', () => {
           if(confirm(`Hast du "${ach.title}" geschafft?`)){
             let rew = ach.reward;
             if(isBoostActive(currentUser, 'multi')) rew = Math.round(rew * 1.25);
             currentUser.coins += rew; currentUser.completedAchievements.push(ach.id);
             addLog(currentUser.name, `🏆 Erfolg: ${ach.title}`, rew);
-            await saveState(); renderAll(); alert(`🎉 Erfolg: +${rew} Coins!`);
+            saveState(); renderAll(); alert(`🎉 Erfolg: +${rew} Coins!`);
           }
         });
       }
@@ -1599,11 +1617,11 @@
   $('luckTypeSelect').addEventListener('change', (e) => {
     if(e.target.value === 'niete') $('luckAmountGroup').style.display = 'none'; else $('luckAmountGroup').style.display = 'block';
   });
-  $('saveLuckBtn').addEventListener('click', async () => {
+  $('saveLuckBtn').addEventListener('click', () => {
     const targetUser = state.users.find(u => u.id === $('luckTargetUserSelect').value);
     if(!targetUser) return;
     targetUser.forcedLoot = { type: $('luckTypeSelect').value, amount: parseInt($('luckAmountInput').value, 10) || 0 };
-    await saveState(); renderAll(); alert(`Gespeichert für ${targetUser.name}!`);
+    saveState(); renderAll(); alert(`Gespeichert für ${targetUser.name}!`);
   });
 
   function renderLogs(){
@@ -1625,8 +1643,8 @@
     state.users.filter(u => !u.approved).forEach(u => {
       const row = document.createElement('div'); row.className = 'games-list-item';
       row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b></span><button class="btn btn-secondary btn-sm" style="color:var(--cyan)">✓</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
-      row.children[1].addEventListener('click', async () => { u.approved = true; await saveState(); renderAll(); });
-      row.children[2].addEventListener('click', async () => { state.users = state.users.filter(x => x.id !== u.id); await saveState(); renderAll(); });
+      row.children[1].addEventListener('click', () => { u.approved = true; saveState(); renderAll(); });
+      row.children[2].addEventListener('click', () => { state.users = state.users.filter(x => x.id !== u.id); saveState(); renderAll(); });
       pendingList.appendChild(row);
     });
     state.users.filter(u => u.approved).forEach(u => {
@@ -1645,7 +1663,7 @@
     $('permLocked').checked = !!u.isLocked; $('permAdmin').checked = !!u.isAdmin; $('permUnlimited').checked = !!u.unlimitedCoins;
   }
 
-  $('saveAccChangesBtn').addEventListener('click', async () => {
+  $('saveAccChangesBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     const diffCoins = (parseInt($('editAccCoins').value, 10) || 0) - selectedUserForEdit.coins;
     if(diffCoins !== 0) addLog(selectedUserForEdit.name, '⚙️ Admin Anpassung Coins', diffCoins);
@@ -1657,20 +1675,20 @@
     selectedUserForEdit.lockReason = $('editAccLockReason').value.trim();
     selectedUserForEdit.isAdmin = $('permAdmin').checked;
     selectedUserForEdit.unlimitedCoins = $('permUnlimited').checked;
-    await saveState(); renderAll(); alert('Gespeichert!');
+    saveState(); renderAll(); alert('Gespeichert!');
   });
 
-  $('deleteAccBtn').addEventListener('click', async () => {
+  $('deleteAccBtn').addEventListener('click', () => {
     if(!selectedUserForEdit) return;
     if(confirm(`"${selectedUserForEdit.name}" löschen?`)){
       state.users = state.users.filter(x => x.id !== selectedUserForEdit.id);
       selectedUserForEdit = null; $('accountEditForm').style.display = 'none'; $('accountEditPlaceholder').style.display = 'block';
-      await saveState(); renderAll();
+      saveState(); renderAll();
     }
   });
 
-  $('saveGlobalAnnounceBtn').addEventListener('click', async () => { state.globalAnnouncement = $('globalAnnounceInput').value.trim(); await saveState(); renderAll(); alert('Veröffentlicht!'); });
-  $('clearGlobalAnnounceBtn').addEventListener('click', async () => { state.globalAnnouncement = ''; $('globalAnnounceInput').value = ''; await saveState(); renderAll(); alert('Gelöscht!'); });
+  $('saveGlobalAnnounceBtn').addEventListener('click', () => { state.globalAnnouncement = $('globalAnnounceInput').value.trim(); saveState(); renderAll(); alert('Veröffentlicht!'); });
+  $('clearGlobalAnnounceBtn').addEventListener('click', () => { state.globalAnnouncement = ''; $('globalAnnounceInput').value = ''; saveState(); renderAll(); alert('Gelöscht!'); });
 
   function createGameCard(g){
     const card = document.createElement('div'); card.className = 'game-card';
@@ -1689,7 +1707,7 @@
     state.games.forEach(g => {
       const row = document.createElement('div'); row.className = 'games-list-item';
       row.innerHTML = `<span>${g.emoji || '🎮'}</span><span class="glabel">${escapeHtml(g.name)}</span><button>✕</button>`;
-      row.querySelector('button').addEventListener('click', async () => { state.games = state.games.filter(x => x.id !== g.id); await saveState(); renderAll(); });
+      row.querySelector('button').addEventListener('click', () => { state.games = state.games.filter(x => x.id !== g.id); saveState(); renderAll(); });
       list.appendChild(row);
     });
   }
@@ -1700,12 +1718,12 @@
     state.tasks.forEach(t => {
       const item = document.createElement('div'); item.className = 'task-item';
       item.innerHTML = `<div class="task-name">📝 ${escapeHtml(t.name)}</div><button class="task-claim-btn">+${t.reward} 🪙</button>`;
-      item.querySelector('.task-claim-btn').addEventListener('click', async () => {
+      item.querySelector('.task-claim-btn').addEventListener('click', () => {
         if(confirm(`"${t.name}" erledigt?`)){
           let rew = t.reward;
           if(isBoostActive(currentUser, 'multi')) rew = Math.round(rew * 1.25);
           currentUser.coins += rew; addLog(currentUser.name, `📝 Aufgabe: ${t.name}`, rew);
-          state.tasks = state.tasks.filter(x => x.id !== t.id); await saveState(); renderAll(); alert(`🎉 +${rew} Coins!`);
+          state.tasks = state.tasks.filter(x => x.id !== t.id); saveState(); renderAll(); alert(`🎉 +${rew} Coins!`);
         }
       });
       list.appendChild(item);
@@ -1717,7 +1735,7 @@
     state.tasks.forEach(t => {
       const row = document.createElement('div'); row.className = 'games-list-item';
       row.innerHTML = `<span class="glabel">${escapeHtml(t.name)} (${t.reward} 🪙)</span><button>✕</button>`;
-      row.querySelector('button').addEventListener('click', async () => { state.tasks = state.tasks.filter(x => x.id !== t.id); await saveState(); renderAll(); });
+      row.querySelector('button').addEventListener('click', () => { state.tasks = state.tasks.filter(x => x.id !== t.id); saveState(); renderAll(); });
       list.appendChild(row);
     });
   }
@@ -1735,8 +1753,8 @@
     $('statTotal').textContent = totalMin.toFixed(1) + ' Min';
   }
 
-  $('resetAnalyticsBtn').addEventListener('click', async () => {
-    if(confirm('Analytics-Verlauf zurücksetzen?')){ state.history = []; await saveState(); renderAll(); alert('Analytics zurückgesetzt!'); }
+  $('resetAnalyticsBtn').addEventListener('click', () => {
+    if(confirm('Analytics-Verlauf zurücksetzen?')){ state.history = []; saveState(); renderAll(); alert('Analytics zurückgesetzt!'); }
   });
 
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
@@ -1809,7 +1827,7 @@
 
   $('reopenGameBtn').addEventListener('click', () => { if(selectedGame) window.open(selectedGame.url, '_blank'); });
 
-  $('stopAndBillBtn').addEventListener('click', async () => {
+  $('stopAndBillBtn').addEventListener('click', () => {
     clearInterval(stopwatchInterval);
     const playedMinutes = sessionSeconds / 60;
     const baseCost = Math.max(3, Math.ceil(playedMinutes) * 3);
@@ -1828,9 +1846,11 @@
 
     clearSessionStorage();
 
-    await saveState(); renderAll();
-    if(currentUser.isLocked) { $('lockedReasonText').textContent = currentUser.lockReason; showScreen('screen-locked'); } 
-    else { showScreen('screen-home'); }
+    saveState().then(() => {
+      renderAll();
+      if(currentUser.isLocked) { $('lockedReasonText').textContent = currentUser.lockReason; showScreen('screen-locked'); } 
+      else { showScreen('screen-home'); }
+    });
   });
 
   $('openAdminDashboardBtn').addEventListener('click', () => { renderAll(); $('adminPanelBackdrop').classList.add('active'); });
@@ -1845,21 +1865,20 @@
     });
   });
 
-  $('addGameBtn').addEventListener('click', async () => {
+  $('addGameBtn').addEventListener('click', () => {
     const name = $('newGameName').value.trim(); const url = $('newGameUrl').value.trim(); const emoji = $('newGameEmoji').value.trim(); const category = $('newGameCategory').value;
     if(!name || !url) return;
     state.games.push({ id: 'g' + Date.now(), name, url, emoji: emoji || '🎮', category: category || 'normal' });
-    await saveState(); renderAll(); $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = '';
+    saveState(); renderAll(); $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = '';
   });
 
-  $('addTaskBtn').addEventListener('click', async () => {
+  $('addTaskBtn').addEventListener('click', () => {
     const name = $('newTaskName').value.trim(); const reward = parseInt($('newTaskReward').value, 10);
     if(!name || !reward || reward < 1 || reward > 50) return;
     state.tasks.push({ id: 't' + Date.now(), name, reward });
-    await saveState(); renderAll(); $('newTaskName').value = ''; $('newTaskReward').value = '';
+    saveState(); renderAll(); $('newTaskName').value = ''; $('newTaskReward').value = '';
   });
 
-  loadState();
 })();
 </script>
 </body>
