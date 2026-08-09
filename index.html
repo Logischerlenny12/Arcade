@@ -280,7 +280,7 @@
       <h2 class="step-title">🎮 SPIELZEIT LÄUFT</h2>
       <div style="color:var(--cream-dim); font-size:13px; margin-bottom:10px;" id="activeGameTitle">Spiel Name</div>
       <div class="timer-display" id="sessionStopwatchDisplay">00:00</div>
-      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <span id="currentCalculatedCost">3 🪙</span></div>
+      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <span id="currentCalculatedCost">1 🪙</span></div>
       <button class="btn btn-secondary" id="reopenGameBtn">🔗 Spiel-Fenster öffnen</button>
       <button class="btn btn-primary row-gap" id="stopAndBillBtn">✓ Beenden & Abrechnen</button>
     </div>
@@ -1847,7 +1847,7 @@
 
     if (currentUser && !currentUser.unlimitedCoins && !isBoostActive(currentUser, 'infinite')) {
       const playedMinutes = sessionSeconds / 60;
-      const baseCost = Math.max(3, Math.ceil(playedMinutes) * 3);
+      const baseCost = Math.max(1, Math.ceil(playedMinutes) * 1);
       let currentCost = getActualPrice(baseCost);
       if (currentUser.coins - currentCost < 0) {
         clearInterval(stopwatchInterval);
@@ -1871,7 +1871,7 @@
 
   function updateStopwatchUI(){
     $('sessionStopwatchDisplay').textContent = formatSeconds(sessionSeconds);
-    const baseCost = Math.max(3, Math.ceil(sessionSeconds / 60) * 3);
+    const baseCost = Math.max(1, Math.ceil(sessionSeconds / 60) * 1);
     
     if(currentUser.unlimitedCoins || isBoostActive(currentUser, 'infinite')) {
       $('currentCalculatedCost').innerHTML = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">0 🪙 (Unendlich Pass)</span>`;
@@ -1890,7 +1890,7 @@
   $('stopAndBillBtn').addEventListener('click', async () => {
     clearInterval(stopwatchInterval);
     const playedMinutes = sessionSeconds / 60;
-    const baseCost = Math.max(3, Math.ceil(playedMinutes) * 3);
+    const baseCost = Math.max(1, Math.ceil(playedMinutes) * 1);
     let costCoins = getActualPrice(baseCost);
 
     if(isBoostActive(currentUser, 'infinite')) {
