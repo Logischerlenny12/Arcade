@@ -92,9 +92,12 @@
 
   h2.step-title{ font-family:var(--font-display); font-size:13px; color:var(--cyan); margin:0 0 16px; text-align:center; }
   .section-subtitle{ font-size:12px; font-weight:700; color:var(--gold); margin:14px 0 8px; text-transform:uppercase; letter-spacing:1px; }
-  .game-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
-  .game-card{ background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:16px 10px; text-align:center; cursor:pointer; }
-  .game-card .emoji{font-size:28px; display:block; margin-bottom:8px;}
+  
+  /* GRID FÜR VOLLBILD ANGEPASST */
+  .game-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:16px; margin-bottom:18px; }
+  .game-card{ background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:16px 10px; text-align:center; cursor:pointer; transition:transform 0.2s; }
+  .game-card:hover { transform:translateY(-4px); border-color:var(--cyan); }
+  .game-card .emoji{font-size:32px; display:block; margin-bottom:10px;}
   .game-card .name{font-size:13px; font-weight:600;}
 
   .user-list { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
@@ -107,7 +110,7 @@
   .task-item.completed { opacity: 0.5; }
   .task-claim-btn { background:var(--gold-dim); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; }
 
-  /* BRAWL STARS STYLE EPIC VOLLBILD SHOP */
+  /* BRAWL STARS STYLE EPIC VOLLBILD OVERLAYS */
   .epic-shop-fullscreen { display:none; position:fixed; inset:0; z-index:90; background:#0c081e; flex-direction:row; overflow:hidden; }
   .epic-shop-fullscreen.active { display:flex; }
   .shop-main-content { flex:1; display:flex; flex-direction:column; padding:20px; overflow-y:auto; }
@@ -214,8 +217,14 @@
 
 <!-- GAME FULLSCREEN CONTAINER -->
 <div id="gameFullscreenContainer" style="display:none; position:fixed; inset:0; z-index:100000; background:black;">
-    <button id="closeFullscreenGameBtn" class="btn btn-danger" style="position:absolute; top:20px; right:20px; z-index:100001; width:auto; padding:10px 20px;">✕ Beenden</button>
+    <button id="closeFullscreenGameBtn" class="btn btn-danger" style="position:absolute; top:20px; right:20px; z-index:100001; width:auto; padding:10px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">✕ Beenden</button>
     <iframe id="gameIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+    
+    <!-- LIVE STATS OVERLAY FÜR IFRAME SPIELE -->
+    <div id="iframeOverlayLiveStats" style="position:absolute; bottom:20px; right:20px; background:rgba(0,0,0,0.85); border:2px solid var(--gold); border-radius:12px; padding:12px 18px; z-index:100001; text-align:right; box-shadow: 0 4px 15px rgba(0,0,0,0.8); pointer-events:none;">
+        <div id="iframeOverlayTimer" style="color:var(--gold); font-family:var(--font-display); font-size:18px;">00:00</div>
+        <div id="iframeOverlayCost" style="color:var(--cyan); font-size:13px; margin-top:6px; font-weight:bold;">1 🪙</div>
+    </div>
 </div>
 
 <div class="cabinet">
@@ -277,17 +286,7 @@
     <button class="btn btn-ghost" id="backFromTasks">← Zurück</button>
   </div>
 
-  <!-- GAME SELECT -->
-  <div class="screen" id="screen-game">
-    <h2 class="step-title">MODUS WÄHLEN</h2>
-    <div class="section-subtitle">⚡ Quick Play</div>
-    <div class="game-grid" id="quickPlayGrid"></div>
-    <div class="section-subtitle">🌐 Normal Play</div>
-    <div class="game-grid" id="normalPlayGrid"></div>
-    <button class="btn btn-ghost" id="backFromGame">← Zurück</button>
-  </div>
-
-  <!-- LIVE GAME SESSION SCREEN -->
+  <!-- LIVE GAME SESSION SCREEN (Hintergrund für non-iframe spiele) -->
   <div class="screen" id="screen-active-session">
     <div class="result-box">
       <h2 class="step-title">🎮 SPIELZEIT LÄUFT</h2>
@@ -305,6 +304,23 @@
       <div class="result-title fail">🔒 ACCOUNT GESPERRT</div>
       <div class="result-sub" id="lockedReasonText" style="margin: 15px 0; color:var(--cream-dim);">Dein Account wurde gesperrt.</div>
       <button class="btn btn-ghost" id="backFromLocked">← Zurück zur Auswahl</button>
+    </div>
+  </div>
+</div>
+
+<!-- VOLLBILD SPIELE AUSWAHL OVERLAY -->
+<div class="epic-shop-fullscreen" id="gameSelectFullscreen">
+  <div class="shop-main-content">
+    <div class="shop-header-bar">
+      <div class="shop-header-title">🎮 MODUS WÄHLEN</div>
+      <button class="btn btn-ghost btn-sm" id="closeGameSelectBtn" style="width:auto;">✕ Schließen</button>
+    </div>
+    <div class="brawl-section active">
+      <div class="brawl-section-title">⚡ Quick Play</div>
+      <div class="game-grid" id="quickPlayGrid"></div>
+      
+      <div class="brawl-section-title" style="margin-top:30px;">🌐 Normal Play</div>
+      <div class="game-grid" id="normalPlayGrid"></div>
     </div>
   </div>
 </div>
@@ -651,6 +667,7 @@
             <label class="perm-item"><input type="checkbox" id="newGameIsVip"> 👑 Nur für VIP</label>
             <label class="perm-item"><input type="checkbox" id="newGameIsDiamond"> 💎 Diamant Knopf</label>
             <label class="perm-item"><input type="checkbox" id="newGameIsAd"> 📢 Zur Werbung hinzufügen</label>
+            <label class="perm-item"><input type="checkbox" id="newGameIsIframe"> 🖼️ Iframe Spiel (Vollbild Overlay)</label>
           </div>
 
           <button class="btn btn-secondary" id="addGameBtn">+ Hinzufügen</button>
@@ -719,7 +736,7 @@
     }
   ];
 
-  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal', isVip: false, isDiamond: false, isAd: false }];
+  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal', isVip: false, isDiamond: false, isAd: false, isIframe: false }];
 
   const DAILY_ACHIEVEMENTS = [
     { id: 'ach_yt15', title: '🎬 15 Min. YouTube', reward: 10 },
@@ -983,6 +1000,12 @@
         selectedGame = JSON.parse(savedGame);
         $('activeGameTitle').textContent = selectedGame.name;
         showScreen('screen-active-session');
+        
+        // Iframe wieder öffnen, falls es ein Iframe Spiel war
+        if (selectedGame.isIframe) {
+            $('gameFullscreenContainer').style.display = 'block';
+            $('gameIframe').src = selectedGame.url;
+        }
         
         sessionSeconds = Math.floor((Date.now() - activeSessionStartTime) / 1000);
         updateStopwatchUI();
@@ -1824,6 +1847,7 @@
       if(g.isVip) extraBadges += '👑 ';
       if(g.isDiamond) extraBadges += '💎 ';
       if(g.isAd) extraBadges += '📢 ';
+      if(g.isIframe) extraBadges += '🖼️ ';
       
       row.innerHTML = `<span style="cursor:pointer;" class="game-edit-trigger">${g.emoji || '🎮'}</span><span class="glabel game-edit-trigger" style="cursor:pointer;">${escapeHtml(g.name)} <small>${extraBadges}</small></span><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
       
@@ -1836,6 +1860,7 @@
         $('newGameIsVip').checked = !!g.isVip;
         $('newGameIsDiamond').checked = !!g.isDiamond;
         $('newGameIsAd').checked = !!g.isAd;
+        $('newGameIsIframe').checked = !!g.isIframe;
         
         $('adminGameFormTitle').textContent = 'Spiel bearbeiten';
         $('addGameBtn').style.display = 'none';
@@ -1851,7 +1876,7 @@
   function resetGameForm() {
     $('editGameId').value = '';
     $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = ''; $('newGameCategory').value = 'normal';
-    $('newGameIsVip').checked = false; $('newGameIsDiamond').checked = false; $('newGameIsAd').checked = false;
+    $('newGameIsVip').checked = false; $('newGameIsDiamond').checked = false; $('newGameIsAd').checked = false; $('newGameIsIframe').checked = false;
     $('adminGameFormTitle').textContent = 'Neues Spiel hinzufügen';
     $('addGameBtn').style.display = 'block';
     $('saveEditGameBtn').style.display = 'none';
@@ -1908,12 +1933,14 @@
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
   function formatSeconds(totalSeconds){ const m = Math.floor(totalSeconds / 60); const s = totalSeconds % 60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
 
-  $('playBtn').addEventListener('click', () => showScreen('screen-game'));
+  // VOLLBILD MENÜS
+  $('playBtn').addEventListener('click', () => $('gameSelectFullscreen').classList.add('active'));
+  $('closeGameSelectBtn').addEventListener('click', () => $('gameSelectFullscreen').classList.remove('active'));
+  
   $('tasksBtn').addEventListener('click', () => showScreen('screen-tasks'));
   $('backFromTasks').addEventListener('click', () => showScreen('screen-home'));
-  $('backFromGame').addEventListener('click', () => showScreen('screen-home'));
 
-  // FULLSCREEN SPIEL SCHLIESSEN BUTTON
+  // FULLSCREEN IFRAME SPIEL SCHLIESSEN BUTTON
   $('closeFullscreenGameBtn').addEventListener('click', () => {
     $('gameFullscreenContainer').style.display = 'none';
     $('gameIframe').src = '';
@@ -1926,21 +1953,32 @@
 
   function startSession(){
     $('activeGameTitle').textContent = selectedGame.name;
-    showScreen('screen-active-session');
     
-    // Spiel im Overlay öffnen
-    const gameContainer = $('gameFullscreenContainer');
-    const gameIframe = $('gameIframe');
-    gameIframe.src = selectedGame.url;
-    gameContainer.style.display = 'block';
+    // Menü schließen
+    $('gameSelectFullscreen').classList.remove('active');
     
-    // Fullscreen anfordern
-    if (gameContainer.requestFullscreen) {
-        gameContainer.requestFullscreen().catch(err => console.log(err));
-    } else if (gameContainer.webkitRequestFullscreen) {
-        gameContainer.webkitRequestFullscreen();
+    // SPIEL STARTEN LOGIK
+    if (selectedGame.isIframe) {
+        // Spiel im Overlay öffnen (Iframe Vollbild)
+        const gameContainer = $('gameFullscreenContainer');
+        const gameIframe = $('gameIframe');
+        gameIframe.src = selectedGame.url;
+        gameContainer.style.display = 'block';
+        
+        // Versuche das echte Geräte-Vollbild aufzurufen
+        if (gameContainer.requestFullscreen) {
+            gameContainer.requestFullscreen().catch(err => console.log(err));
+        } else if (gameContainer.webkitRequestFullscreen) {
+            gameContainer.webkitRequestFullscreen();
+        }
+    } else {
+        // Normal in neuem Tab öffnen
+        window.open(selectedGame.url, '_blank');
     }
     
+    // Immer die unsichtbare "Abrechnungs"-Ansicht im Hintergrund laden
+    showScreen('screen-active-session');
+
     activeSessionStartTime = Date.now();
     localStorage.setItem('activeSessionStart', activeSessionStartTime);
     localStorage.setItem('activeSessionGame', JSON.stringify(selectedGame));
@@ -1986,30 +2024,44 @@
   }
 
   function updateStopwatchUI(){
-    $('sessionStopwatchDisplay').textContent = formatSeconds(sessionSeconds);
+    const timeText = formatSeconds(sessionSeconds);
+    $('sessionStopwatchDisplay').textContent = timeText;
+    $('iframeOverlayTimer').textContent = timeText; // Update Live-Overlay
+
     const baseCost = Math.max(1, Math.ceil(sessionSeconds / 60) * 1);
     
     if(currentUser.unlimitedCoins || isBoostActive(currentUser, 'infinite')) {
-      $('currentCalculatedCost').innerHTML = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">0 🪙 (Unendlich Pass)</span>`;
+      const unendlichHtml = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">0 🪙 (Unendlich Pass)</span>`;
+      $('currentCalculatedCost').innerHTML = unendlichHtml;
+      $('iframeOverlayCost').innerHTML = unendlichHtml;
       return;
     }
+
     if(isBoostActive(currentUser, 'discount')) {
       const discCost = Math.max(1, Math.floor(baseCost * 0.85));
-      $('currentCalculatedCost').innerHTML = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">${discCost} 🪙 (-15%)</span>`;
+      const discHtml = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">${discCost} 🪙 (-15%)</span>`;
+      $('currentCalculatedCost').innerHTML = discHtml;
+      $('iframeOverlayCost').innerHTML = discHtml;
     } else {
-      $('currentCalculatedCost').textContent = `${baseCost} 🪙`;
+      const stdHtml = `${baseCost} 🪙`;
+      $('currentCalculatedCost').textContent = stdHtml;
+      $('iframeOverlayCost').textContent = stdHtml;
     }
   }
 
   $('reopenGameBtn').addEventListener('click', () => { 
     if(selectedGame) {
-      const gameContainer = $('gameFullscreenContainer');
-      $('gameIframe').src = selectedGame.url;
-      gameContainer.style.display = 'block';
-      if (gameContainer.requestFullscreen) {
-          gameContainer.requestFullscreen().catch(e => {});
-      } else if (gameContainer.webkitRequestFullscreen) {
-          gameContainer.webkitRequestFullscreen();
+      if(selectedGame.isIframe) {
+          const gameContainer = $('gameFullscreenContainer');
+          $('gameIframe').src = selectedGame.url;
+          gameContainer.style.display = 'block';
+          if (gameContainer.requestFullscreen) {
+              gameContainer.requestFullscreen().catch(e => {});
+          } else if (gameContainer.webkitRequestFullscreen) {
+              gameContainer.webkitRequestFullscreen();
+          }
+      } else {
+          window.open(selectedGame.url, '_blank');
       }
     }
   });
@@ -2055,7 +2107,7 @@
     if(!name || !url) return;
     state.games.push({ 
       id: 'g' + Date.now(), name, url, emoji: emoji || '🎮', category: category || 'normal',
-      isVip: $('newGameIsVip').checked, isDiamond: $('newGameIsDiamond').checked, isAd: $('newGameIsAd').checked
+      isVip: $('newGameIsVip').checked, isDiamond: $('newGameIsDiamond').checked, isAd: $('newGameIsAd').checked, isIframe: $('newGameIsIframe').checked
     });
     await saveState(); renderAll(); resetGameForm();
   });
@@ -2071,6 +2123,7 @@
     game.isVip = $('newGameIsVip').checked;
     game.isDiamond = $('newGameIsDiamond').checked;
     game.isAd = $('newGameIsAd').checked;
+    game.isIframe = $('newGameIsIframe').checked;
     await saveState(); renderAll(); resetGameForm(); alert('Spiel erfolgreich aktualisiert!');
   });
 
