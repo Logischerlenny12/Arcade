@@ -205,6 +205,19 @@
 </head>
 <body>
 
+<!-- WERBE POPUP -->
+<div id="werbePopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); padding:24px; z-index:9999; border: 2px solid var(--gold); border-radius:16px; text-align:center; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+    <h2 style="font-family:var(--font-display); font-size:14px; color:var(--gold); margin-top:0;">🌟 NEUIGKEIT!</h2>
+    <p id="werbeText" style="color:var(--cream); font-size:14px; margin-bottom:20px;"></p>
+    <button class="btn btn-primary" onclick="document.getElementById('werbePopup').style.display='none'">Super, später ansehen!</button>
+</div>
+
+<!-- GAME FULLSCREEN CONTAINER -->
+<div id="gameFullscreenContainer" style="display:none; position:fixed; inset:0; z-index:100000; background:black;">
+    <button id="closeFullscreenGameBtn" class="btn btn-danger" style="position:absolute; top:20px; right:20px; z-index:100001; width:auto; padding:10px 20px;">✕ Beenden</button>
+    <iframe id="gameIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+</div>
+
 <div class="cabinet">
   <div class="marquee-title">✦ MÜNZ-ARCADE ✦</div>
 
@@ -627,12 +640,22 @@
       <div style="display:flex; gap:20px; flex-wrap:wrap;">
         <div style="flex:1; min-width:280px;"><h3>Spieleliste</h3><div id="adminGamesList"></div></div>
         <div style="flex:1; min-width:280px;">
-          <h3>Neues Spiel hinzufügen</h3>
+          <h3 id="adminGameFormTitle">Neues Spiel hinzufügen</h3>
+          <input type="hidden" id="editGameId" value="">
           <div class="field"><label>Name</label><input type="text" id="newGameName"></div>
           <div class="field"><label>Spiele-Link (URL)</label><input type="text" id="newGameUrl"></div>
           <div class="field"><label>Emoji</label><input type="text" id="newGameEmoji" maxlength="4"></div>
           <div class="field"><label>Kategorie</label><select id="newGameCategory"><option value="quick">⚡ Quick Play</option><option value="normal" selected>🌐 Normal Play</option></select></div>
+          
+          <div class="perm-box" style="margin-bottom:14px;">
+            <label class="perm-item"><input type="checkbox" id="newGameIsVip"> 👑 Nur für VIP</label>
+            <label class="perm-item"><input type="checkbox" id="newGameIsDiamond"> 💎 Diamant Knopf</label>
+            <label class="perm-item"><input type="checkbox" id="newGameIsAd"> 📢 Zur Werbung hinzufügen</label>
+          </div>
+
           <button class="btn btn-secondary" id="addGameBtn">+ Hinzufügen</button>
+          <button class="btn btn-primary" id="saveEditGameBtn" style="display:none; margin-bottom:8px;">💾 Änderungen speichern</button>
+          <button class="btn btn-ghost" id="cancelEditGameBtn" style="display:none;">Abbrechen</button>
         </div>
       </div>
     </div>
@@ -696,7 +719,7 @@
     }
   ];
 
-  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal' }];
+  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal', isVip: false, isDiamond: false, isAd: false }];
 
   const DAILY_ACHIEVEMENTS = [
     { id: 'ach_yt15', title: '🎬 15 Min. YouTube', reward: 10 },
@@ -1097,6 +1120,13 @@
     renderAll(); 
     checkLockStatus();
     checkActiveSession();
+
+    // Werbungs-Popup Logik
+    const adGame = state.games.find(g => g.isAd);
+    if (adGame) {
+        $('werbeText').innerHTML = `Schau dir unser empfohlenes Spiel an:<br><br><b style="font-size:18px;">${adGame.emoji} ${escapeHtml(adGame.name)}</b>`;
+        $('werbePopup').style.display = 'block';
+    }
   }
 
   $('dailyRewardBtn').addEventListener('click', async () => {
@@ -1752,25 +1782,83 @@
 
   function createGameCard(g){
     const card = document.createElement('div'); card.className = 'game-card';
-    card.innerHTML = `<span class="emoji">${g.emoji || '🎮'}</span><span class="name">${escapeHtml(g.name)}</span>`;
-    card.addEventListener('click', () => { selectedGame = g; startSession(); });
+    
+    // Custom styles for VIP and Diamond
+    if (g.isDiamond) {
+       card.style.borderColor = '#00f2fe';
+       card.style.background = 'linear-gradient(180deg, #0a2540 0%, #100a20 100%)';
+    }
+    if (g.isVip) {
+       card.style.borderColor = 'var(--gold)';
+       card.style.background = 'linear-gradient(180deg, #2b2005 0%, #100a20 100%)';
+    }
+
+    let badgeHtml = '';
+    if (g.isVip) badgeHtml += '<div style="font-size:9px; background:var(--gold); color:black; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px; font-weight:bold;">VIP</div> ';
+    if (g.isDiamond) badgeHtml += '<div style="font-size:9px; background:#00f2fe; color:black; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px; font-weight:bold;">DIAMANT</div>';
+
+    card.innerHTML = `${badgeHtml}<br><span class="emoji">${g.emoji || '🎮'}</span><span class="name">${escapeHtml(g.name)}</span>`;
+    card.addEventListener('click', () => { 
+      if(g.isVip && !isVip(currentUser)) {
+        alert('Dieses Spiel ist exklusiv für VIP-Mitglieder! Du kannst den Pass im Arcade Store kaufen.');
+        return;
+      }
+      selectedGame = g; 
+      startSession(); 
+    });
     return card;
   }
+
   function renderGameGrid(){
     const qGrid = $('quickPlayGrid'); qGrid.innerHTML = '';
     const nGrid = $('normalPlayGrid'); nGrid.innerHTML = '';
     state.games.filter(g => g.category === 'quick').forEach(g => qGrid.appendChild(createGameCard(g)));
     state.games.filter(g => g.category !== 'quick').forEach(g => nGrid.appendChild(createGameCard(g)));
   }
+
   function renderAdminGamesList(){
     const list = $('adminGamesList'); list.innerHTML = '';
     state.games.forEach(g => {
       const row = document.createElement('div'); row.className = 'games-list-item';
-      row.innerHTML = `<span>${g.emoji || '🎮'}</span><span class="glabel">${escapeHtml(g.name)}</span><button>✕</button>`;
-      row.querySelector('button').addEventListener('click', async () => { state.games = state.games.filter(x => x.id !== g.id); await saveState(); renderAll(); });
+      let extraBadges = '';
+      if(g.isVip) extraBadges += '👑 ';
+      if(g.isDiamond) extraBadges += '💎 ';
+      if(g.isAd) extraBadges += '📢 ';
+      
+      row.innerHTML = `<span style="cursor:pointer;" class="game-edit-trigger">${g.emoji || '🎮'}</span><span class="glabel game-edit-trigger" style="cursor:pointer;">${escapeHtml(g.name)} <small>${extraBadges}</small></span><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
+      
+      row.querySelectorAll('.game-edit-trigger').forEach(el => el.addEventListener('click', () => {
+        $('editGameId').value = g.id;
+        $('newGameName').value = g.name;
+        $('newGameUrl').value = g.url;
+        $('newGameEmoji').value = g.emoji || '🎮';
+        $('newGameCategory').value = g.category || 'normal';
+        $('newGameIsVip').checked = !!g.isVip;
+        $('newGameIsDiamond').checked = !!g.isDiamond;
+        $('newGameIsAd').checked = !!g.isAd;
+        
+        $('adminGameFormTitle').textContent = 'Spiel bearbeiten';
+        $('addGameBtn').style.display = 'none';
+        $('saveEditGameBtn').style.display = 'block';
+        $('cancelEditGameBtn').style.display = 'block';
+      }));
+
+      row.querySelector('button').addEventListener('click', async () => { state.games = state.games.filter(x => x.id !== g.id); await saveState(); renderAll(); resetGameForm(); });
       list.appendChild(row);
     });
   }
+
+  function resetGameForm() {
+    $('editGameId').value = '';
+    $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = ''; $('newGameCategory').value = 'normal';
+    $('newGameIsVip').checked = false; $('newGameIsDiamond').checked = false; $('newGameIsAd').checked = false;
+    $('adminGameFormTitle').textContent = 'Neues Spiel hinzufügen';
+    $('addGameBtn').style.display = 'block';
+    $('saveEditGameBtn').style.display = 'none';
+    $('cancelEditGameBtn').style.display = 'none';
+  }
+
+  $('cancelEditGameBtn').addEventListener('click', resetGameForm);
 
   function renderUserTasksList() {
     const list = $('userTasksList'); list.innerHTML = '';
@@ -1825,10 +1913,33 @@
   $('backFromTasks').addEventListener('click', () => showScreen('screen-home'));
   $('backFromGame').addEventListener('click', () => showScreen('screen-home'));
 
+  // FULLSCREEN SPIEL SCHLIESSEN BUTTON
+  $('closeFullscreenGameBtn').addEventListener('click', () => {
+    $('gameFullscreenContainer').style.display = 'none';
+    $('gameIframe').src = '';
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.log(err));
+    } else if (document.webkitFullscreenElement) {
+        document.webkitExitFullscreen();
+    }
+  });
+
   function startSession(){
     $('activeGameTitle').textContent = selectedGame.name;
     showScreen('screen-active-session');
-    window.open(selectedGame.url, '_blank');
+    
+    // Spiel im Overlay öffnen
+    const gameContainer = $('gameFullscreenContainer');
+    const gameIframe = $('gameIframe');
+    gameIframe.src = selectedGame.url;
+    gameContainer.style.display = 'block';
+    
+    // Fullscreen anfordern
+    if (gameContainer.requestFullscreen) {
+        gameContainer.requestFullscreen().catch(err => console.log(err));
+    } else if (gameContainer.webkitRequestFullscreen) {
+        gameContainer.webkitRequestFullscreen();
+    }
     
     activeSessionStartTime = Date.now();
     localStorage.setItem('activeSessionStart', activeSessionStartTime);
@@ -1863,6 +1974,11 @@
           checkLockStatus();
         });
         
+        // Fullscreen beenden falls noch offen
+        $('gameFullscreenContainer').style.display = 'none';
+        $('gameIframe').src = '';
+        if (document.fullscreenElement) document.exitFullscreen().catch(e => {});
+
         $('lockedReasonText').textContent = currentUser.lockReason;
         showScreen('screen-locked');
       }
@@ -1885,7 +2001,18 @@
     }
   }
 
-  $('reopenGameBtn').addEventListener('click', () => { if(selectedGame) window.open(selectedGame.url, '_blank'); });
+  $('reopenGameBtn').addEventListener('click', () => { 
+    if(selectedGame) {
+      const gameContainer = $('gameFullscreenContainer');
+      $('gameIframe').src = selectedGame.url;
+      gameContainer.style.display = 'block';
+      if (gameContainer.requestFullscreen) {
+          gameContainer.requestFullscreen().catch(e => {});
+      } else if (gameContainer.webkitRequestFullscreen) {
+          gameContainer.webkitRequestFullscreen();
+      }
+    }
+  });
 
   $('stopAndBillBtn').addEventListener('click', async () => {
     clearInterval(stopwatchInterval);
@@ -1912,7 +2039,7 @@
   });
 
   $('openAdminDashboardBtn').addEventListener('click', () => { renderAll(); $('adminPanelBackdrop').classList.add('active'); });
-  $('closeAdminPanel').addEventListener('click', () => $('adminPanelBackdrop').classList.remove('active'));
+  $('closeAdminPanel').addEventListener('click', () => { $('adminPanelBackdrop').classList.remove('active'); resetGameForm(); });
 
   document.querySelectorAll('.admin-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1926,8 +2053,25 @@
   $('addGameBtn').addEventListener('click', async () => {
     const name = $('newGameName').value.trim(); const url = $('newGameUrl').value.trim(); const emoji = $('newGameEmoji').value.trim(); const category = $('newGameCategory').value;
     if(!name || !url) return;
-    state.games.push({ id: 'g' + Date.now(), name, url, emoji: emoji || '🎮', category: category || 'normal' });
-    await saveState(); renderAll(); $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = '';
+    state.games.push({ 
+      id: 'g' + Date.now(), name, url, emoji: emoji || '🎮', category: category || 'normal',
+      isVip: $('newGameIsVip').checked, isDiamond: $('newGameIsDiamond').checked, isAd: $('newGameIsAd').checked
+    });
+    await saveState(); renderAll(); resetGameForm();
+  });
+
+  $('saveEditGameBtn').addEventListener('click', async () => {
+    const id = $('editGameId').value;
+    const game = state.games.find(g => g.id === id);
+    if(!game) return;
+    game.name = $('newGameName').value.trim();
+    game.url = $('newGameUrl').value.trim();
+    game.emoji = $('newGameEmoji').value.trim();
+    game.category = $('newGameCategory').value;
+    game.isVip = $('newGameIsVip').checked;
+    game.isDiamond = $('newGameIsDiamond').checked;
+    game.isAd = $('newGameIsAd').checked;
+    await saveState(); renderAll(); resetGameForm(); alert('Spiel erfolgreich aktualisiert!');
   });
 
   $('addTaskBtn').addEventListener('click', async () => {
