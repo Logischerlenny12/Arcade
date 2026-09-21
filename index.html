@@ -187,7 +187,8 @@ a{color:inherit;text-decoration:none}
 /* Spiele */
 .game{display:flex;gap:14px;align-items:center;padding:14px;background:var(--solid);border:1.5px solid var(--line);border-radius:24px}
 .game .thumb{width:72px;height:72px;border-radius:22px;flex:none}
-.game-actions{display:flex;gap:8px;margin-top:8px}
+.game-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.design-preview{min-height:150px;aspect-ratio:16/9}
 .grid-games{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 
 /* Admin */
@@ -235,7 +236,7 @@ a{color:inherit;text-decoration:none}
   <div class="auth-card">
     <div class="auth-logo"><i class="coin"></i></div>
     <h1>CoinOS</h1>
-    <p class="muted">Dein Konto, dein Shop, deine Spiele.</p>
+    <p class="muted">Dein Konto, dein Shop, deine Apps.</p>
     <div class="tabs" id="authTabs">
       <button type="button" class="active" data-action="auth-tab" data-tab="login">Anmelden</button>
       <button type="button" data-action="auth-tab" data-tab="register" id="registerTab">Registrieren</button>
@@ -391,6 +392,10 @@ const ICONS = {
   list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
   image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
   globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  palette: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 0-3.6h-.7a1.8 1.8 0 0 1 0-3.6H15a6 6 0 0 0 0-12z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="10" cy="6.8" r=".8"/><circle cx="14" cy="6.8" r=".8"/>',
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  store: '<path d="M4 9h16v11H4z"/><path d="M3 9l2-5h14l2 5"/><path d="M8 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M8 13h8"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
   receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>'
 };
 const icon = (name, size = 20) => `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
@@ -402,10 +407,11 @@ const thumbHTML = (url, fb = "image", size = 30) => {
 
 /* ---------------- App-Registry ---------------- */
 const APPS = {
-  konto:  { title: "Konto",  icon: "wallet",  c1: "#20c997", c2: "#0a7d5c", mount: mountKonto,  update: updateKonto },
-  shop:   { title: "Shop",   icon: "bag",     c1: "#ff9f43", c2: "#e5541b", mount: mountShop,   update: updateShop },
-  spiele: { title: "Spiele", icon: "gamepad", c1: "#8f74ff", c2: "#4b33d6", mount: mountSpiele, update: updateSpiele },
-  admin:  { title: "Admin",  icon: "shield",  c1: "#ff5d73", c2: "#a81e36", mount: mountAdmin,  update: updateAdmin, adminOnly: true }
+  konto:     { title: "Konto",       icon: "wallet",  c1: "#20c997", c2: "#0a7d5c", mount: mountKonto,     update: updateKonto },
+  shop:      { title: "Shop",        icon: "bag",     c1: "#ff9f43", c2: "#e5541b", mount: mountShop,      update: updateShop },
+  appstore:  { title: "App Store",   icon: "store",   c1: "#8f74ff", c2: "#4b33d6", mount: mountAppStore,  update: updateAppStore },
+  designstore:{ title: "Design Store",icon: "palette", c1: "#ff6fae", c2: "#a93ee8", mount: mountDesignStore,update: updateDesignStore },
+  admin:     { title: "Admin",       icon: "shield",  c1: "#ff5d73", c2: "#a81e36", mount: mountAdmin,     update: updateAdmin, adminOnly: true }
 };
 
 /* ---------------- State ---------------- */
@@ -413,7 +419,7 @@ const state = {
   user: null, profile: null,
   items: [], apps: [], orders: [], txs: [],
   allUsers: [], allOrders: [],
-  openApp: null, shopSearch: "", shopCat: "Alle",
+  openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle",
   adminTab: "users", orderFilter: "alle"
 };
 let unsubs = [];
@@ -567,7 +573,7 @@ function stopListeners() {
   unsubs.forEach(u => { try { u(); } catch {} });
   unsubs = [];
   adminSubs = false;
-  Object.assign(state, { items: [], apps: [], orders: [], txs: [], allUsers: [], allOrders: [], openApp: null, shopSearch: "", shopCat: "Alle", adminTab: "users", orderFilter: "alle" });
+  Object.assign(state, { items: [], apps: [], orders: [], txs: [], allUsers: [], allOrders: [], openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle", adminTab: "users", orderFilter: "alle" });
   shownCoins = null;
   $("#window")?.classList.remove("open");
   closeGameFrame();
@@ -624,21 +630,41 @@ function renderStatus() {
   setCoins(Number(p.balance) || 0);
 }
 
+function getInstalledApps() {
+  const list = Array.isArray(state.profile?.installedApps) ? state.profile.installedApps : [];
+  return list.map(x => typeof x === "string" ? { appId: x } : x).filter(x => x && x.appId);
+}
+
+function installedEntry(id) { return getInstalledApps().find(x => x.appId === id) || null; }
+function appPrice(a) { return Math.max(0, Math.floor(Number(a.price ?? a.requiredCoins) || 0)); }
+function appBilling(a) { return ["once","daily","weekly"].includes(a.billing) ? a.billing : "once"; }
+function billingLabel(a) { return appBilling(a) === "daily" ? "pro Tag" : appBilling(a) === "weekly" ? "pro Woche" : "einmalig"; }
+function entryExpiry(entry) {
+  if (!entry?.expiresAt) return null;
+  return entry.expiresAt?.toMillis ? entry.expiresAt.toMillis() : new Date(entry.expiresAt).getTime();
+}
+function isAppActive(a) {
+  const e = installedEntry(a.id);
+  if (!e) return false;
+  const exp = entryExpiry(e);
+  return !exp || exp > Date.now();
+}
+
 function renderDesktop() {
   const p = state.profile;
   $("#greeting").textContent = `Hallo, ${p.name || "du"}!`;
   $("#dateLine").textContent = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
   const builtin = Object.entries(APPS).filter(([, a]) => !a.adminOnly || isAdmin());
-  const custom = state.apps.filter(a => !a.isGame);
+  const installed = getInstalledApps().map(e => state.apps.find(a => a.id === e.appId)).filter(Boolean);
   $("#appGrid").innerHTML =
     builtin.map(([id, a]) => `
       <button class="tile" data-action="open-app" data-app="${id}">
         <span class="tile-icon" style="--c1:${a.c1};--c2:${a.c2}">${icon(a.icon, 38)}</span>
         <span class="tile-label">${a.title}</span>
       </button>`).join("") +
-    custom.map(a => `
-      <button class="tile" data-action="open-link" data-id="${a.id}" title="${esc(a.title)}">
-        <span class="tile-icon" style="--c1:#4dabf7;--c2:#1c7ed6">${thumbHTML(a.iconUrl, "globe", 36)}</span>
+    installed.map(a => `
+      <button class="tile" data-action="open-installed" data-id="${a.id}" title="${esc(a.title)}">
+        <span class="tile-icon" style="--c1:#4dabf7;--c2:#1c7ed6">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 36)}</span>
         <span class="tile-label">${esc(a.title)}</span>
       </button>`).join("");
 }
@@ -829,6 +855,88 @@ async function buyItem(itemId) {
 }
 
 /* =========================================================
+   APP-STORE
+   ========================================================= */
+function mountAppStore(el) {
+  el.innerHTML = `<div class="toolbar"><input class="search" id="appSearch" type="search" placeholder="Apps suchen" style="max-width:320px"><div class="chips" id="appChips"></div></div><div id="appStoreGrid"></div>`;
+  const s = $("#appSearch"); s.value = state.appSearch;
+  s.addEventListener("input", () => { state.appSearch = s.value; updateAppStoreGrid(); });
+}
+function updateAppStore() {
+  const cats = ["Alle", ...new Set(state.apps.map(a => a.category).filter(Boolean))];
+  if (!cats.includes(state.appCat)) state.appCat = "Alle";
+  $("#appChips").innerHTML = cats.map(c => `<button class="chip ${c === state.appCat ? "active" : ""}" data-action="app-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  updateAppStoreGrid();
+}
+function updateAppStoreGrid() {
+  const q = state.appSearch.trim().toLowerCase();
+  const list = state.apps.filter(a => (state.appCat === "Alle" || a.category === state.appCat) && (!q || String(a.title).toLowerCase().includes(q)) && a.hidden !== true);
+  $("#appStoreGrid").innerHTML = list.length ? `<div class="grid-games">${list.map(a => {
+    const installed = installedEntry(a.id); const active = isAppActive(a); const price = appPrice(a); const billing = appBilling(a);
+    const action = installed && active ? "installed" : installed ? "renew-app" : "install-app";
+    const label = installed && active ? "Installiert" : installed ? "Abo verlängern" : price > 0 ? "Installieren" : "Kostenlos installieren";
+    return `<article class="game"><div class="thumb">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${price > 0 ? `${fmt(price)} Coins ${billingLabel(a)}` : "Kostenlos"}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button>${installed ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
+  }).join("")}</div>` : `<div class="empty">${icon("store",40)}${state.apps.length ? "Keine App passt zu deiner Suche." : "Der App Store ist noch leer."}</div>`;
+}
+async function installApp(id) {
+  const a = state.apps.find(x => x.id === id); if (!a) throw new AppError("Diese App gibt es nicht mehr.");
+  const price = appPrice(a), billing = appBilling(a), uid = state.user.uid, userRef = doc(db,"users",uid), txRef = doc(collection(db,"users",uid,"transactions"));
+  const current = installedEntry(id);
+  if (current && isAppActive(a)) return toast("Diese App ist bereits installiert.");
+  const ok = await confirmDialog({title:`${a.title} installieren?`, text: price > 0 ? `Die Installation kostet ${fmt(price)} Coins ${billingLabel(a)}.` : "Die Installation ist kostenlos.", confirmLabel: price > 0 ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren"});
+  if (!ok) return;
+  await runTransaction(db, async tx => {
+    const u = await tx.get(userRef); if (!u.exists()) throw new AppError("Nutzer nicht gefunden.");
+    const data = u.data(); const bal = Number(data.balance)||0; if (bal < price) throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);
+    const list = Array.isArray(data.installedApps) ? data.installedApps.map(x => typeof x === "string" ? {appId:x}:x).filter(Boolean) : [];
+    const now = Date.now(); let expiresAt = null; if (billing === "daily") expiresAt = new Date(now + 86400000); if (billing === "weekly") expiresAt = new Date(now + 7*86400000);
+    const entry = {appId:id, installedAt:new Date(now), expiresAt}; const next = list.filter(x => x.appId !== id); next.push(entry);
+    tx.update(userRef,{balance:bal-price,installedApps:next});
+    if (price > 0) tx.set(txRef,{amount:-price,type:"app_install",description:`App ${billing === "once" ? "gekauft" : "Abo bezahlt"}: ${a.title}`,timestamp:serverTimestamp()});
+  });
+  toast(price > 0 ? `${a.title} wurde installiert.` : `${a.title} wurde kostenlos installiert.`,"success");
+}
+async function uninstallApp(id) {
+  const a = state.apps.find(x => x.id === id); if (!a) return;
+  if (!await confirmDialog({title:`${a.title} deinstallieren?`,text:"Die App verschwindet von deinem Homescreen. Ein bereits bezahlter Zeitraum wird nicht erstattet.",confirmLabel:"Deinstallieren",danger:true})) return;
+  const ref=doc(db,"users",state.user.uid); const snap=await getDoc(ref); if(!snap.exists()) return;
+  const next=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x).filter(x=>x.appId!==id);
+  await updateDoc(ref,{installedApps:next}); toast("App deinstalliert.","success");
+}
+async function moveInstalledApp(id, direction) {
+  const ref=doc(db,"users",state.user.uid); const snap=await getDoc(ref); if(!snap.exists()) return;
+  const list=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean);
+  const i=list.findIndex(x=>x.appId===id); if(i<0) return; const j=i+direction; if(j<0||j>=list.length) return;
+  [list[i],list[j]]=[list[j],list[i]]; await updateDoc(ref,{installedApps:list});
+}
+
+function openInstalledApp(id) {
+  const a=state.apps.find(x=>x.id===id); if(!a) return;
+  if(!isAppActive(a)){ toast("Das Abo dieser App ist abgelaufen. Verlängere es im App Store.","error"); openApp("appstore"); return; }
+  const url=safeUrl(a.targetUrl); if(!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
+  const w=window.open(url,"_blank","noopener"); if(!w) toast("Der Browser hat den neuen Tab blockiert. Bitte Pop-ups erlauben.","error");
+}
+
+/* =========================================================
+   DESIGN-STORE
+   ========================================================= */
+const DESIGNS = [
+  {id:"candy",title:"Candy Glow",desc:"Rosa, lila und blau – passend zum CoinOS-Look.",bg:"radial-gradient(900px 620px at 8% 8%,#ffc9e2 0%,transparent 62%),radial-gradient(800px 600px at 95% 12%,#c9e8ff 0%,transparent 60%),radial-gradient(900px 700px at 70% 105%,#ffe7b8 0%,transparent 58%),#f3e4ff"},
+  {id:"ocean",title:"Ocean",desc:"Kühler blau-türkiser Hintergrund.",bg:"radial-gradient(800px 600px at 15% 15%,#b9f2ff 0%,transparent 60%),radial-gradient(900px 700px at 90% 90%,#b8c9ff 0%,transparent 60%),#dff8ff"},
+  {id:"sunset",title:"Sunset",desc:"Warmer Sonnenuntergang.",bg:"radial-gradient(900px 650px at 80% 10%,#ffd0a8 0%,transparent 62%),radial-gradient(800px 650px at 10% 90%,#ffb7cf 0%,transparent 60%),#fff0d5"},
+  {id:"lavender",title:"Lavender",desc:"Ruhiges Lila mit weichen Flächen.",bg:"radial-gradient(900px 700px at 20% 20%,#e5d4ff 0%,transparent 60%),radial-gradient(900px 700px at 85% 85%,#cfc8ff 0%,transparent 60%),#f5f0ff"}
+];
+function mountDesignStore(el){el.innerHTML=`<div class="toolbar"><span class="muted">Alle Hintergründe sind kostenlos.</span></div><div id="designGrid" class="grid-items"></div>`;}
+function updateDesignStore(){
+  const saved=JSON.parse(localStorage.getItem("coinos_designs")||"[]"), current=localStorage.getItem("coinos_current_design")||"candy";
+  $("#designGrid").innerHTML=`${DESIGNS.map(d=>`<article class="item"><div class="thumb design-preview" style="background:${d.bg}"></div><div class="item-body"><span class="muted small">Kostenlos</span><h4>${d.title}</h4><span class="muted small">${d.desc}</span><div class="game-actions"><button class="btn primary small" data-action="download-design" data-id="${d.id}">${saved.includes(d.id)?icon("check",16)+"Heruntergeladen":icon("download",16)+"Herunterladen"}</button><button class="btn small" data-action="apply-design" data-id="${d.id}" ${current===d.id?"disabled":""}>${current===d.id?"Aktiv":"Anwenden"}</button></div></div></article>`).join("")}`;
+}
+function downloadDesign(id){let saved=JSON.parse(localStorage.getItem("coinos_designs")||"[]");if(!saved.includes(id))saved.push(id);localStorage.setItem("coinos_designs",JSON.stringify(saved));toast("Design heruntergeladen.","success");updateDesignStore();}
+function applyDesign(id){const d=DESIGNS.find(x=>x.id===id);if(!d)return;localStorage.setItem("coinos_designs",JSON.stringify([...new Set([...JSON.parse(localStorage.getItem("coinos_designs")||"[]"),id])]));localStorage.setItem("coinos_current_design",id);$(".wallpaper").style.background=d.bg;toast(`${d.title} wurde angewendet.` ,"success");updateDesignStore();}
+function restoreDesign(){const id=localStorage.getItem("coinos_current_design")||"candy";const d=DESIGNS.find(x=>x.id===id)||DESIGNS[0];const w=$(".wallpaper");if(w)w.style.background=d.bg;}
+restoreDesign();
+
+/* =========================================================
    SPIELE-APP
    ========================================================= */
 function mountSpiele(el) {
@@ -855,24 +963,9 @@ function updateSpiele() {
 }
 
 async function startGame(id, mode) {
-  const a = state.apps.find(x => x.id === id);
-  if (!a) throw new AppError("Diese App gibt es nicht mehr.");
-  const url = safeUrl(a.targetUrl);
-  if (!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
-  const cost = Number(a.requiredCoins) || 0;
-  if (cost > 0) {
-    const bal = Number(state.profile?.balance) || 0;
-    if (bal < cost) throw new AppError(`Nicht genügend Coins. ${a.title} kostet ${fmt(cost)} Coins.`);
-    const ok = await confirmDialog({ title: `${a.title} starten?`, text: `Ein Start kostet ${fmt(cost)} Coins.`, confirmLabel: `Für ${fmt(cost)} Coins starten` });
-    if (!ok) return;
-    await spendCoins(cost, `Spiel: ${a.title}`, "game");
-  }
-  if (mode === "tab") {
-    const w = window.open(url, "_blank", "noopener");
-    if (!w) toast("Der Browser hat das neue Tab blockiert. Bitte Pop-ups erlauben.", "error");
-  } else {
-    openGameFrame(a, url);
-  }
+  const a=state.apps.find(x=>x.id===id); if(!a) throw new AppError("Diese App gibt es nicht mehr.");
+  const url=safeUrl(a.targetUrl); if(!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
+  const w=window.open(url,"_blank","noopener"); if(!w) toast("Der Browser hat den neuen Tab blockiert. Bitte Pop-ups erlauben.","error");
 }
 
 function openGameFrame(a, url) {
@@ -898,7 +991,7 @@ function mountAdmin(el) {
 
 function updateAdmin() {
   if (!isAdmin()) return;
-  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Spiele & Apps", "gamepad"], ["orders", "Bestellungen", "list"]];
+  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Apps", "store"], ["orders", "Bestellungen", "list"]];
   $("#adminTabs").innerHTML = tabs.map(([id, label, ic]) =>
     `<button class="chip ${state.adminTab === id ? "active" : ""}" data-action="admin-tab" data-tab="${id}">${icon(ic, 16)}${label}</button>`).join("");
   const views = { users: adminUsers, items: adminItems, apps: adminApps, orders: adminOrders };
@@ -935,15 +1028,10 @@ function adminItems() {
 }
 
 function adminApps() {
+  const installs = id => state.allUsers.reduce((n,u)=>n+(Array.isArray(u.installedApps)?u.installedApps.some(x=>(typeof x==="string"?x:x?.appId)===id):0),0);
   return `
-    <div class="toolbar"><button class="btn primary" data-action="app-new">${icon("plus", 18)}Neues Spiel oder Link</button></div>
-    ${state.apps.length ? state.apps.map(a => `
-      <div class="row">
-        <div class="thumb">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 22)}</div>
-        <div class="grow"><b>${esc(a.title)}</b><span class="muted small">${a.isGame ? "Spiel" : "Web-App auf dem Homescreen"}${Number(a.requiredCoins) > 0 ? `, ${fmt(a.requiredCoins)} Coins pro Start` : ""}</span></div>
-        <button class="btn small" data-action="app-edit" data-id="${a.id}" aria-label="Bearbeiten">${icon("pencil", 16)}</button>
-        <button class="btn small" data-action="app-del" data-id="${a.id}" aria-label="Löschen">${icon("trash", 16)}</button>
-      </div>`).join("") : `<div class="empty">${icon("gamepad", 36)}Noch keine Spiele oder Links.</div>`}`;
+    <div class="toolbar"><button class="btn primary" data-action="app-new">${icon("plus",18)}Neue App</button></div>
+    ${state.apps.length ? state.apps.map(a=>`<div class="row"><div class="thumb">${thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",22)}</div><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${esc(a.category||"Ohne Kategorie")} · ${appPrice(a)>0?`${fmt(appPrice(a))} Coins ${billingLabel(a)}`:"Kostenlos"} · ${fmt(installs(a.id))} Installationen</span></div><button class="btn small" data-action="app-edit" data-id="${a.id}" aria-label="Bearbeiten">${icon("pencil",16)}</button><button class="btn small" data-action="app-del" data-id="${a.id}" aria-label="Löschen">${icon("trash",16)}</button></div>`).join("") : `<div class="empty">${icon("store",36)}Noch keine Apps.</div>`}`;
 }
 
 function adminOrders() {
@@ -1074,27 +1162,25 @@ async function seedItems() {
 }
 
 function appDialog(id) {
-  const a = id ? state.apps.find(x => x.id === id) : null;
-  showModal({
-    title: a ? "Eintrag bearbeiten" : "Neues Spiel oder Link",
-    submitLabel: a ? "Änderungen speichern" : "Anlegen",
-    fields: [
-      { name: "title", label: "Titel", required: true, value: a?.title },
-      { name: "targetUrl", label: "Ziel-URL", type: "url", required: true, value: a?.targetUrl, placeholder: "https://…" },
-      { name: "iconUrl", label: "Icon-URL", type: "url", value: a?.iconUrl, placeholder: "https://…" },
-      { name: "requiredCoins", label: "Coins pro Start (0 = gratis)", type: "number", min: 0, value: a?.requiredCoins ?? 0 },
-      { name: "isGame", label: "Ist ein Spiel (erscheint in der Spiele-App)", type: "checkbox", value: a ? !!a.isGame : true }
-    ],
-    onSubmit: async v => {
-      if (!v.title) throw new AppError("Bitte einen Titel eingeben.");
-      if (!safeUrl(v.targetUrl)) throw new AppError("Bitte eine gültige Ziel-URL mit https:// angeben.");
-      if (v.iconUrl && !safeUrl(v.iconUrl)) throw new AppError("Bitte eine gültige Icon-URL mit https:// angeben.");
-      const data = { title: v.title, targetUrl: safeUrl(v.targetUrl), iconUrl: v.iconUrl ? safeUrl(v.iconUrl) : "", isGame: v.isGame, requiredCoins: Math.max(0, Math.floor(v.requiredCoins) || 0) };
-      if (a) await updateDoc(doc(db, "apps", id), data);
-      else await addDoc(collection(db, "apps"), data);
-      toast(a ? "Eintrag gespeichert." : "Eintrag angelegt.", "success");
-    }
-  });
+  const a=id?state.apps.find(x=>x.id===id):null;
+  showModal({title:a?"App bearbeiten":"Neue App",submitLabel:a?"Änderungen speichern":"App anlegen",fields:[
+    {name:"title",label:"Titel",required:true,value:a?.title},
+    {name:"targetUrl",label:"Ziel-URL",type:"url",required:true,value:a?.targetUrl,placeholder:"https://…"},
+    {name:"iconUrl",label:"Icon-URL",type:"url",value:a?.iconUrl,placeholder:"https://…"},
+    {name:"category",label:"Kategorie",value:a?.category??"Spiele"},
+    {name:"price",label:"Preis in Coins",type:"number",min:0,value:a?.price??a?.requiredCoins??0},
+    {name:"billing",label:"Preisart",type:"select",value:a?.billing??"once",options:[{value:"once",label:"Einmalig beim Installieren"},{value:"daily",label:"Tägliches Abo – 24 Stunden"},{value:"weekly",label:"Wöchentliches Abo – 7 Tage"}]},
+    {name:"isGame",label:"Ist ein Spiel",type:"checkbox",value:a?!!a.isGame:true},
+    {name:"hidden",label:"Im App Store verstecken",type:"checkbox",value:a?!!a.hidden:false}
+  ],onSubmit:async v=>{
+    if(!v.title)throw new AppError("Bitte einen Titel eingeben.");
+    if(!safeUrl(v.targetUrl))throw new AppError("Bitte eine gültige Ziel-URL mit https:// angeben.");
+    if(v.iconUrl&&!safeUrl(v.iconUrl))throw new AppError("Bitte eine gültige Icon-URL mit https:// angeben.");
+    const price=Math.max(0,Math.floor(v.price)||0);
+    const data={title:v.title,targetUrl:safeUrl(v.targetUrl),iconUrl:v.iconUrl?safeUrl(v.iconUrl):"",category:v.category||"Sonstiges",price,billing:v.billing||"once",requiredCoins:price,isGame:!!v.isGame,hidden:!!v.hidden};
+    if(a)await updateDoc(doc(db,"apps",id),data);else await addDoc(collection(db,"apps"),data);
+    toast(a?"App gespeichert.":"App angelegt.","success");
+  }});
 }
 
 async function appDelete(id) {
@@ -1205,8 +1291,17 @@ const actions = {
   "logout": () => signOut(auth),
   "open-app": el => openApp(el.dataset.app),
   "home": closeApp,
-  "open-link": el => startGame(el.dataset.id, "tab"),
-  "play": el => startGame(el.dataset.id, "frame"),
+  "open-link": el => openInstalledApp(el.dataset.id),
+  "open-installed": el => openInstalledApp(el.dataset.id),
+  "install-app": el => installApp(el.dataset.id),
+  "renew-app": el => installApp(el.dataset.id),
+  "uninstall-app": el => uninstallApp(el.dataset.id),
+  "move-app-up": el => moveInstalledApp(el.dataset.id, -1),
+  "move-app-down": el => moveInstalledApp(el.dataset.id, 1),
+  "app-cat": el => { state.appCat = el.dataset.cat; updateAppStore(); },
+  "download-design": el => downloadDesign(el.dataset.id),
+  "apply-design": el => applyDesign(el.dataset.id),
+  "play": el => startGame(el.dataset.id, "tab"),
   "play-tab": el => startGame(el.dataset.id, "tab"),
   "close-frame": closeGameFrame,
   "frame-home": () => { closeGameFrame(); closeApp(); },
