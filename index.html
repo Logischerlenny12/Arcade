@@ -1,2106 +1,1266 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Münz-Arcade 2.0</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3e4ff">
+<title>CoinOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg-deep:#160f2b; --bg-panel:#221a3d; --bg-panel-2:#2b2150;
-    --gold:#ffc857; --gold-dim:#7a6323; --magenta:#ff4d8d; --cyan:#3fe0d0;
-    --cream:#f4efff; --cream-dim:#a89bd6; --danger:#ff5c5c;
-    --font-display:'Press Start 2P', monospace; --font-body:'Space Grotesk', sans-serif;
-  }
-  body.theme-cyberpunk {
-    --bg-deep:#03001e; --bg-panel:#7303c0; --bg-panel-2:#03001e;
-    --gold:#00f2fe; --gold-dim:#00828b; --magenta:#ec38bc; --cyan:#00f2fe;
-    --cream:#f4efff; --cream-dim:#b89bd6;
-  }
-  body.theme-matrix {
-    --bg-deep:#051405; --bg-panel:#0d260d; --bg-panel-2:#051405;
-    --gold:#00ff41; --gold-dim:#00661a; --magenta:#008f11; --cyan:#00ff41;
-    --cream:#d0ffd0; --cream-dim:#66b366;
-  }
-  body.theme-gold {
-    --bg-deep:#1f1900; --bg-panel:#382d00; --bg-panel-2:#1f1900;
-    --gold:#ffd700; --gold-dim:#8b7500; --magenta:#ffae00; --cyan:#fff099;
-    --cream:#fffdf0; --cream-dim:#c2b574;
-  }
-  body.theme-candy {
-    --bg-deep:#2b1020; --bg-panel:#4a1c38; --bg-panel-2:#2b1020;
-    --gold:#ffb7c5; --gold-dim:#99626d; --magenta:#ff6584; --cyan:#a8e6cf;
-    --cream:#fff0f5; --cream-dim:#d69fb2;
-  }
-  body.theme-sunset {
-    --bg-deep:#1f0c1b; --bg-panel:#3d142b; --bg-panel-2:#1f0c1b;
-    --gold:#ff7e5f; --gold-dim:#994b39; --magenta:#feb47b; --cyan:#ff7e5f;
-    --cream:#fff5f0; --cream-dim:#d6a393;
-  }
-  body.theme-cosmic {
-    --bg-deep:#090014; --bg-panel:#19002e; --bg-panel-2:#240046;
-    --gold:#e0aaff; --gold-dim:#7b2cbf; --magenta:#c77dff; --cyan:#9d4edd;
-    --cream:#f72585; --cream-dim:#b5179e;
-  }
+/* =========================================================
+   CoinOS – Design-Tokens
+   Farben: Zuckerwatte-Wallpaper, Trauben-Tinte, Goldmünze
+   Schrift: Bricolage Grotesque (Überschriften/Zahlen), Figtree (Text)
+   ========================================================= */
+:root{
+  --ink:#2b1b4a; --muted:#6f6489; --line:rgba(43,27,74,.12);
+  --surface:rgba(255,255,255,.82); --solid:#fff; --soft:rgba(43,27,74,.05);
+  --primary:#7b5cff; --primary-2:#4b33d6;
+  --accent:var(--primary); --accent-2:var(--primary-2);
+  --gold:#ffc233; --gold-deep:#e59a00;
+  --green:#12b886; --red:#e5384f; --amber:#f08c00; --blue:#1c7ed6;
+  --font-head:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --font-body:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --shadow:0 24px 60px -18px rgba(75,51,214,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-body);color:var(--ink);background:#f3e4ff;overflow:hidden;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45}
+h1,h2,h3,h4{font-family:var(--font-head);font-weight:700;letter-spacing:-.01em;line-height:1.15}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.muted{color:var(--muted)}
+.small{font-size:.84rem}
+.grow{flex:1;min-width:0}
+.ic{flex:none;display:block}
 
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{height:100%; margin:0;}
-  body{
-    min-height:100vh;
-    background: radial-gradient(circle at 20% 10%, var(--bg-panel-2) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, var(--bg-deep) 0%, transparent 50%), var(--bg-deep);
-    color:var(--cream); font-family:var(--font-body);
-    display:flex; align-items:center; justify-content:center; padding:24px; transition: background 0.3s, color 0.3s;
-  }
-  .cabinet{
-    width:100%; max-width:480px; background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
-    border-radius:28px; border:2px solid #3d2f66; box-shadow: 0 0 0 6px #100a20, 0 20px 60px rgba(0,0,0,0.55);
-    padding:28px 24px 24px; position:relative; overflow:hidden;
-  }
-  .cabinet::before{
-    content:""; position:absolute; top:0; left:0; right:0; height:5px;
-    background:linear-gradient(90deg, var(--magenta), var(--gold), var(--cyan), var(--magenta));
-    background-size:300% 100%; animation:marquee 6s linear infinite;
-  }
-  @keyframes marquee{ 0%{background-position:0% 0%;} 100%{background-position:300% 0%;} }
-  .marquee-title{ font-family:var(--font-display); font-size:12px; color:var(--cream-dim); text-align:center; margin:14px 0 22px; }
-  .screen{display:none; animation:fadeIn .35s ease;}
-  .screen.active{display:block;}
-  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+.wallpaper{position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(900px 620px at 8% 8%,#ffc9e2 0%,transparent 62%),
+    radial-gradient(800px 600px at 95% 12%,#c9e8ff 0%,transparent 60%),
+    radial-gradient(900px 700px at 70% 105%,#ffe7b8 0%,transparent 58%),
+    radial-gradient(700px 600px at 0% 100%,#d8ccff 0%,transparent 60%),
+    #f3e4ff;}
 
-  .global-announcement { background: #0f0a1e; border: 2px solid var(--magenta); border-radius: 14px; padding: 14px; margin-bottom: 18px; text-align: center; }
-  .global-announcement .title { font-family: var(--font-display); font-size: 11px; color: var(--magenta); margin-bottom: 6px; }
-  .global-announcement .text { font-size: 15px; font-weight: bold; color: var(--gold); }
+/* ---------- Münz-Motiv ---------- */
+.coin{display:inline-block;flex:none;width:1.15em;height:1.15em;border-radius:50%;position:relative;vertical-align:-.2em;
+  background:radial-gradient(circle at 32% 28%,#fff1b8 0%,var(--gold) 45%,var(--gold-deep) 100%);
+  box-shadow:0 1px 2px rgba(120,80,0,.45)}
+.coin::after{content:"";position:absolute;inset:.2em;border-radius:50%;border:.11em solid rgba(150,90,0,.45)}
 
-  .user-msg-box { background: rgba(63, 224, 208, 0.1); border: 1px solid var(--cyan); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--cyan); }
-  .user-badge-header { display:flex; justify-content:space-between; align-items:center; background:#0f0a1e; border:1px solid #3d2f66; border-radius:12px; padding:8px 14px; margin-bottom:16px; font-size:13px; }
+/* ---------- Buttons & Formulare ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:700;background:var(--solid);border:1.5px solid var(--line);transition:transform .12s,box-shadow .12s,background .12s}
+.btn:hover{box-shadow:0 6px 16px -8px rgba(43,27,74,.5)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+.btn.danger{background:var(--red);color:#fff;border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.small{padding:7px 13px;font-size:.85rem}
+.btn.block{display:flex;width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none}
+.link{color:var(--primary-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;margin-top:12px;display:block;width:100%;text-align:center}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field>span{font-size:.85rem;font-weight:700;color:var(--muted)}
+.field input,.field select,.search{width:100%;padding:12px 14px;border-radius:14px;background:var(--solid);border:1.5px solid var(--line)}
+.field input:focus,.field select:focus,.search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.check{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-weight:600}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.form-error{background:#ffe3e7;color:#a31629;padding:10px 12px;border-radius:12px;font-weight:600;margin-bottom:12px;font-size:.9rem}
 
-  /* STATS DISPLAY NEU (inkl. XP) */
-  .stats-display{ background:#0f0a1e; border:2px solid var(--gold-dim); border-radius:18px; padding:18px 16px; text-align:center; margin-bottom:18px; display:flex; justify-content:space-around; align-items:center; flex-wrap: wrap; gap: 10px; }
-  .coin-sub-box { text-align:center; flex: 1; min-width: 80px; }
-  .coin-label{ font-size:10px; letter-spacing:1px; color:var(--cream-dim); text-transform:uppercase; margin-bottom:6px; }
-  .coin-value{ font-family:var(--font-display); font-size:18px; color:var(--gold); display:flex; align-items:center; justify-content:center; gap:6px; }
-  .xp-value{ font-family:var(--font-display); font-size:18px; color:#a020f0; display:flex; align-items:center; justify-content:center; gap:6px; }
-  .level-badge { background: linear-gradient(135deg, #a020f0, var(--magenta)); border-radius: 8px; padding: 4px 8px; font-family: var(--font-display); font-size: 10px; color: white; margin-left: 10px; display:inline-block;}
+/* ---------- Badges ---------- */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--soft)}
+.badge.red{background:#ffe3e7;color:#a31629}
+.badge.blue{background:#dcebff;color:#0b4a94}
+.badge.st-bestellt{background:#fff0d1;color:#8a5200}
+.badge.st-gepackt{background:#dcebff;color:#0b4a94}
+.badge.st-geliefert{background:#d3f5e8;color:#0a6c4b}
+.price{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-family:var(--font-head);font-size:1.1rem}
 
-  .btn{ display:block; width:100%; border:none; border-radius:14px; padding:16px 18px; font-family:var(--font-body); font-weight:700; font-size:15px; cursor:pointer; text-align:center; transition:transform .12s; }
-  .btn:active{transform:scale(0.97);}
-  .btn-primary{ background:linear-gradient(135deg, var(--magenta), #d63bff); color:#fff; }
-  .btn-secondary{ background:#372a5c; color:var(--cream); border:1px solid #4a3a75; }
-  .btn-ghost{ background:transparent; color:var(--cream-dim); border:1px solid #3d2f66; }
-  .btn-sm{ padding:8px 12px; font-size:12px; border-radius:8px; width:auto; display:inline-block; }
-  .btn-danger{ background:var(--danger); color:#fff; }
-  .row-gap{margin-top:12px;}
+/* ---------- Boot / Auth ---------- */
+#boot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3e4ff}
+.spinner{width:44px;height:44px;border-radius:50%;border:5px solid rgba(123,92,255,.2);border-top-color:var(--primary);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#auth{position:relative;z-index:2;min-height:100%;display:grid;place-items:center;padding:20px;overflow:auto}
+.auth-card{width:min(420px,100%);background:var(--surface);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1.5px solid rgba(255,255,255,.9);border-radius:32px;padding:34px 28px;box-shadow:var(--shadow)}
+.auth-logo{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;margin:0 auto 16px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;font-size:2rem;box-shadow:0 14px 30px -10px rgba(75,51,214,.7)}
+.auth-logo .coin{width:38px;height:38px}
+.auth-card h1{text-align:center;font-size:2.1rem;font-weight:800}
+.auth-card>p{text-align:center;margin:6px 0 22px}
+.tabs{display:flex;gap:6px;background:var(--soft);padding:5px;border-radius:999px;margin-bottom:20px}
+.tabs button{flex:1;padding:9px;border-radius:999px;font-weight:700;color:var(--muted)}
+.tabs button.active{background:var(--solid);color:var(--ink);box-shadow:0 4px 12px -6px rgba(43,27,74,.5)}
 
-  h2.step-title{ font-family:var(--font-display); font-size:13px; color:var(--cyan); margin:0 0 16px; text-align:center; }
-  .section-subtitle{ font-size:12px; font-weight:700; color:var(--gold); margin:14px 0 8px; text-transform:uppercase; letter-spacing:1px; }
-  
-  .game-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:16px; margin-bottom:18px; }
-  .game-card{ background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:16px 10px; text-align:center; cursor:pointer; transition:transform 0.2s; }
-  .game-card:hover { transform:translateY(-4px); border-color:var(--cyan); }
-  .game-card .emoji{font-size:32px; display:block; margin-bottom:10px;}
-  .game-card .name{font-size:13px; font-weight:600;}
+/* ---------- OS-Layout ---------- */
+#os{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
+#statusbar{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;padding-top:env(safe-area-inset-top,0);background:rgba(255,255,255,.6);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1.5px solid rgba(255,255,255,.85);position:relative;z-index:35}
+.sb-left,.sb-right{display:flex;align-items:center;gap:14px}
+.brand{font-family:var(--font-head);font-weight:800;font-size:1.25rem}
+#clock{font-weight:600;font-size:.9rem}
+.coin-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;background:linear-gradient(135deg,#fff3c4,#ffd569);border:1.5px solid rgba(229,154,0,.45);font-family:var(--font-head);font-weight:800;font-size:1.05rem;color:#5c3a00}
+.coin-pill .coin{width:26px;height:26px}
+.coin-pill.bump{animation:bump .6s ease}
+@keyframes bump{30%{transform:scale(1.12)}100%{transform:scale(1)}}
+#profileWrap{position:relative}
+.avatar-btn,.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff7eb3,#7b5cff);flex:none}
+#profileMenu{position:absolute;right:0;top:48px;width:250px;background:var(--solid);border-radius:20px;padding:16px;box-shadow:var(--shadow);border:1.5px solid var(--line);display:grid;gap:8px;z-index:60}
+.pm-name{font-family:var(--font-head);font-weight:700;font-size:1.1rem}
+#pmRole{justify-self:start;margin-bottom:6px}
 
-  .user-list { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
-  .user-card { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:2px solid #3d2f66; border-radius:14px; padding:14px; cursor:pointer; }
-  .user-card.locked { border-color: var(--danger); opacity: 0.8; }
-  .user-info { font-weight:bold; font-size:15px; }
+#desktop{flex:1;overflow:auto;padding:34px 22px 130px;max-width:980px;width:100%;margin:0 auto}
+#desktop h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800}
+#dateLine{margin:4px 0 30px;font-weight:600;text-transform:none}
+#appGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:26px 14px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px;border-radius:24px;transition:transform .15s}
+.tile:hover{transform:translateY(-4px)}
+.tile-icon{position:relative;width:84px;height:84px;border-radius:28px;display:grid;place-items:center;color:#fff;overflow:hidden;
+  background:linear-gradient(145deg,var(--c1),var(--c2));box-shadow:0 16px 28px -14px var(--c2)}
+.tile-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.tile-label{font-weight:700;font-size:.95rem;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  .tasks-container { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; max-height:300px; overflow-y:auto; }
-  .task-item { display:flex; align-items:center; justify-content:space-between; background:#1c1536; border:1px solid #3d2f66; border-radius:10px; padding:10px 12px; }
-  .task-item.completed { opacity: 0.5; }
-  .task-claim-btn { background:var(--gold-dim); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:bold; cursor:pointer; }
+#dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0));transform:translateX(-50%);z-index:36;display:flex;gap:10px;padding:10px 14px;border-radius:30px;background:rgba(255,255,255,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--shadow)}
+.dock-btn{position:relative;width:52px;height:52px;border-radius:18px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1),var(--c2));transition:transform .15s}
+.dock-btn:hover{transform:translateY(-5px) scale(1.06)}
+.dock-btn.home{background:linear-gradient(145deg,#6f6489,#2b1b4a)}
+.dock-btn.active::after{content:"";position:absolute;bottom:-8px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--ink)}
 
-  /* BRAWL STARS STYLE EPIC VOLLBILD OVERLAYS */
-  .epic-shop-fullscreen { display:none; position:fixed; inset:0; z-index:90; background:#0c081e; flex-direction:row; overflow:hidden; }
-  .epic-shop-fullscreen.active { display:flex; }
-  .shop-main-content { flex:1; display:flex; flex-direction:column; padding:20px; overflow-y:auto; }
-  .shop-header-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#160f2b; padding:12px 20px; border-radius:16px; border:2px solid #3d2f66; }
-  .shop-header-title { font-family:var(--font-display); font-size:16px; color:var(--gold); text-shadow:0 0 10px var(--gold); }
-  .shop-user-stats { display:flex; gap:15px; font-family:var(--font-display); font-size:12px; color:var(--cream); align-items: center; }
+/* ---------- App-Fenster ---------- */
+#window{position:fixed;z-index:30;top:72px;bottom:104px;left:50%;width:min(1060px,calc(100% - 24px));display:flex;flex-direction:column;border-radius:30px;overflow:hidden;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1.5px solid #fff;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transform:translateX(-50%) translateY(24px) scale(.97);transition:opacity .22s,transform .22s}
+#window.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0) scale(1)}
+.win-head{flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px;color:#fff;background:linear-gradient(120deg,var(--accent),var(--accent-2))}
+.win-head h2{flex:1;display:flex;align-items:center;gap:10px;font-size:1.3rem;min-width:0}
+.win-head h2 span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.head-btn{background:rgba(255,255,255,.2)!important;color:#fff!important;border:1.5px solid rgba(255,255,255,.4)!important;padding:8px 14px}
+.head-btn:hover{background:rgba(255,255,255,.32)!important}
+.head-spacer{width:1px}
+.win-body{flex:1;overflow:auto;padding:22px}
 
-  .shop-sidebar-right { width:170px; background:#150f2e; border-left:3px solid #3d2f66; display:flex; flex-direction:column; gap:10px; padding:15px 10px; justify-content:flex-start; }
-  .shop-sidebar-btn { padding:14px 10px; background:#221a3d; border:2px solid #3d2f66; border-radius:14px; color:var(--cream-dim); font-family:var(--font-display); font-size:10px; text-align:center; cursor:pointer; transition:all 0.2s; }
-  .shop-sidebar-btn.active { background:linear-gradient(135deg, var(--magenta), #d63bff); color:white; border-color:white; box-shadow:0 0 15px var(--magenta); transform:scale(1.03); }
+#gameView{position:fixed;z-index:45;left:0;right:0;bottom:0;top:58px;display:flex;flex-direction:column;background:#fff}
+#gameView iframe{flex:1;border:0;width:100%;background:#fff}
+#gameView .win-head{padding-top:12px}
 
-  .brawl-section { display:none; margin-bottom:20px; }
-  .brawl-section.active { display:block; }
-  .brawl-section-title { font-family:var(--font-display); font-size:14px; color:var(--cyan); margin-bottom:12px; text-transform:uppercase; text-shadow:0 0 8px var(--cyan); }
-  
-  .brawl-row-scroll { display:flex; gap:16px; overflow-x:auto; padding-bottom:15px; scrollbar-width:thin; scroll-snap-type:x mandatory; }
-  .brawl-card { flex:0 0 210px; scroll-snap-align:start; background:linear-gradient(180deg, #1c1536 0%, #100a20 100%); border:3px solid #3d2f66; border-radius:20px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; position:relative; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.4); transition:transform 0.2s; }
-  .brawl-card:hover { transform:translateY(-4px); border-color:var(--cyan); }
-  .brawl-card.vip-card { border-color:var(--gold); background:linear-gradient(180deg, #2b2005 0%, #100a20 100%); }
-  .brawl-card .vip-badge { position:absolute; top:8px; right:8px; background:var(--gold); color:black; font-weight:bold; font-size:9px; padding:3px 8px; border-radius:8px; font-family:var(--font-display); }
-  .brawl-card .card-icon { font-size:42px; margin:15px 0; text-shadow:0 0 15px rgba(255,255,255,0.3); }
-  .brawl-card .card-title { font-weight:bold; font-size:14px; text-align:center; margin-bottom:6px; }
-  .brawl-card .card-desc { font-size:11px; color:var(--cream-dim); text-align:center; margin-bottom:12px; }
-  .brawl-card .buy-btn { width:100%; border:none; border-radius:12px; padding:12px; background:linear-gradient(135deg, #00f2fe, #4facfe); color:black; font-weight:bold; font-family:var(--font-display); font-size:11px; cursor:pointer; text-align:center; }
-  .brawl-card .buy-btn.vip-buy { background:linear-gradient(135deg, var(--gold), #ffae00); }
-  .brawl-card .buy-btn.xp-buy { background:linear-gradient(135deg, #a020f0, #d63bff); color: white; }
+.panel{background:var(--solid);border:1.5px solid var(--line);border-radius:22px;padding:18px}
+.panel h3{font-size:1.1rem;margin-bottom:12px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--soft);margin-bottom:9px;flex-wrap:wrap}
+.row:last-child{margin-bottom:0}
+.row b{display:block;overflow:hidden;text-overflow:ellipsis}
+.empty{display:grid;place-items:center;gap:10px;text-align:center;padding:34px 16px;color:var(--muted);font-weight:600}
+.empty .ic{opacity:.6}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 15px;border-radius:999px;font-weight:700;background:var(--solid);border:1.5px solid var(--line)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.thumb{position:relative;overflow:hidden;background:linear-gradient(135deg,#f4ecff,#ffe9d1);display:grid;place-items:center;color:var(--muted)}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 
-  .boost-active-badge { background:rgba(63,224,208,0.2); border:1px solid var(--cyan); border-radius:10px; padding:8px 12px; color:var(--cyan); font-size:12px; font-weight:bold; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+/* Konto */
+.balance{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:26px;border-radius:26px;color:#fff;background:linear-gradient(130deg,#12b886,#0a7d5c)}
+.balance .lbl{font-weight:600;opacity:.9}
+.balance .big{display:flex;align-items:center;gap:14px;font-family:var(--font-head);font-weight:800;font-size:clamp(2.6rem,9vw,4.4rem);line-height:1}
+.balance .big .coin{width:.75em;height:.75em}
+.stats{display:flex;gap:26px;flex-wrap:wrap}
+.stat b{display:block;font-family:var(--font-head);font-size:1.6rem}
+.stat span{font-size:.85rem;opacity:.9;font-weight:600}
+.amt{font-family:var(--font-head);font-weight:800;font-size:1.05rem}
+.amt.plus{color:var(--green)}
+.amt.minus{color:var(--red)}
 
-  /* 3D UNBOXING STYLES & ANIMATIONS */
-  .unboxing-fullscreen-backdrop { display:none; position:fixed; inset:0; z-index:100; background:radial-gradient(circle at center, #11151f 0%, #06080d 100%); flex-direction:column; align-items:center; justify-content:center; overflow:hidden; }
-  .unboxing-fullscreen-backdrop.active { display:flex; }
-  .unboxing-title { font-family:var(--font-display); font-size:16px; color:var(--gold); margin-bottom:50px; text-shadow:0 0 10px var(--gold); z-index:10; }
-  .scene-3d { width:240px; height:180px; perspective:900px; position:relative; margin-bottom:40px; z-index:5; }
-  .box-3d { width:100%; height:100%; position:absolute; transform-style:preserve-3d; transform:rotateX(-15deg) rotateY(25deg); transition:transform 0.5s; }
-  .box-face { position:absolute; border:3px solid #00f0ff; background:#1c2333; box-shadow:inset 0 0 25px rgba(0,240,255,0.4), inset 0 0 50px rgba(0,0,0,0.8); }
-  .box-front { width:240px; height:140px; bottom:0; transform:translateZ(70px); }
-  .box-back { width:240px; height:140px; bottom:0; transform:rotateY(180deg) translateZ(70px); }
-  .box-left { width:140px; height:140px; bottom:0; transform:rotateY(-90deg) translateZ(70px); }
-  .box-right { width:140px; height:140px; bottom:0; transform:rotateY(90deg) translateZ(170px); }
-  .box-bottom { width:240px; height:140px; bottom:0; transform:rotateX(-90deg) translateZ(70px); background:#0c101a; }
-  .box-lid-3d { width:246px; height:146px; position:absolute; top:37px; left:-3px; transform-style:preserve-3d; transform-origin:back center; transition:transform 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-  .box-lid-face { position:absolute; border:3px solid #00f0ff; background:#242d40; }
-  .lid-top { width:246px; height:146px; transform:rotateX(90deg) translateZ(73px); box-shadow:inset 0 0 30px rgba(0,240,255,0.4); }
-  .lid-front { width:246px; height:45px; transform:translateZ(73px); }
-  .light-beam { position:absolute; width:200px; height:400px; bottom:70px; left:20px; background:linear-gradient(0deg, rgba(255,204,0,0.9) 0%, rgba(255,165,0,0.5) 40%, transparent 100%); clip-path:polygon(20% 100%, 80% 100%, 100% 0%, 0% 0%); opacity:0; transition:opacity 1s; pointer-events:none; z-index:10; }
-  .unboxing-fullscreen-backdrop.shaking .box-3d { animation: shake3d 0.08s infinite; }
-  @keyframes shake3d { 0%{transform:rotateX(-15deg) rotateY(25deg) translate(0,0);} 50%{transform:rotateX(-15deg) rotateY(25deg) translate(-6px, 6px);} 100%{transform:rotateX(-15deg) rotateY(25deg) translate(6px, -4px);} }
-  .unboxing-fullscreen-backdrop.opened .box-lid-3d { transform:rotateX(-120deg); }
-  .unboxing-fullscreen-backdrop.opened .light-beam { opacity:1; animation: pulseLight 2s infinite alternate; }
-  @keyframes pulseLight { 0%{opacity:0.8;} 100%{opacity:1;} }
+/* Shop */
+.grid-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.item{display:flex;flex-direction:column;background:var(--solid);border:1.5px solid var(--line);border-radius:26px;overflow:hidden}
+.item .thumb{aspect-ratio:4/3}
+.item-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.item-body h4{font-size:1.15rem}
+.item-foot{display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px}
+.stock{font-size:.82rem;font-weight:700;color:var(--muted)}
+.stock.low{color:var(--amber)}
+.stock.out{color:var(--red)}
+.item-body .btn{margin-top:auto}
 
-  .anim-fx-anim_neon .box-face { border-color:#00f2fe; box-shadow:0 0 25px #00f2fe; }
-  .anim-fx-anim_fire .light-beam { background:linear-gradient(0deg, #ff0000 0%, #ff7700 60%, transparent 100%); }
-  .anim-fx-anim_matrix .box-face { border-color:#00ff41; background:#051405; }
-  .anim-fx-anim_matrix .light-beam { background:linear-gradient(0deg, #00ff41 0%, rgba(0,255,65,0.4) 60%, transparent 100%); }
-  .anim-fx-anim_hyper .light-beam { background:linear-gradient(0deg, #ff0000, #ff7700, #00ff41, #00f2fe, #d63bff); animation:rainbowBeam 0.5s linear infinite; }
-  @keyframes rainbowBeam { 0%{filter:hue-rotate(0deg);} 100%{filter:hue-rotate(360deg);} }
+/* Spiele */
+.game{display:flex;gap:14px;align-items:center;padding:14px;background:var(--solid);border:1.5px solid var(--line);border-radius:24px}
+.game .thumb{width:72px;height:72px;border-radius:22px;flex:none}
+.game-actions{display:flex;gap:8px;margin-top:8px}
+.grid-games{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 
-  .reveal-drop-box { text-align:center; display:none; animation: popUpDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:20; position:relative; }
-  @keyframes popUpDrop { from{opacity:0; transform:scale(0.3) translateY(40px);} to{opacity:1; transform:scale(1) translateY(0);} }
-  .reveal-item-text { font-family:var(--font-display); font-size:20px; color:var(--gold); margin-bottom:15px; text-shadow:0 0 20px var(--gold); }
-  .tap-prompt { font-size:13px; color:var(--cream-dim); margin-top:20px; animation:blinkPrompt 1.2s infinite; font-weight:bold; }
-  @keyframes blinkPrompt { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-  .summary-box { text-align:center; display:none; background:#1c1536; border:2px solid var(--gold); border-radius:20px; padding:30px; max-width:340px; width:100%; z-index:20; position:relative; }
+/* Admin */
+.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tabbar .chip{display:inline-flex;align-items:center;gap:8px}
+.row .thumb{width:46px;height:46px;border-radius:14px;flex:none}
+.row select{padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--solid);font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-family:var(--font-head)}
 
-  .result-box{ text-align:center; padding:10px 4px 6px; }
-  .result-title.fail{color:var(--danger);}
-  .timer-display{ font-family:var(--font-display); font-size:32px; color:var(--gold); margin:15px 0; }
-  
-  /* ADMIN PANEL STYLES */
-  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(8,5,18,0.92); align-items:center; justify-content:center; padding:20px; z-index:50; }
-  .modal-backdrop.active{display:flex;}
-  .modal-fullscreen { width:100vw; height:100vh; max-width:none; border-radius:0; border:none; background:var(--bg-deep); padding:24px; display:flex; flex-direction:column; }
-  .admin-header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #3d2f66; padding-bottom:16px; margin-bottom:20px; }
-  .admin-nav { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
-  .admin-nav-btn { flex:1; min-width:90px; padding:10px; background:#1c1536; border:1px solid #3d2f66; color:var(--cream-dim); border-radius:10px; font-weight:bold; cursor:pointer; font-size:12px; text-align:center; }
-  .admin-nav-btn.active { background:var(--magenta); color:white; border-color:var(--magenta); }
-  .admin-tab-content { display:none; flex:1; overflow-y:auto; }
-  .admin-tab-content.active { display:block; }
-  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px; }
-  .stat-card { background:#1c1536; border:1px solid #3d2f66; border-radius:14px; padding:16px; text-align:center; }
-  .stat-card .num { font-family:var(--font-display); font-size:22px; color:var(--cyan); margin-top:8px; }
-  .field{margin-bottom:14px;}
-  .field label{ display:block; font-size:12px; color:var(--cream-dim); margin-bottom:6px; }
-  .field input, .field select, .field textarea{ width:100%; background:#0f0a1e; border:1px solid #3d2f66; border-radius:10px; padding:11px 12px; color:var(--cream); font-family:var(--font-body); }
-  .games-list-item{ display:flex; align-items:center; gap:8px; background:#1c1536; border:1px solid #3d2f66; border-radius:10px; padding:8px 10px; margin-bottom:8px; }
-  .games-list-item .glabel{flex:1;}
-  .perm-box { display:flex; flex-direction:column; gap:8px; background:#0f0a1e; padding:12px; border-radius:10px; margin-top:8px; }
-  .perm-item { display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; }
-  .perm-item input { width:auto; }
-  
-  .log-table { width:100%; border-collapse:collapse; font-size:13px; margin-top: 10px;}
-  .log-table th, .log-table td { padding:10px; text-align:left; border-bottom:1px solid #3d2f66; }
-  .log-table th { background:#1c1536; color:var(--cyan); font-family:var(--font-display); font-size:10px; }
-  .log-plus { color:var(--cyan); font-weight:bold; }
-  .log-minus { color:var(--danger); font-weight:bold; }
+/* Modal / Toast */
+#modalRoot{position:relative;z-index:80}
+.modal-backdrop{position:fixed;inset:0;background:rgba(43,27,74,.45);backdrop-filter:blur(4px);display:grid;place-items:center;padding:16px;animation:fade .15s}
+.modal{width:min(440px,100%);max-height:calc(100% - 20px);overflow:auto;background:var(--solid);border-radius:28px;padding:26px;box-shadow:0 30px 80px -20px rgba(43,27,74,.6);animation:pop .18s}
+.modal h3{font-size:1.4rem;margin-bottom:6px}
+.modal>p,.modal-text{margin-bottom:16px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}}
+#toasts{position:fixed;z-index:90;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0));transform:translateX(-50%);display:grid;gap:10px;width:min(440px,calc(100% - 24px));pointer-events:none}
+.toast{padding:13px 18px;border-radius:18px;font-weight:700;color:#fff;background:var(--ink);box-shadow:0 14px 30px -10px rgba(0,0,0,.5);animation:pop .2s;pointer-events:auto}
+.toast.error{background:var(--red)}
+.toast.success{background:#0a7d5c}
 
-  .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; background: #1c1536; padding: 10px; border-radius: 10px; border: 1px solid #3d2f66; align-items: center; }
-  .filter-bar select, .filter-bar input { flex: 1; min-width: 120px; padding: 8px; border-radius: 6px; border: 1px solid #3d2f66; background: #0f0a1e; color: white; }
-
-  /* Sub-Nav für Admin Log/Playtime */
-  .admin-sub-nav { display: flex; gap: 10px; margin-bottom: 15px; }
-  .admin-sub-nav button { flex: 1; padding: 10px; background: #221a3d; border: 1px solid #3d2f66; color: var(--cream); border-radius: 10px; cursor: pointer; font-weight: bold; }
-  .admin-sub-nav button.active { background: var(--cyan); color: black; border-color: var(--cyan); }
-  .sub-tab-content { display: none; }
-  .sub-tab-content.active { display: block; }
+@media (max-width:700px){
+  .two-col{grid-template-columns:1fr}
+  #window{top:62px;bottom:92px;width:100%;border-radius:26px 26px 0 0;border-bottom:0}
+  .win-body{padding:16px}
+  #clock{display:none}
+  .grid-items{grid-template-columns:repeat(2,1fr);gap:12px}
+  .item-body{padding:12px}
+  #desktop{padding:24px 16px 130px}
+  .tile-icon{width:76px;height:76px;border-radius:26px}
+  .grid-games{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="wallpaper"></div>
 
-<!-- WERBE POPUP -->
-<div id="werbePopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); padding:24px; z-index:9999; border: 2px solid var(--gold); border-radius:16px; text-align:center; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-    <h2 style="font-family:var(--font-display); font-size:14px; color:var(--gold); margin-top:0;">🌟 NEUIGKEIT!</h2>
-    <p id="werbeText" style="color:var(--cream); font-size:14px; margin-bottom:20px;"></p>
-    <button class="btn btn-primary" onclick="document.getElementById('werbePopup').style.display='none'">Super, später ansehen!</button>
+<div id="boot"><div class="spinner" role="status" aria-label="Lädt"></div></div>
+
+<!-- ===================== LOGIN ===================== -->
+<main id="auth" hidden>
+  <div class="auth-card">
+    <div class="auth-logo"><i class="coin"></i></div>
+    <h1>CoinOS</h1>
+    <p class="muted">Dein Konto, dein Shop, deine Spiele.</p>
+    <div class="tabs" id="authTabs">
+      <button type="button" class="active" data-action="auth-tab" data-tab="login">Anmelden</button>
+      <button type="button" data-action="auth-tab" data-tab="register" id="registerTab">Registrieren</button>
+    </div>
+    <form id="authForm">
+      <label class="field" id="nameField" hidden><span>Name</span><input id="authName" autocomplete="name" placeholder="Dein Name"></label>
+      <label class="field"><span>E-Mail</span><input id="authEmail" type="email" required autocomplete="email" placeholder="name@beispiel.de"></label>
+      <label class="field"><span>Passwort</span><input id="authPass" type="password" required minlength="6" autocomplete="current-password" placeholder="Mindestens 6 Zeichen"></label>
+      <p class="form-error" id="authError" hidden></p>
+      <button class="btn primary block" id="authSubmit" type="submit">Anmelden</button>
+      <button type="button" class="link" data-action="reset-pw">Passwort vergessen?</button>
+    </form>
+  </div>
+</main>
+
+<!-- ===================== OS ===================== -->
+<div id="os" hidden>
+  <header id="statusbar">
+    <div class="sb-left"><span class="brand">CoinOS</span><span id="clock" class="muted"></span></div>
+    <div class="sb-right">
+      <div class="coin-pill" id="coinPill" title="Dein Kontostand"><i class="coin"></i><b id="sbCoins">0</b></div>
+      <div id="profileWrap">
+        <button class="avatar-btn" id="avatarBtn" data-action="toggle-profile" aria-label="Profil öffnen"></button>
+        <div id="profileMenu" hidden>
+          <div class="pm-name" id="pmName"></div>
+          <div class="muted small" id="pmMail"></div>
+          <span class="badge" id="pmRole"></span>
+          <button class="btn block" data-action="logout" data-icon="logout">Abmelden</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="desktop">
+    <h1 id="greeting"></h1>
+    <p id="dateLine" class="muted"></p>
+    <div id="appGrid"></div>
+  </main>
+
+  <nav id="dock" aria-label="Dock"></nav>
+
+  <section id="window" aria-hidden="true" aria-labelledby="winTitle">
+    <header class="win-head">
+      <button class="btn head-btn" data-action="home" data-icon="home" aria-label="Zum Homescreen">Home</button>
+      <h2 id="winTitle"></h2>
+      <span class="head-spacer"></span>
+    </header>
+    <div class="win-body" id="winBody"></div>
+  </section>
 </div>
 
-<!-- GAME FULLSCREEN CONTAINER -->
-<div id="gameFullscreenContainer" style="display:none; position:fixed; inset:0; z-index:100000; background:black;">
-    <button id="closeFullscreenGameBtn" class="btn btn-danger" style="position:absolute; top:20px; right:20px; z-index:100001; width:auto; padding:10px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">✕ Beenden</button>
-    <iframe id="gameIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
-    <div id="iframeOverlayLiveStats" style="position:absolute; bottom:20px; right:20px; background:rgba(0,0,0,0.85); border:2px solid var(--gold); border-radius:12px; padding:12px 18px; z-index:100001; text-align:right; box-shadow: 0 4px 15px rgba(0,0,0,0.8); pointer-events:none;">
-        <div id="iframeOverlayTimer" style="color:var(--gold); font-family:var(--font-display); font-size:18px;">00:00</div>
-        <div id="iframeOverlayCost" style="color:var(--cyan); font-size:13px; margin-top:6px; font-weight:bold;">1 🪙</div>
-    </div>
-</div>
+<section id="gameView" hidden>
+  <header class="win-head" style="--accent:#7b5cff;--accent-2:#4b33d6">
+    <button class="btn head-btn" data-action="close-frame" data-icon="arrow-left">Zurück</button>
+    <h2 id="gameTitle"></h2>
+    <a id="gameExternal" class="btn head-btn" target="_blank" rel="noopener" data-icon="external">Im Tab öffnen</a>
+    <button class="btn head-btn" data-action="frame-home" data-icon="home" aria-label="Zum Homescreen"></button>
+  </header>
+  <iframe id="gameFrame" title="Spiel" allow="fullscreen; gamepad; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals"></iframe>
+</section>
 
-<div class="cabinet">
-  <div class="marquee-title">✦ MÜNZ-ARCADE 2.0 ✦</div>
+<div id="modalRoot"></div>
+<div id="toasts" aria-live="polite"></div>
 
-  <!-- AUTH SCREEN -->
-  <div class="screen active" id="screen-auth">
-    <div class="global-announcement" id="globalAnnouncementBox" style="display:none;">
-      <div class="title">📢 BENACHRICHTIGUNG</div>
-      <div class="text" id="globalAnnouncementText">...</div>
-    </div>
-    <h2 class="step-title">BENUTZER WÄHLEN</h2>
-    <div class="user-list" id="userSelectList"></div>
-    <button class="btn btn-secondary" id="registerBtn">➕ Neuen Account erstellen</button>
-  </div>
+<script type="module">
+/* =========================================================
+   Firebase (SDK v10 über CDN) – nur Auth + Firestore
+   ========================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signOut, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, where,
+  orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  <!-- HOME SCREEN -->
-  <div class="screen" id="screen-home">
-    <div class="user-badge-header">
-      <span id="userBadgeSpan">👤 <b id="currentUserName">Name</b> <span class="level-badge" id="headerLevelBadge">Lvl 1</span></span>
-      <div style="display:flex; gap:6px;">
-        <button class="btn btn-ghost btn-sm" id="settingsBtn" title="Einstellungen">⚙️</button>
-        <button class="btn btn-ghost btn-sm" id="logoutBtn">Abmelden</button>
-      </div>
-    </div>
+/* ---------------- KONFIGURATION ---------------- */
+// WICHTIG: Hier deine Admin-E-Mail eintragen. Das Konto mit dieser Adresse wird beim
+// ersten Login als Admin angelegt. Dieselbe Adresse gehört auch in die Firestore-Regeln.
+const ADMIN_EMAIL = "DEINE-ADMIN-MAIL@example.com";
+// Nach dem Anlegen aller Konten auf false setzen (oder in Firebase die Registrierung sperren).
+// Neue Nutzer kann der Admin dann trotzdem in der Admin-App anlegen.
+const ALLOW_REGISTRATION = true;
+const START_BALANCE = 100;
 
-    <div class="user-msg-box" id="userPersonalMsgBox" style="display:none;">
-      <b>📩 Nachricht vom Admin:</b><br><span id="userPersonalMsgText"></span>
-    </div>
+const firebaseConfig = {
+  apiKey: "AIzaSyB1cAF8dfjxu_l0oz58gR7x0q6CCV55e08",
+  authDomain: "as-1e226.firebaseapp.com",
+  projectId: "as-1e226",
+  storageBucket: "as-1e226.firebasestorage.app",
+  messagingSenderId: "758093946816",
+  appId: "1:758093946816:web:ab79a017d57899ac337225",
+  measurementId: "G-R7XV84H2WJ"
+};
 
-    <!-- STATS (Coins, Tickets, XP) -->
-    <div class="stats-display">
-      <div class="coin-sub-box">
-        <div class="coin-label">Münzen</div>
-        <div class="coin-value">🪙 <span id="coinsHome">0</span></div>
-      </div>
-      <div style="width:1px; height:30px; background:#3d2f66;"></div>
-      <div class="coin-sub-box">
-        <div class="coin-label">Tickets</div>
-        <div class="coin-value">🎟️ <span id="ticketsHome">0</span></div>
-      </div>
-      <div style="width:1px; height:30px; background:#3d2f66;"></div>
-      <div class="coin-sub-box">
-        <div class="coin-label">XP (Level)</div>
-        <div class="xp-value">✨ <span id="xpHome">0</span></div>
-      </div>
-    </div>
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
 
-    <div id="activeBoostsHomeBox" style="display:none; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
+/* ---------------- Helfer ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = n => new Intl.NumberFormat("de-DE").format(Number(n) || 0);
+const tsMs = ts => (ts && ts.toMillis ? ts.toMillis() : Date.now());
+const fmtDate = ts => new Date(tsMs(ts)).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const safeUrl = u => { try { const x = new URL(String(u || "").trim()); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : ""; } catch { return ""; } };
 
-    <button class="btn btn-primary" id="playBtn">▶ Spielen</button>
-    <button class="btn btn-secondary row-gap" id="openEpicShopBtn" style="background:linear-gradient(135deg, var(--magenta), #d63bff); border:none;">🛒 Arcade Store (Vollbild)</button>
-    <button class="btn btn-secondary row-gap" id="tasksBtn">📝 Aufgaben & Erfolge</button>
-    
-    <!-- LOGIN STREAK & TAGESGESCHENK -->
-    <div style="background:#1c1536; border:1px solid #3d2f66; border-radius:14px; padding:12px; margin-top:12px; text-align:center;">
-      <div style="font-size:12px; color:var(--gold); margin-bottom:8px; font-weight:bold;">🔥 Login Streak: <span id="streakDaysDisplay">0</span> Tage</div>
-      <button class="btn btn-ghost btn-sm" id="dailyRewardBtn" style="width:100%;">🎁 Tagesgeschenk abholen</button>
-    </div>
+class AppError extends Error {}
 
-    <button class="btn btn-ghost row-gap" id="openAdminDashboardBtn" style="display:none; border-color:var(--gold); color:var(--gold);">⚙️ Admin Dashboard</button>
-  </div>
+const STATUS = { bestellt: "Bestellt", gepackt: "Gepackt", geliefert: "Geliefert" };
 
-  <!-- TASKS SCREEN -->
-  <div class="screen" id="screen-tasks">
-    <h2 class="step-title">AUFGABEN & ERFOLGE</h2>
-    <div class="section-subtitle">🏆 Tägliche Erfolge</div>
-    <div class="tasks-container" id="userAchievementsList"></div>
-    <div class="section-subtitle">📝 Individuelle Aufgaben</div>
-    <div class="tasks-container" id="userTasksList"></div>
-    <button class="btn btn-ghost" id="backFromTasks">← Zurück</button>
-  </div>
-
-  <!-- LIVE GAME SESSION SCREEN -->
-  <div class="screen" id="screen-active-session">
-    <div class="result-box">
-      <h2 class="step-title">🎮 SPIELZEIT LÄUFT</h2>
-      <div style="color:var(--cream-dim); font-size:13px; margin-bottom:10px;" id="activeGameTitle">Spiel Name</div>
-      <div class="timer-display" id="sessionStopwatchDisplay">00:00</div>
-      <div style="color:var(--gold); font-size:13px; margin-bottom:15px;">Kosten aktuell: <span id="currentCalculatedCost">1 🪙</span></div>
-      <button class="btn btn-secondary" id="reopenGameBtn">🔗 Spiel-Fenster öffnen</button>
-      <button class="btn btn-primary row-gap" id="stopAndBillBtn">✓ Beenden & Abrechnen</button>
-    </div>
-  </div>
-
-  <!-- ACCOUNT BLOCKED SCREEN -->
-  <div class="screen" id="screen-locked">
-    <div class="result-box">
-      <div class="result-title fail">🔒 ACCOUNT GESPERRT</div>
-      <div class="result-sub" id="lockedReasonText" style="margin: 15px 0; color:var(--cream-dim);">Dein Account wurde gesperrt.</div>
-      <button class="btn btn-ghost" id="backFromLocked">← Zurück zur Auswahl</button>
-    </div>
-  </div>
-</div>
-
-<!-- VOLLBILD SPIELE AUSWAHL OVERLAY -->
-<div class="epic-shop-fullscreen" id="gameSelectFullscreen">
-  <div class="shop-main-content">
-    <div class="shop-header-bar">
-      <div class="shop-header-title">🎮 MODUS WÄHLEN</div>
-      <button class="btn btn-ghost btn-sm" id="closeGameSelectBtn" style="width:auto;">✕ Schließen</button>
-    </div>
-    <div class="brawl-section active">
-      <div class="brawl-section-title">⚡ Quick Play</div>
-      <div class="game-grid" id="quickPlayGrid"></div>
-      <div class="brawl-section-title" style="margin-top:30px;">🌐 Normal Play</div>
-      <div class="game-grid" id="normalPlayGrid"></div>
-    </div>
-  </div>
-</div>
-
-<!-- VOLLBILD ARCADE STORE -->
-<div class="epic-shop-fullscreen" id="epicShopFullscreen">
-  <div class="shop-main-content">
-    <div class="shop-header-bar">
-      <div class="shop-header-title">🛍️ ARCADE STORE</div>
-      <div class="shop-user-stats">
-        <span>🪙 <b id="shopCoinsVal">0</b></span>
-        <span>🎟️ <b id="shopTicketsVal">0</b></span>
-        <span style="color:#a020f0;">✨ <b id="shopXpVal">0</b></span>
-        <span id="shopVipBadge"></span>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="closeEpicShopBtn" style="width:auto;">✕ Schließen</button>
-    </div>
-
-    <!-- SUBKATEGORIE: STORE -->
-    <div class="brawl-section active" id="brawl-sub-store">
-      <div class="brawl-section-title">👑 VIP & TICKETS</div>
-      <div class="brawl-row-scroll">
-        <div class="brawl-card vip-card">
-          <div class="vip-badge">VIP</div>
-          <div class="card-icon">👑</div>
-          <div class="card-title">VIP-Pass (7 Tage)</div>
-          <div class="card-desc">Schaltet exklusive VIP-Items & Kisten frei!</div>
-          <button class="buy-btn vip-buy" id="buyVipBtn"></button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">🎟️</div>
-          <div class="card-title">1 Arcade Ticket</div>
-          <div class="card-desc">Zum Öffnen von Kisten im Store.</div>
-          <button class="buy-btn" id="buyTicketBrawlBtn"></button>
-        </div>
-      </div>
-
-      <div class="brawl-section-title" style="margin-top:20px;">🎟️ PROMO CODES</div>
-      <div style="background:#1c1536; padding:16px; border-radius:14px; border:2px solid #3d2f66; margin-bottom:20px; display:flex; gap:10px;">
-         <input type="text" id="shopPromoInput" placeholder="Code eingeben..." style="flex:1; padding:10px; border-radius:8px; border:none; background:#0f0a1e; color:white; text-transform:uppercase;">
-         <button class="btn btn-primary btn-sm" id="shopRedeemPromoBtn">Einlösen</button>
-      </div>
-
-      <div class="brawl-section-title" style="margin-top:20px;">✨ XP UMTAUSCH (LEVEL SHOP)</div>
-      <div class="brawl-row-scroll">
-        <div class="brawl-card">
-          <div class="card-icon">🪙</div>
-          <div class="card-title">XP zu Coins</div>
-          <div class="card-desc">Tausche 100 XP gegen 10 Coins (VIP: 15 Coins)</div>
-          <button class="buy-btn xp-buy" id="buyXpToCoins">100 XP umwandeln</button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">🎟️</div>
-          <div class="card-title">XP zu Ticket</div>
-          <div class="card-desc">Tausche 500 XP gegen 1 Ticket</div>
-          <button class="buy-btn xp-buy" id="buyXpToTicket">500 XP umwandeln</button>
-        </div>
-      </div>
-      
-      <div class="brawl-section-title" style="margin-top:20px;">🎨 FARBIGE DESIGN-THEMEN (7 STÜCK)</div>
-      <div class="brawl-row-scroll" id="shopThemesList"></div>
-      
-      <div class="brawl-section-title" style="margin-top:20px;">🎬 EXKLUSIVE ANIMATIONEN</div>
-      <div class="brawl-row-scroll" id="shopAnimList"></div>
-
-      <div class="brawl-section-title" style="margin-top:20px;">🎨 FARBIGE NAMEN & EFFEKTE</div>
-      <div class="brawl-row-scroll" id="shopNameColorsList"></div>
-
-      <div class="brawl-section-title" style="margin-top:20px;">🏆 PROFIL BADGES</div>
-      <div class="brawl-row-scroll" id="shopBadgesList"></div>
-    </div>
-    
-    <!-- SUBKATEGORIE: BOOSTS (INVENTAR + KAUFLADEN) -->
-    <div class="brawl-section" id="brawl-sub-boosts">
-      <div class="brawl-section-title">⚡ INVENTAR & AKTIVE BOOSTS</div>
-      <div id="boostsStatusContainer"></div>
-      
-      <div class="brawl-section-title" style="margin-top:15px;">🛍️ BOOST STORE (KAUFEN FÜRS INVENTAR)</div>
-      <div class="brawl-row-scroll">
-        <div class="brawl-card">
-          <div class="card-icon">⚡</div>
-          <div class="card-title">1,25x Multiplikator</div>
-          <div class="card-desc">Kauf fürs Inventar (Gilt 12 Std)</div>
-          <button class="buy-btn" id="buyBoostMulti"></button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">🛡️</div>
-          <div class="card-title">Pechschutz</div>
-          <div class="card-desc">Kauf fürs Inventar (Gilt 10 Min)</div>
-          <button class="buy-btn" id="buyBoostNoDud"></button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">🏷️</div>
-          <div class="card-title">Rabatt-Pass (15%)</div>
-          <div class="card-desc">Kauf fürs Inventar (Gilt 20 Min)</div>
-          <button class="buy-btn" id="buyBoostDiscount"></button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">♾️</div>
-          <div class="card-title">Unendlich Spielen</div>
-          <div class="card-desc">Kauf fürs Inventar (Gilt 12 Std)</div>
-          <button class="buy-btn" id="buyBoostInfinite"></button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SUBKATEGORIE: KISTEN -->
-    <div class="brawl-section" id="brawl-sub-kisten">
-      <div class="brawl-section-title">📦 LOOTBOXEN UNBOXING</div>
-      <div class="brawl-row-scroll">
-        <div class="brawl-card">
-          <div class="card-icon">🥈</div>
-          <div class="card-title">Silber Lootbox</div>
-          <div class="card-desc">Kosten: 1 Ticket (Wert: 70 🪙)</div>
-          <button class="buy-btn" onclick="start3dUnboxing(1)">1 🎟️ Öffnen</button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">🥇</div>
-          <div class="card-title">Gold Lootbox</div>
-          <div class="card-desc">Kosten: 2 Tickets (Wert: 140 🪙)</div>
-          <button class="buy-btn" onclick="start3dUnboxing(2)">2 🎟️ Öffnen</button>
-        </div>
-        <div class="brawl-card">
-          <div class="card-icon">💎</div>
-          <div class="card-title">Diamond Lootbox</div>
-          <div class="card-desc">Kosten: 4 Tickets (Wert: 280 🪙)</div>
-          <button class="buy-btn" onclick="start3dUnboxing(3)">4 🎟️ Öffnen</button>
-        </div>
-        <div class="brawl-card vip-card">
-          <div class="vip-badge">VIP ONLY</div>
-          <div class="card-icon">👑</div>
-          <div class="card-title">VIP Kiste</div>
-          <div class="card-desc">Kosten: 6 Tickets (Wert: 420 🪙 - Riesige Gewinne!)</div>
-          <button class="buy-btn vip-buy" onclick="start3dUnboxing(4)">6 🎟️ VIP Öffnen</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SUBKATEGORIE: ACCOUNTS / SOCIAL -->
-    <div class="brawl-section" id="brawl-sub-accounts">
-      <div class="brawl-section-title">📢 GLOBALE NACHRICHT KAUFEN</div>
-      <div style="background:#1c1536; padding:16px; border-radius:14px; border:2px solid #3d2f66; max-width:500px; margin-bottom:20px;">
-        <p style="font-size:12px; color:var(--cream-dim);">Kauf eine globale Nachricht im Header für alle Spieler!</p>
-        <div class="field"><input type="text" id="buyAnnounceText" placeholder="Deine Nachricht an alle..."></div>
-        <button class="btn btn-primary btn-sm" id="buyAnnounceBtn"></button>
-      </div>
-
-      <div class="brawl-section-title">🎁 ITEMS & COINS AN FREUNDE VERSCHICKEN</div>
-      <div style="background:#1c1536; padding:16px; border-radius:14px; border:2px solid #3d2f66; max-width:500px;">
-        <div class="field"><label>Empfänger wählen</label><select id="sendGiftTargetUser"></select></div>
-        <div class="field">
-          <label>Was möchtest du senden?</label>
-          <select id="sendGiftType">
-            <option value="coins">🪙 Münzen verschicken</option>
-            <option value="tickets">🎟️ Tickets verschicken</option>
-          </select>
-        </div>
-        <div class="field"><label>Anzahl</label><input type="number" id="sendGiftAmount" min="1" value="10"></div>
-        <button class="btn btn-secondary btn-sm" id="sendGiftSubmitBtn">🎁 Verschicken</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="shop-sidebar-right">
-    <div class="shop-sidebar-btn active" data-brawltab="brawl-sub-store">🛒 STORE</div>
-    <div class="shop-sidebar-btn" data-brawltab="brawl-sub-boosts">⚡ BOOSTS</div>
-    <div class="shop-sidebar-btn" data-brawltab="brawl-sub-kisten">📦 KISTEN</div>
-    <div class="shop-sidebar-btn" data-brawltab="brawl-sub-accounts">👥 ACCOUNTS</div>
-  </div>
-</div>
-
-<!-- 3D LOOTBOX UNBOXING FULLSCREEN -->
-<div class="unboxing-fullscreen-backdrop" id="unboxingFullscreen">
-  <div class="unboxing-title" id="unboxingTitle">BOX WIRD GEÖFFNET...</div>
-
-  <div class="scene-3d">
-    <div class="light-beam"></div>
-    <div class="box-3d" id="box3dContainer">
-      <div class="box-face box-front"></div>
-      <div class="box-face box-back"></div>
-      <div class="box-face box-left"></div>
-      <div class="box-face box-right"></div>
-      <div class="box-face box-bottom"></div>
-      <div class="box-lid-3d">
-        <div class="box-lid-face lid-top"></div>
-        <div class="box-lid-face lid-front"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="reveal-drop-box" id="revealDropBox">
-    <div class="reveal-item-text" id="revealItemText">+10 Münzen 🪙</div>
-    <div class="tap-prompt">Klicke weiter, um den Rest zu looten!</div>
-  </div>
-
-  <div class="summary-box" id="summaryBox">
-    <h3 style="font-family:var(--font-display); color:var(--gold); margin-top:0;">LOOT ÜBERSICHT</h3>
-    <div id="summaryItemsList" style="font-size:18px; margin:24px 0; font-weight:bold; color:var(--cyan); text-shadow:0 0 10px rgba(63,224,208,0.5);"></div>
-    <button class="btn btn-primary" id="finishUnboxingBtn">Fertig (Zurück)</button>
-  </div>
-</div>
-
-<!-- LOGIN, REGISTER & SETTINGS MODALS -->
-<div class="modal-backdrop" id="passwordModal">
-  <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
-    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;" id="passwordModalTitle">PASSWORT</h3>
-    <div class="field"><input type="password" id="userPasswordInput" placeholder="Passwort eingeben"></div>
-    <div class="perm-box" style="margin-bottom:14px; background:transparent; padding:0;">
-      <label class="perm-item" style="color:var(--cream);"><input type="checkbox" id="rememberMeInput" checked> Angemeldet bleiben</label>
-    </div>
-    <div style="color:var(--danger); font-size:12px; margin-bottom:10px;" id="passwordModalMsg"></div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn btn-ghost" id="passwordModalCancel">Abbrechen</button>
-      <button class="btn btn-primary" id="passwordModalSubmit">Einloggen</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="registerModal">
-  <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
-    <h3 style="font-family:var(--font-display); color:var(--cyan); font-size:14px; margin-top:0;">ACCOUNT ANFRAGEN</h3>
-    <div class="field"><label>Dein Name</label><input type="text" id="regNameInput" placeholder="z. B. Lisa"></div>
-    <div class="field"><label>Passwort</label><input type="password" id="regPasswordInput" placeholder="••••••"></div>
-    <div class="perm-box" style="margin-bottom:14px; background:transparent; padding:0;">
-      <label class="perm-item" style="color:var(--cream);"><input type="checkbox" id="regRememberMeInput" checked> Angemeldet bleiben</label>
-    </div>
-    <div style="color:var(--danger); font-size:12px; margin-bottom:10px;" id="registerMsg"></div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn btn-ghost" id="registerCancel">Abbrechen</button>
-      <button class="btn btn-primary" id="registerSubmit">Anfragen</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="userSettingsModal">
-  <div style="background:var(--bg-panel); padding:24px; border-radius:20px; width:100%; max-width:360px;">
-    <h3 style="font-family:var(--font-display); color:var(--gold); font-size:14px; margin-top:0;">⚙️ EINSTELLUNGEN</h3>
-    <div class="field">
-      <label>Neues Passwort festlegen</label>
-      <input type="password" id="changePasswordInput" placeholder="Neues Passwort">
-    </div>
-    <button class="btn btn-secondary btn-sm" id="saveNewPasswordBtn" style="width:100%; margin-bottom:18px;">Passwort ändern</button>
-    <div style="border-top:1px solid #3d2f66; padding-top:14px;">
-      <button class="btn btn-danger" id="fullLogoutBtn">Vollständig abmelden</button>
-    </div>
-    <button class="btn btn-ghost row-gap" id="closeSettingsBtn">Schließen</button>
-  </div>
-</div>
-
-<!-- VOLLBILD ADMIN PANEL -->
-<div class="modal-backdrop" id="adminPanelBackdrop">
-  <div class="modal-fullscreen">
-    <div class="admin-header">
-      <h2 style="font-family:var(--font-display); font-size:14px; color:var(--gold); margin:0;">⚙ ADMIN DASHBOARD</h2>
-      <button class="btn btn-ghost" id="closeAdminPanel" style="width:auto; padding:8px 16px;">✕ Schließen</button>
-    </div>
-
-    <div class="admin-nav">
-      <button class="admin-nav-btn active" data-tab="tab-accounts" id="tabBtnAccounts">👥 Acc</button>
-      <button class="admin-nav-btn" data-tab="tab-luck" id="tabBtnLuck" style="color:var(--gold);">🍀 Glück</button>
-      <button class="admin-nav-btn" data-tab="tab-gift" id="tabBtnGift">🎁 Tagesgeschenk & Promo</button>
-      <button class="admin-nav-btn" data-tab="tab-games" id="tabBtnGames">🎮 Spiele</button>
-      <button class="admin-nav-btn" data-tab="tab-tasks" id="tabBtnTasks">📝 Tasks</button>
-      <button class="admin-nav-btn" data-tab="tab-analytics" id="tabBtnAnalytics">📊 Log & Playtime</button>
-    </div>
-
-    <!-- TAB: ACCOUNTS -->
-    <div class="admin-tab-content active" id="tab-accounts">
-      <div style="display:flex; gap:20px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:280px;">
-          <h3 style="color:var(--gold)">Wartende Account-Anfragen</h3>
-          <div id="adminPendingAccountsList"></div>
-          <h3 style="margin-top:24px;">Aktive Accounts</h3>
-          <div id="adminActiveAccountsList"></div>
-        </div>
-        <div style="flex:1; min-width:280px; background:#1c1536; padding:18px; border-radius:14px; border:1px solid #3d2f66;">
-          <h3>Account bearbeiten</h3>
-          <div id="accountEditForm" style="display:none;">
-            <div class="field"><label>Name</label><input type="text" id="editAccName"></div>
-            <div style="display:flex; gap:10px;">
-              <div class="field" style="flex:1;"><label>Coins</label><input type="number" id="editAccCoins"></div>
-              <div class="field" style="flex:1;"><label>Tickets</label><input type="number" id="editAccTickets"></div>
-              <div class="field" style="flex:1;"><label>XP</label><input type="number" id="editAccXp"></div>
-            </div>
-            <div class="field"><label>Nachricht an Nutzer</label><input type="text" id="editAccMsg"></div>
-            <div class="perm-box">
-              <label class="perm-item"><input type="checkbox" id="permLocked"> 🔒 Account Sperren</label>
-              <div class="field" style="margin-top:6px;"><input type="text" id="editAccLockReason" placeholder="Grund der Sperre"></div>
-            </div>
-            <div class="perm-box">
-              <label class="perm-item"><input type="checkbox" id="permAdmin"> 👑 Admin</label>
-              <label class="perm-item"><input type="checkbox" id="permUnlimited"> ♾️ Unendliche Coins</label>
-            </div>
-
-            <div class="perm-box" style="border:1px solid var(--danger);">
-              <label style="color:var(--danger); font-weight:bold; font-size:12px;">🚫 Ausrüstung & Status zurücksetzen</label>
-              <button class="btn btn-danger btn-sm" id="resetVipBtn">VIP entfernen</button>
-              <button class="btn btn-ghost btn-sm" id="resetThemeBtn">Theme zurücksetzen</button>
-              <button class="btn btn-ghost btn-sm" id="resetNameColorBtn">Namensfarben zurücksetzen</button>
-              <button class="btn btn-ghost btn-sm" id="resetAnimBtn">Animationen zurücksetzen</button>
-              <button class="btn btn-ghost btn-sm" id="resetBadgeBtn">Badges zurücksetzen</button>
-              <button class="btn btn-ghost btn-sm" id="clearBoostsBtn">Aktive Boosts löschen</button>
-            </div>
-
-            <button class="btn btn-secondary row-gap" id="saveAccChangesBtn">Speichern</button>
-            <button class="btn btn-danger row-gap" id="deleteAccBtn">Account löschen</button>
-          </div>
-          <div id="accountEditPlaceholder" style="color:var(--cream-dim); text-align:center; padding:40px 0;">Wähle links einen Account aus.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: GLÜCK -->
-    <div class="admin-tab-content" id="tab-luck">
-      <div style="max-width:500px; background:#1c1536; padding:20px; border-radius:14px; border:2px solid var(--gold);">
-        <h3 style="color:var(--gold); margin-top:0;">🍀 Garantierten Loot einstellen</h3>
-        <p style="color:var(--cream-dim); font-size:13px; margin-bottom:20px;">Bestimme exakt, was der Account bei seiner <b>nächsten Lootbox</b> zwingend ziehen wird.</p>
-        <div class="field"><label>1. Account wählen</label><select id="luckTargetUserSelect"></select></div>
-        <div class="field">
-          <label>2. Garantiertes Ergebnis</label>
-          <select id="luckTypeSelect">
-            <option value="coins">🪙 Coins</option>
-            <option value="tickets">🎟️ Tickets</option>
-            <option value="niete">❌ Niete (0)</option>
-          </select>
-        </div>
-        <div class="field" id="luckAmountGroup"><label>3. Anzahl</label><input type="number" id="luckAmountInput" value="1000" min="1"></div>
-        <button class="btn btn-primary" id="saveLuckBtn" style="background:linear-gradient(135deg, var(--gold), #ffae00);">🔒 Für nächste Box speichern</button>
-      </div>
-      <div id="activeLuckDisplay" style="margin-top:20px; font-size:14px; color:var(--cyan);"></div>
-    </div>
-
-    <!-- TAB: GESCHENKE & PROMO CODES -->
-    <div class="admin-tab-content" id="tab-gift">
-      <div style="display:flex; gap:20px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:280px; background:#1c1536; padding:18px; border-radius:14px; border:1px solid #3d2f66;">
-          <h3 style="color:var(--gold); margin-top:0;">🎁 Tagesgeschenke anpassen</h3>
-          
-          <h4>Heute (Standard)</h4>
-          <div class="field"><label>Belohnung Normal-Spieler</label>
-             <select id="giftTodayNormalType"><option value="coins">Coins</option><option value="tickets">Tickets</option><option value="xp">XP</option></select>
-             <input type="number" id="giftTodayNormalAmount" style="margin-top:5px;">
-          </div>
-          <div class="field"><label>Belohnung VIP-Spieler</label>
-             <select id="giftTodayVipType"><option value="coins">Coins</option><option value="tickets">Tickets</option><option value="xp">XP</option></select>
-             <input type="number" id="giftTodayVipAmount" style="margin-top:5px;">
-          </div>
-          
-          <h4 style="margin-top:20px;">Morgen (Geplant)</h4>
-          <div class="field"><label>Belohnung Normal-Spieler</label>
-             <select id="giftTomorrowNormalType"><option value="coins">Coins</option><option value="tickets">Tickets</option><option value="xp">XP</option></select>
-             <input type="number" id="giftTomorrowNormalAmount" style="margin-top:5px;">
-          </div>
-          <div class="field"><label>Belohnung VIP-Spieler</label>
-             <select id="giftTomorrowVipType"><option value="coins">Coins</option><option value="tickets">Tickets</option><option value="xp">XP</option></select>
-             <input type="number" id="giftTomorrowVipAmount" style="margin-top:5px;">
-          </div>
-          <button class="btn btn-primary" id="saveDailyGiftsBtn">Tagesgeschenke Speichern</button>
-          
-          <h3 style="margin-top:30px;">🎁 Sofortiges Direkt-Geschenk</h3>
-          <div class="field"><label>Ziel-Account wählen</label><select id="giftTargetUserSelect"></select></div>
-          <div class="field">
-            <label>Was möchtest du verschenken?</label>
-            <select id="giftTypeSelect">
-              <option value="coins">🪙 Coins Guthaben</option>
-              <option value="tickets">🎟️ Tickets Guthaben</option>
-              <option value="xp">✨ XP</option>
-              <option value="vip">👑 VIP Pass (7 Tage)</option>
-              <option value="theme">🎨 Design Theme</option>
-              <option value="animation">🎬 Exklusive Animation</option>
-              <option value="nameColor">🎨 Namensfarbe / Effekt</option>
-              <option value="badge">🏆 Profil Badge</option>
-            </select>
-          </div>
-          <div class="field" id="giftAmountGroup"><label>Anzahl</label><input type="number" id="giftAmountInput" value="50" min="1"></div>
-          <div class="field" id="giftItemSelectGroup" style="display:none;"><label>Item wählen</label><select id="giftItemSelect"></select></div>
-          <button class="btn btn-primary" id="executeGiftBtn">🎁 Jetzt Verschenken</button>
-        </div>
-        
-        <div style="flex:1; min-width:280px; background:#1c1536; padding:18px; border-radius:14px; border:1px solid #3d2f66;">
-          <h3 style="color:var(--cyan); margin-top:0;">🎟️ Promo Codes erstellen</h3>
-          <div class="field"><label>Neuer Code</label><input type="text" id="newPromoCode" placeholder="Z.B. SOMMER26"></div>
-          <div class="field"><label>Typ</label><select id="newPromoType"><option value="coins">Coins</option><option value="tickets">Tickets</option><option value="xp">XP</option></select></div>
-          <div class="field"><label>Menge</label><input type="number" id="newPromoAmount" value="50"></div>
-          <button class="btn btn-secondary" id="addPromoBtn">Code Hinzufügen</button>
-          
-          <h4 style="margin-top:20px;">Aktive Codes</h4>
-          <div id="adminPromoList"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: SPIELE -->
-    <div class="admin-tab-content" id="tab-games">
-      <div style="display:flex; gap:20px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:280px;"><h3>Spieleliste</h3><div id="adminGamesList"></div></div>
-        <div style="flex:1; min-width:280px;">
-          <h3 id="adminGameFormTitle">Neues Spiel hinzufügen</h3>
-          <input type="hidden" id="editGameId" value="">
-          <div class="field"><label>Name</label><input type="text" id="newGameName"></div>
-          <div class="field"><label>Spiele-Link (URL)</label><input type="text" id="newGameUrl"></div>
-          <div class="field"><label>Emoji</label><input type="text" id="newGameEmoji" maxlength="4"></div>
-          <div class="field"><label>Kategorie</label><select id="newGameCategory"><option value="quick">⚡ Quick Play</option><option value="normal" selected>🌐 Normal Play</option></select></div>
-          
-          <div class="perm-box" style="margin-bottom:14px;">
-            <label class="perm-item"><input type="checkbox" id="newGameIsVip"> 👑 Nur für VIP</label>
-            <label class="perm-item"><input type="checkbox" id="newGameIsDiamond"> 💎 Diamant Knopf</label>
-            <label class="perm-item"><input type="checkbox" id="newGameIsAd"> 📢 Zur Werbung hinzufügen</label>
-            <label class="perm-item"><input type="checkbox" id="newGameIsIframe"> 🖼️ Iframe Spiel (Vollbild Overlay)</label>
-          </div>
-
-          <button class="btn btn-secondary" id="addGameBtn">+ Hinzufügen</button>
-          <button class="btn btn-primary" id="saveEditGameBtn" style="display:none; margin-bottom:8px;">💾 Änderungen speichern</button>
-          <button class="btn btn-ghost" id="cancelEditGameBtn" style="display:none;">Abbrechen</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: AUFGABEN -->
-    <div class="admin-tab-content" id="tab-tasks">
-      <div style="display:flex; gap:20px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:280px;"><h3>Aktive Aufgaben</h3><div id="adminTasksList"></div></div>
-        <div style="flex:1; min-width:280px;">
-          <h3>Neue Aufgabe erstellen</h3>
-          <div class="field"><label>Beschreibung</label><input type="text" id="newTaskName"></div>
-          <div class="field"><label>Belohnung (1-50 Coins)</label><input type="number" id="newTaskReward" min="1" max="50"></div>
-          <button class="btn btn-secondary" id="addTaskBtn">+ Hinzufügen</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: LOG & PLAYTIME -->
-    <div class="admin-tab-content" id="tab-analytics">
-      <h3>Globale Benachrichtigung</h3>
-      <div class="field"><textarea id="globalAnnounceInput" rows="2" placeholder="Text eingeben..."></textarea></div>
-      <button class="btn btn-secondary btn-sm" id="saveGlobalAnnounceBtn">Veröffentlichen</button>
-      <button class="btn btn-ghost btn-sm" id="clearGlobalAnnounceBtn">Löschen</button>
-      <hr style="border-color:#3d2f66; margin:20px 0;">
-
-      <div class="admin-sub-nav">
-        <button id="btnViewLog" class="active">📜 Logbuch</button>
-        <button id="btnViewPlaytime">⏱️ Playtime</button>
-      </div>
-
-      <!-- LOG SUB-TAB -->
-      <div id="sub-tab-log" class="sub-tab-content active">
-         <div class="filter-bar">
-            <select id="filterLogUser"><option value="all">Alle Spieler</option></select>
-            <select id="filterLogType">
-              <option value="all">Alle Aktionen</option>
-              <option value="buy">Nur Käufe / Store</option>
-              <option value="game">Nur Spiele / Kosten</option>
-              <option value="gift">Nur Geschenke / Promo</option>
-              <option value="system">System / Sonstiges</option>
-            </select>
-            <input type="number" id="filterLogAmountMin" placeholder="Min. Betrag">
-         </div>
-         <div style="overflow-x:auto; max-height:400px; border:1px solid #3d2f66; border-radius:10px;">
-           <table class="log-table">
-             <thead><tr><th>Datum</th><th>Account</th><th>Aktion</th><th>Anzahl</th></tr></thead>
-             <tbody id="transactionLogBody"></tbody>
-           </table>
-         </div>
-      </div>
-
-      <!-- PLAYTIME SUB-TAB -->
-      <div id="sub-tab-playtime" class="sub-tab-content">
-         <div class="filter-bar">
-            <select id="filterPlaytimeUser"><option value="all">Alle Spieler</option></select>
-            <select id="filterPlaytimeType">
-               <option value="all">Alle Zeiten (Gesamt)</option>
-               <option value="game">Nur Spiele</option>
-               <option value="store">Nur Store</option>
-            </select>
-         </div>
-         <div class="stats-grid" style="display:flex; gap:15px; margin-bottom:15px;">
-           <div style="background:#1c1536; padding:15px; border-radius:10px; flex:1; text-align:center;">
-              <div>Letzte Stunde</div><div style="color:var(--cyan); font-size:20px; font-weight:bold;" id="ptHour">0 Min</div>
-           </div>
-           <div style="background:#1c1536; padding:15px; border-radius:10px; flex:1; text-align:center;">
-              <div>Heute</div><div style="color:var(--cyan); font-size:20px; font-weight:bold;" id="ptToday">0 Min</div>
-           </div>
-           <div style="background:#1c1536; padding:15px; border-radius:10px; flex:1; text-align:center;">
-              <div>Gesamt</div><div style="color:var(--cyan); font-size:20px; font-weight:bold;" id="ptTotal">0 Min</div>
-           </div>
-         </div>
-         
-         <div style="overflow-x:auto; max-height:300px; border:1px solid #3d2f66; border-radius:10px;">
-           <table class="log-table">
-             <thead><tr><th>Datum</th><th>Account</th><th>Ort / Spiel</th><th>Dauer (Min)</th></tr></thead>
-             <tbody id="playtimeLogBody"></tbody>
-           </table>
-         </div>
-         <button class="btn btn-danger row-gap" id="resetAnalyticsBtn" style="max-width:320px; margin-top:20px;">🗑️ Playtime & Logs zurücksetzen</button>
-      </div>
-
-    </div>
-
-  </div>
-</div>
-<script>
-(function(){
-  const BIN_ID = '6a63656bda38895dfe89ebb2';
-  const API_KEY = '$2a$10$i3rOp5dtA.tkNcFKJKitYOAOFN/Vq19.quCdvKZDif0UZem2.ScqG';
-
-  const DEFAULT_USERS = [
-    {
-      id: 'u_admin', name: 'Admin', password: '1234', approved: true,
-      isAdmin: true, unlimitedCoins: true,
-      coins: 100, tickets: 5, xp: 0, level: 1, loginStreak: 0, lastLoginDate: '', redeemedPromos: [],
-      lastDailyClaim: 0, isLocked: false, lockReason: '', message: '',
-      unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
-      vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'],
-      currentNameColor: 'default', unlockedNameColors: ['default'],
-      currentBadge: 'none', unlockedBadges: ['none'],
-      inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 },
-      boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
-    }
-  ];
-
-  const DEFAULT_GAMES = [{ id: 'g1', name: 'Yandex Games', url: 'https://yandex.com/games/', emoji: '🌐', category: 'normal', isVip: false, isDiamond: false, isAd: false, isIframe: false }];
-
-  const DAILY_ACHIEVEMENTS = [
-    { id: 'ach_yt15', title: '🎬 15 Min. YouTube', reward: 10 },
-    { id: 'ach_yt30', title: '📺 30 Min. YouTube', reward: 20 },
-    { id: 'ach_poke15', title: '⚡ 15 Min. Pokémon', reward: 12 },
-    { id: 'ach_poki15', title: '🎮 15 Min. Poki', reward: 10 },
-    { id: 'ach_poki30', title: '🕹️ 30 Min. Poki Master', reward: 22 },
-    { id: 'ach_gemini', title: '🤖 1 Frage an Gemini', reward: 5 },
-    { id: 'ach_first_task', title: '📝 1 Aufgabe erledigt', reward: 15 },
-    { id: 'ach_daily_claim', title: '🎁 Belohnung abgeholt', reward: 5 },
-    { id: 'ach_game30', title: '⏱️ 30 Min. Spielzeit', reward: 25 },
-    { id: 'ach_100coins', title: '👑 100 Coins erreicht', reward: 30 }
-  ];
-
-  const THEMES = [
-    { id: 'default', name: '👾 Retro Arcade', cost: 0, icon: '👾', vip: false },
-    { id: 'theme-cyberpunk', name: '🏎️ Cyberpunk', cost: 100, icon: '🏎️', vip: false },
-    { id: 'theme-matrix', name: '💚 Matrix Green', cost: 100, icon: '💚', vip: false },
-    { id: 'theme-candy', name: '🍧 Pastell Candy', cost: 120, icon: '🍧', vip: false },
-    { id: 'theme-sunset', name: '☀️ Sunset Drive', cost: 120, icon: '☀️', vip: false },
-    { id: 'theme-gold', name: '👑 Royal Gold', cost: 180, icon: '👑', vip: true },
-    { id: 'theme-cosmic', name: '🌌 Cosmic Void', cost: 220, icon: '🌌', vip: true }
-  ];
-
-  const ANIMATIONS = [
-    { id: 'anim_standard', name: 'Standard Light', cost: 50, icon: '✨', vip: false },
-    { id: 'anim_neon', name: 'Neon Flash', cost: 70, icon: '⚡', vip: false },
-    { id: 'anim_fire', name: 'Inferno Fire', cost: 100, icon: '🔥', vip: false },
-    { id: 'anim_matrix', name: 'Matrix Rain', cost: 120, icon: '💚', vip: false },
-    { id: 'anim_star', name: 'Star Burst', cost: 150, icon: '🌟', vip: false },
-    { id: 'anim_cosmic', name: 'Cosmic Void', cost: 180, icon: '🌌', vip: true },
-    { id: 'anim_hyper', name: 'Rainbow Hyper', cost: 200, icon: '🌈', vip: true }
-  ];
-
-  const NAME_COLORS = [
-    { id: 'nc_cyan', name: 'Neon Cyan', cost: 60, color: '#00f2fe', vip: false },
-    { id: 'nc_pink', name: 'Magenta Glow', cost: 90, color: '#ff4d8d', vip: false },
-    { id: 'nc_green', name: 'Emerald Green', cost: 120, color: '#00ff41', vip: false },
-    { id: 'nc_gold', name: 'Royal Gold (VIP)', cost: 200, color: '#ffd700', vip: true }
-  ];
-
-  const BADGES = [
-    { id: 'badge_speed', name: 'Speedster', cost: 50, icon: '⚡', vip: false },
-    { id: 'badge_pro', name: 'Arcade Pro', cost: 100, icon: '🎮', vip: false },
-    { id: 'badge_rich', name: 'Coin Magnet', cost: 150, icon: '💎', vip: false },
-    { id: 'badge_king', name: 'Ultimate King', cost: 250, icon: '👑', vip: true }
-  ];
-
-  function getSecureRandom() {
-    const array = new Uint32Array(1);
-    window.crypto.getRandomValues(array);
-    return (array[0] / 4294967295) * 100;
-  }
-
-  function splitIntoRandomChunks(totalAmount) {
-    if (totalAmount <= 0) return [{type: 'niete', val: 0}];
-    if (totalAmount === 1) return [{type: 'coin', val: 1}];
-    if (totalAmount === 2) return [{type: 'coin', val: 1}, {type: 'coin', val: 1}];
-    let p1 = Math.max(1, Math.floor(totalAmount * (0.1 + (getSecureRandom()/100 * 0.3))));
-    let p2 = Math.max(1, Math.floor((totalAmount - p1) * (0.2 + (getSecureRandom()/100 * 0.4))));
-    let p3 = totalAmount - p1 - p2;
-    if (p3 <= 0) { p3 = 1; p2 -= 1; }
-    let chunks = [p1, p2, p3].filter(v => v > 0).map(v => ({type: 'coin', val: v}));
-    return chunks.sort(() => Math.random() - 0.5);
-  }
-
-  const BOX_CONFIGS = {
-    1: { name: '🥈 Silber Lootbox', costTickets: 1, themeColor: '#00f0ff', vipOnly: false,
-      open: (r, noDud) => {
-        if(r < 15) return noDud ? { coins: 35, tickets: 0 } : { coins: 0, tickets: 0 };
-        if(r < 30) return { coins: 35, tickets: 0 };
-        if(r < 45) return { coins: 70, tickets: 0 };
-        if(r < 55) return { coins: 80, tickets: 0 };
-        if(r < 70) return { coins: 0, tickets: 1 };
-        if(r < 75) return { coins: 0, tickets: 2 };
-        if(r < 90) return { coins: 100, tickets: 0 };
-        return { coins: 150, tickets: 0 };
-      }
-    },
-    2: { name: '🥇 Gold Lootbox', costTickets: 2, themeColor: '#ffb703', vipOnly: false,
-      open: (r, noDud) => {
-        if(r < 15) return noDud ? { coins: 70, tickets: 0 } : { coins: 0, tickets: 0 };
-        if(r < 30) return { coins: 70, tickets: 0 };
-        if(r < 45) return { coins: 140, tickets: 0 };
-        if(r < 55) return { coins: 160, tickets: 0 };
-        if(r < 70) return { coins: 0, tickets: 2 };
-        if(r < 75) return { coins: 0, tickets: 4 };
-        if(r < 90) return { coins: 200, tickets: 0 };
-        return { coins: 300, tickets: 0 };
-      }
-    },
-    3: { name: '💎 Diamond Lootbox', costTickets: 4, themeColor: '#d63bff', vipOnly: false,
-      open: (r, noDud) => {
-        if(r < 15) return noDud ? { coins: 140, tickets: 0 } : { coins: 0, tickets: 0 };
-        if(r < 30) return { coins: 140, tickets: 0 };
-        if(r < 45) return { coins: 280, tickets: 0 };
-        if(r < 55) return { coins: 310, tickets: 0 };
-        if(r < 70) return { coins: 0, tickets: 4 };
-        if(r < 75) return { coins: 0, tickets: 8 };
-        if(r < 90) return { coins: 400, tickets: 0 };
-        return { coins: 650, tickets: 0 };
-      }
-    },
-    4: { name: '👑 VIP Kiste', costTickets: 6, themeColor: '#ffd700', vipOnly: true,
-      open: (r, noDud) => {
-        if(r < 15) return noDud ? { coins: 210, tickets: 0 } : { coins: 0, tickets: 0 };
-        if(r < 30) return { coins: 210, tickets: 0 };
-        if(r < 45) return { coins: 420, tickets: 0 };
-        if(r < 55) return { coins: 470, tickets: 0 };
-        if(r < 70) return { coins: 0, tickets: 6 };
-        if(r < 75) return { coins: 0, tickets: 12 };
-        if(r < 90) return { coins: 600, tickets: 0 };
-        return { coins: 975, tickets: 0 };
-      }
-    }
+function errMsg(e) {
+  if (e instanceof AppError) return e.message;
+  const code = String(e?.code || "").replace("firestore/", "").replace("auth/", "");
+  const map = {
+    "invalid-credential": "E-Mail oder Passwort ist falsch.",
+    "wrong-password": "E-Mail oder Passwort ist falsch.",
+    "user-not-found": "Zu dieser E-Mail gibt es kein Konto.",
+    "invalid-email": "Bitte eine gültige E-Mail-Adresse eingeben.",
+    "email-already-in-use": "Diese E-Mail wird bereits verwendet.",
+    "weak-password": "Das Passwort braucht mindestens 6 Zeichen.",
+    "too-many-requests": "Zu viele Versuche. Bitte kurz warten und erneut probieren.",
+    "network-request-failed": "Keine Internetverbindung.",
+    "missing-password": "Bitte ein Passwort eingeben.",
+    "operation-not-allowed": "E-Mail/Passwort-Login ist in Firebase noch nicht aktiviert.",
+    "permission-denied": "Keine Berechtigung. Bitte die Firestore-Regeln prüfen.",
+    "unavailable": "Der Server ist gerade nicht erreichbar.",
+    "failed-precondition": "Firestore braucht dafür noch eine Einrichtung (siehe Browser-Konsole)."
   };
+  return map[code] || e?.message || "Etwas ist schiefgelaufen.";
+}
 
-  let state = { 
-      users: DEFAULT_USERS, games: DEFAULT_GAMES, tasks: [], history: [], logs: [], globalAnnouncement: '',
-      playtimeHistory: [], promoCodes: [],
-      dailyGifts: {
-         today: { normal: {type: 'coins', amount: 20}, vip: {type: 'tickets', amount: 1} },
-         tomorrow: { normal: {type: 'coins', amount: 20}, vip: {type: 'tickets', amount: 1} }
-      }
-  };
-  
-  let currentUser = null, selectedUserForAuth = null, selectedUserForEdit = null, selectedGame = null;
-  let currentUnboxingKey = 1, revealSteps = [], currentStepIndex = 0, accumulatedCoins = 0, accumulatedTickets = 0;
-  let unboxingBaseCoins = 0, unboxingBoostedCoins = 0;
-  let stopwatchInterval = null, sessionSeconds = 0, activeSessionStartTime = 0;
-  let storeStartTime = 0;
-  let lastStateHash = '';
+/* ---------------- Icons (Lucide-Stil) ---------------- */
+const ICONS = {
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  gamepad: '<line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  package: '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/>',
+  "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>'
+};
+const icon = (name, size = 20) => `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+const COIN = '<i class="coin"></i>';
+const thumbHTML = (url, fb = "image", size = 30) => {
+  const u = safeUrl(url);
+  return `${icon(fb, size)}${u ? `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}`;
+};
 
-  const $ = id => document.getElementById(id);
+/* ---------------- App-Registry ---------------- */
+const APPS = {
+  konto:  { title: "Konto",  icon: "wallet",  c1: "#20c997", c2: "#0a7d5c", mount: mountKonto,  update: updateKonto },
+  shop:   { title: "Shop",   icon: "bag",     c1: "#ff9f43", c2: "#e5541b", mount: mountShop,   update: updateShop },
+  spiele: { title: "Spiele", icon: "gamepad", c1: "#8f74ff", c2: "#4b33d6", mount: mountSpiele, update: updateSpiele },
+  admin:  { title: "Admin",  icon: "shield",  c1: "#ff5d73", c2: "#a81e36", mount: mountAdmin,  update: updateAdmin, adminOnly: true }
+};
 
-  function isVip(user) { return user && user.vipUntil && user.vipUntil > Date.now(); }
-  function isBoostActive(user, type) { return user && user.boosts && user.boosts[type] && user.boosts[type] > Date.now(); }
-  
-  function getLevel(xp) { return Math.floor(Math.sqrt((xp||0) / 100)) + 1; }
-  function updateLevelAndXp(amount) {
-     currentUser.xp = (currentUser.xp || 0) + amount;
-     currentUser.level = getLevel(currentUser.xp);
-  }
+/* ---------------- State ---------------- */
+const state = {
+  user: null, profile: null,
+  items: [], apps: [], orders: [], txs: [],
+  allUsers: [], allOrders: [],
+  openApp: null, shopSearch: "", shopCat: "Alle",
+  adminTab: "users", orderFilter: "alle"
+};
+let unsubs = [];
+let adminSubs = false;
+let osShown = false;
+let pendingName = "";
+let authMode = "login";
+const isAdmin = () => state.profile?.role === "admin";
 
-  function getActualPrice(origPrice) {
-    if(isBoostActive(currentUser, 'discount')) return Math.max(1, Math.floor(origPrice * 0.85));
-    return origPrice;
-  }
+/* =========================================================
+   AUTH
+   ========================================================= */
+function setAuthMode(mode) {
+  authMode = (mode === "register" && ALLOW_REGISTRATION) ? "register" : "login";
+  $$("#authTabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === authMode));
+  $("#nameField").hidden = authMode !== "register";
+  $("#authSubmit").textContent = authMode === "register" ? "Konto erstellen" : "Anmelden";
+  $("#authPass").autocomplete = authMode === "register" ? "new-password" : "current-password";
+  $("#authError").hidden = true;
+}
 
-  function getPriceHtml(origPrice) {
-    if(isBoostActive(currentUser, 'discount')) {
-      const disc = Math.max(1, Math.floor(origPrice * 0.85));
-      return `<s style="opacity:0.6; font-size:10px;">${origPrice} 🪙</s><br><span style="color:var(--cyan); font-weight:bold;">${disc} 🪙 (-15%)</span>`;
-    }
-    return `${origPrice} 🪙`;
-  }
-
-  function loadLocalBackup(){ try { const loc = localStorage.getItem('arcade_state_backup'); if(loc) return JSON.parse(loc); } catch(e){} return null; }
-  function saveLocalBackup(){ try { localStorage.setItem('arcade_state_backup', JSON.stringify(state)); } catch(e){} }
-
-  async function loadState(){
-    try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
-      if(res.ok){
-        const data = await res.json();
-        if(data.record && data.record.users) {
-          const newHash = JSON.stringify(data.record);
-          if (newHash !== lastStateHash) {
-            state = data.record; lastStateHash = newHash; saveLocalBackup(); renderAll(); checkLockStatus();
-          }
-        }
-      }
-    } catch(e) {
-      const localData = loadLocalBackup();
-      if(localData && localData.users) {
-        const newHash = JSON.stringify(localData);
-        if (newHash !== lastStateHash) { state = localData; lastStateHash = newHash; renderAll(); checkLockStatus(); }
-      }
-    }
-
-    if(!state.users) state.users = DEFAULT_USERS;
-    if(!state.games) state.games = DEFAULT_GAMES;
-    if(!state.tasks) state.tasks = [];
-    if(!state.history) state.history = [];
-    if(!state.logs) state.logs = [];
-    if(!state.playtimeHistory) state.playtimeHistory = [];
-    if(!state.promoCodes) state.promoCodes = [];
-    if(!state.dailyGifts) state.dailyGifts = { today: { normal: {type: 'coins', amount: 20}, vip: {type: 'tickets', amount: 1} }, tomorrow: { normal: {type: 'coins', amount: 20}, vip: {type: 'tickets', amount: 1} } };
-
-    if(!lastStateHash) { lastStateHash = JSON.stringify(state); renderAll(); checkLockStatus(); checkSavedLogin(); }
-  }
-
-  function checkSavedLogin() {
-    if (!currentUser) {
-      const savedUserId = localStorage.getItem('arcade_remembered_user');
-      if (savedUserId) {
-        const user = state.users.find(u => u.id === savedUserId && u.approved);
-        if (user) loginAsUser(user);
-      }
-    }
-  }
-
-  setInterval(() => { loadState(); }, 3000);
-  
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadState(); if (activeSessionStartTime) sessionTick(); } });
-  window.addEventListener('pageshow', () => { loadState(); if (activeSessionStartTime) sessionTick(); });
-
-  async function saveState(){
-    lastStateHash = JSON.stringify(state); saveLocalBackup();
-    try { await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(state) }); } catch(e) {}
-  }
-
-  function addLog(userName, typeReason, amount, unit='🪙', category='system'){
-    if(!state.logs) state.logs = [];
-    state.logs.unshift({ timestamp: Date.now(), userName, typeReason, amount, unit, category });
-  }
-
-  function addPlaytime(userName, locationName, minutes, isStore=false) {
-    if(!state.playtimeHistory) state.playtimeHistory = [];
-    state.playtimeHistory.unshift({ timestamp: Date.now(), userName, locationName, minutes, isStore });
-  }
-
-  function applyTheme(themeId){ document.body.className = themeId === 'default' ? '' : themeId; }
-  function showScreen(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); }
-
-  function checkLockStatus() {
-    if (currentUser) {
-      const freshUser = state.users.find(u => u.id === currentUser.id);
-      if (freshUser && freshUser.isLocked) {
-        currentUser = freshUser; clearInterval(stopwatchInterval); clearSessionStorage();
-        $('lockedReasonText').textContent = currentUser.lockReason || 'Gesperrt.'; showScreen('screen-locked');
-      }
-    }
-  }
-
-  function checkActiveSession() {
-    if (!currentUser) return;
-    const savedUser = localStorage.getItem('activeSessionUser');
-    if (savedUser === currentUser.id) {
-      const savedStart = localStorage.getItem('activeSessionStart');
-      const savedGame = localStorage.getItem('activeSessionGame');
-      if (savedStart && savedGame) {
-        activeSessionStartTime = parseInt(savedStart, 10); selectedGame = JSON.parse(savedGame);
-        $('activeGameTitle').textContent = selectedGame.name;
-        showScreen('screen-active-session');
-        if (selectedGame.isIframe) { $('gameFullscreenContainer').style.display = 'block'; $('gameIframe').src = selectedGame.url; }
-        sessionSeconds = Math.floor((Date.now() - activeSessionStartTime) / 1000);
-        updateStopwatchUI(); clearInterval(stopwatchInterval); stopwatchInterval = setInterval(sessionTick, 1000);
-      }
-    }
-  }
-
-  function clearSessionStorage() {
-    localStorage.removeItem('activeSessionStart'); localStorage.removeItem('activeSessionGame'); localStorage.removeItem('activeSessionUser');
-    activeSessionStartTime = 0;
-  }
-
-  function renderAll(){
-    renderUserSelectList();
-    if(state.globalAnnouncement) { $('globalAnnouncementBox').style.display = 'block'; $('globalAnnouncementText').textContent = state.globalAnnouncement; }
-    else $('globalAnnouncementBox').style.display = 'none';
-
-    if(currentUser){
-      const freshUser = state.users.find(u => u.id === currentUser.id);
-      if(freshUser) currentUser = freshUser;
-
-      if(!currentUser.unlockedThemes) currentUser.unlockedThemes = ['default'];
-      if(!currentUser.currentTheme) currentUser.currentTheme = 'default';
-      if(!currentUser.completedAchievements) currentUser.completedAchievements = [];
-      if(!currentUser.inventory) currentUser.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
-      if(!currentUser.boosts) currentUser.boosts = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
-      if(!currentUser.unlockedAnims) currentUser.unlockedAnims = ['anim_standard'];
-      if(!currentUser.unlockedNameColors) currentUser.unlockedNameColors = ['default'];
-      if(!currentUser.unlockedBadges) currentUser.unlockedBadges = ['none'];
-      if(currentUser.xp === undefined) currentUser.xp = 0;
-      currentUser.level = getLevel(currentUser.xp);
-
-      applyTheme(currentUser.currentTheme);
-      
-      let nameHtml = escapeHtml(currentUser.name);
-      if(currentUser.currentNameColor && currentUser.currentNameColor !== 'default'){
-        const nc = NAME_COLORS.find(c => c.id === currentUser.currentNameColor);
-        if(nc) nameHtml = `<span style="color:${nc.color}; text-shadow:0 0 8px ${nc.color};">${nameHtml}</span>`;
-      }
-      if(currentUser.currentBadge && currentUser.currentBadge !== 'none'){
-        const bd = BADGES.find(b => b.id === currentUser.currentBadge);
-        if(bd) nameHtml = `${bd.icon} ${nameHtml}`;
-      }
-      if(isVip(currentUser)) nameHtml += ' <span style="color:var(--gold)">[VIP]</span>';
-      
-      $('userBadgeSpan').innerHTML = `👤 <b>${nameHtml}</b> <span class="level-badge" id="headerLevelBadge">Lvl ${currentUser.level}</span>`;
-      $('coinsHome').textContent = currentUser.unlimitedCoins ? '♾️' : currentUser.coins;
-      $('ticketsHome').textContent = currentUser.tickets || 0;
-      $('xpHome').textContent = currentUser.xp;
-      $('streakDaysDisplay').textContent = currentUser.loginStreak || 0;
-
-      if(currentUser.message) { $('userPersonalMsgBox').style.display = 'block'; $('userPersonalMsgText').textContent = currentUser.message; }
-      else $('userPersonalMsgBox').style.display = 'none';
-
-      $('openAdminDashboardBtn').style.display = currentUser.isAdmin ? 'block' : 'none';
-
-      renderActiveHomeBoosts();
-      renderGameGrid();
-      renderUserTasksList();
-      renderUserAchievementsList();
-      renderAdminAccounts();
-      renderAdminGamesList();
-      renderAdminTasksList();
-      renderAdminGiftsAndPromos();
-      renderAdminLogsAndPlaytime();
-      renderGiftSelects();
-      renderLuckTab();
-      renderShopItems();
-
-      const todayDate = new Date().toDateString();
-      if(currentUser.lastLoginDate === todayDate) {
-         $('dailyRewardBtn').disabled = true; $('dailyRewardBtn').textContent = '🎁 Heute bereits abgeholt'; $('dailyRewardBtn').style.opacity = '0.5';
-      } else {
-         $('dailyRewardBtn').disabled = false; $('dailyRewardBtn').textContent = '🎁 Tagesgeschenk abholen'; $('dailyRewardBtn').style.opacity = '1';
-      }
+$("#authForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("#authEmail").value.trim();
+  const pass = $("#authPass").value;
+  const err = $("#authError");
+  const btn = $("#authSubmit");
+  err.hidden = true;
+  btn.disabled = true;
+  try {
+    if (authMode === "register") {
+      pendingName = $("#authName").value.trim();
+      await createUserWithEmailAndPassword(auth, email, pass);
     } else {
-      applyTheme('default');
+      await signInWithEmailAndPassword(auth, email, pass);
     }
+  } catch (ex) {
+    err.textContent = errMsg(ex);
+    err.hidden = false;
+  } finally {
+    btn.disabled = false;
   }
+});
 
-  function renderActiveHomeBoosts(){
-    const box = $('activeBoostsHomeBox'); box.innerHTML = '';
-    let hasBoost = false; const now = Date.now();
-    if(currentUser.boosts.multi > now){ hasBoost = true; box.innerHTML += `<div class="boost-active-badge"><span>⚡ 1,25x Coin-Multiplikator</span><span>${Math.ceil((currentUser.boosts.multi - now)/60000)} Min</span></div>`; }
-    if(currentUser.boosts.noDud > now){ hasBoost = true; box.innerHTML += `<div class="boost-active-badge"><span>🛡️ Pechschutz (Keine Nieten)</span><span>${Math.ceil((currentUser.boosts.noDud - now)/60000)} Min</span></div>`; }
-    if(currentUser.boosts.discount > now){ hasBoost = true; box.innerHTML += `<div class="boost-active-badge"><span>🏷️ 15% Rabatt-Pass</span><span>${Math.ceil((currentUser.boosts.discount - now)/60000)} Min</span></div>`; }
-    if(currentUser.boosts.infinite > now){ hasBoost = true; box.innerHTML += `<div class="boost-active-badge"><span>♾️ Unendlich Spielen Pass</span><span>${Math.ceil((currentUser.boosts.infinite - now)/60000)} Min</span></div>`; }
-    box.style.display = hasBoost ? 'flex' : 'none';
+async function resetPassword() {
+  const email = $("#authEmail").value.trim();
+  if (!email) throw new AppError("Bitte zuerst deine E-Mail-Adresse eintragen.");
+  await sendPasswordResetEmail(auth, email);
+  toast("Wir haben dir eine E-Mail zum Zurücksetzen geschickt.", "success");
+}
+
+async function ensureProfile(user) {
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return;
+  const admin = (user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  await setDoc(ref, {
+    email: user.email,
+    role: admin ? "admin" : "user",
+    name: pendingName || user.displayName || (user.email || "").split("@")[0],
+    balance: START_BALANCE
+  });
+}
+
+onAuthStateChanged(auth, async user => {
+  stopListeners();
+  $("#boot").hidden = true;
+  if (!user) {
+    state.user = null;
+    state.profile = null;
+    showAuth();
+    return;
   }
-
-  function renderUserSelectList(){
-    const list = $('userSelectList'); list.innerHTML = '';
-    state.users.filter(u => u.approved).forEach(u => {
-      const card = document.createElement('div'); card.className = 'user-card' + (u.isLocked ? ' locked' : '');
-      let statusText = u.isAdmin ? '👑 Admin' : '🪙 ' + (u.unlimitedCoins ? '♾️' : u.coins);
-      if(u.isLocked) statusText = '🔒 Gesperrt';
-      card.innerHTML = `<span class="user-info">👤 ${escapeHtml(u.name)} ${isVip(u)?'👑':''}</span><span>${statusText}</span>`;
-      card.addEventListener('click', () => {
-        selectedUserForAuth = u;
-        if(u.isLocked) { $('lockedReasonText').textContent = u.lockReason || 'Gesperrt.'; showScreen('screen-locked'); return; }
-        const savedUserId = localStorage.getItem('arcade_remembered_user');
-        if(savedUserId === u.id) { loginAsUser(u); return; }
-        if(u.password) { $('passwordModalTitle').textContent = `PASSWORT FÜR ${u.name.toUpperCase()}`; $('userPasswordInput').value = ''; $('passwordModalMsg').textContent = ''; $('passwordModal').classList.add('active'); }
-        else loginAsUser(u);
-      });
-      list.appendChild(card);
-    });
+  state.user = user;
+  try {
+    await ensureProfile(user);
+    startListeners(user);
+  } catch (e) {
+    console.error(e);
+    toast(errMsg(e), "error");
+    await signOut(auth);
+  } finally {
+    pendingName = "";
   }
+});
 
-  function loginAsUser(user){ 
-    currentUser = user; 
-    showScreen('screen-home'); 
-    renderAll(); 
-    checkLockStatus();
-    checkActiveSession();
+function showAuth() {
+  $("#os").hidden = true;
+  $("#auth").hidden = false;
+  osShown = false;
+  $("#authPass").value = "";
+  setAuthMode("login");
+}
 
-    const adGame = state.games.find(g => g.isAd);
-    if (adGame) {
-        $('werbeText').innerHTML = `Schau dir unser empfohlenes Spiel an:<br><br><b style="font-size:18px;">${adGame.emoji} ${escapeHtml(adGame.name)}</b>`;
-        $('werbePopup').style.display = 'block';
+function showOS() {
+  $("#auth").hidden = true;
+  $("#os").hidden = false;
+  osShown = true;
+}
+
+/* =========================================================
+   Echtzeit-Listener (onSnapshot)
+   ========================================================= */
+const docs = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+const onErr = e => { console.error(e); toast(errMsg(e), "error"); };
+
+function startListeners(user) {
+  const uid = user.uid;
+  unsubs.push(onSnapshot(doc(db, "users", uid), snap => {
+    if (!snap.exists()) return;
+    state.profile = { id: snap.id, ...snap.data() };
+    if (isAdmin() && !adminSubs) startAdminListeners();
+    if (!osShown) showOS();
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(collection(db, "items"), snap => {
+    state.items = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(collection(db, "apps"), snap => {
+    state.apps = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(query(collection(db, "orders"), where("userId", "==", uid)), snap => {
+    state.orders = docs(snap).sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"), limit(60)), snap => {
+    state.txs = docs(snap);
+    scheduleRender();
+  }, onErr));
+}
+
+function startAdminListeners() {
+  adminSubs = true;
+  unsubs.push(onSnapshot(collection(db, "users"), snap => {
+    state.allUsers = docs(snap).sort((a, b) => String(a.email).localeCompare(String(b.email)));
+    scheduleRender();
+  }, onErr));
+  unsubs.push(onSnapshot(collection(db, "orders"), snap => {
+    state.allOrders = docs(snap).sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
+    scheduleRender();
+  }, onErr));
+}
+
+function stopListeners() {
+  unsubs.forEach(u => { try { u(); } catch {} });
+  unsubs = [];
+  adminSubs = false;
+  Object.assign(state, { items: [], apps: [], orders: [], txs: [], allUsers: [], allOrders: [], openApp: null, shopSearch: "", shopCat: "Alle", adminTab: "users", orderFilter: "alle" });
+  shownCoins = null;
+  $("#window")?.classList.remove("open");
+  closeGameFrame();
+  closeModal();
+}
+
+/* =========================================================
+   Rendering: Statusleiste, Desktop, Dock
+   ========================================================= */
+let renderQueued = false;
+function scheduleRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  queueMicrotask(() => { renderQueued = false; renderAll(); });
+}
+
+function renderAll() {
+  if (!state.profile) return;
+  renderStatus();
+  renderDesktop();
+  renderDock();
+  if (state.openApp && APPS[state.openApp]) APPS[state.openApp].update();
+}
+
+let shownCoins = null;
+function setCoins(n) {
+  const el = $("#sbCoins");
+  if (shownCoins === null || reduceMotion) {
+    el.textContent = fmt(n);
+  } else if (n !== shownCoins) {
+    const from = shownCoins, t0 = performance.now();
+    const step = t => {
+      const k = Math.min(1, (t - t0) / 600);
+      el.textContent = fmt(Math.round(from + (n - from) * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    const pill = $("#coinPill");
+    pill.classList.remove("bump");
+    void pill.offsetWidth;
+    pill.classList.add("bump");
+  }
+  shownCoins = n;
+}
+
+function renderStatus() {
+  const p = state.profile;
+  $("#avatarBtn").textContent = (p.name || p.email || "?").charAt(0).toUpperCase();
+  $("#pmName").textContent = p.name || "";
+  $("#pmMail").textContent = p.email || "";
+  const r = $("#pmRole");
+  r.textContent = isAdmin() ? "Admin" : "Nutzer";
+  r.className = "badge " + (isAdmin() ? "red" : "blue");
+  setCoins(Number(p.balance) || 0);
+}
+
+function renderDesktop() {
+  const p = state.profile;
+  $("#greeting").textContent = `Hallo, ${p.name || "du"}!`;
+  $("#dateLine").textContent = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+  const builtin = Object.entries(APPS).filter(([, a]) => !a.adminOnly || isAdmin());
+  const custom = state.apps.filter(a => !a.isGame);
+  $("#appGrid").innerHTML =
+    builtin.map(([id, a]) => `
+      <button class="tile" data-action="open-app" data-app="${id}">
+        <span class="tile-icon" style="--c1:${a.c1};--c2:${a.c2}">${icon(a.icon, 38)}</span>
+        <span class="tile-label">${a.title}</span>
+      </button>`).join("") +
+    custom.map(a => `
+      <button class="tile" data-action="open-link" data-id="${a.id}" title="${esc(a.title)}">
+        <span class="tile-icon" style="--c1:#4dabf7;--c2:#1c7ed6">${thumbHTML(a.iconUrl, "globe", 36)}</span>
+        <span class="tile-label">${esc(a.title)}</span>
+      </button>`).join("");
+}
+
+function renderDock() {
+  const builtin = Object.entries(APPS).filter(([, a]) => !a.adminOnly || isAdmin());
+  $("#dock").innerHTML =
+    `<button class="dock-btn home ${state.openApp ? "" : "active"}" data-action="home" title="Home" aria-label="Home">${icon("home", 26)}</button>` +
+    builtin.map(([id, a]) => `
+      <button class="dock-btn ${state.openApp === id ? "active" : ""}" style="--c1:${a.c1};--c2:${a.c2}" data-action="open-app" data-app="${id}" title="${a.title}" aria-label="${a.title}">${icon(a.icon, 26)}</button>`).join("");
+}
+
+function tickClock() {
+  $("#clock").textContent = new Date().toLocaleString("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+setInterval(tickClock, 20000);
+tickClock();
+
+/* ---------------- App-Fenster ---------------- */
+function openApp(id) {
+  const app = APPS[id];
+  if (!app || (app.adminOnly && !isAdmin())) return;
+  state.openApp = id;
+  const root = document.documentElement.style;
+  root.setProperty("--accent", app.c1);
+  root.setProperty("--accent-2", app.c2);
+  $("#winTitle").innerHTML = `${icon(app.icon, 24)}<span class="t">${app.title}</span>`;
+  const body = $("#winBody");
+  body.innerHTML = "";
+  body.scrollTop = 0;
+  app.mount(body);
+  app.update();
+  const w = $("#window");
+  w.classList.add("open");
+  w.setAttribute("aria-hidden", "false");
+  renderDock();
+}
+
+function closeApp() {
+  state.openApp = null;
+  const root = document.documentElement.style;
+  root.removeProperty("--accent");
+  root.removeProperty("--accent-2");
+  const w = $("#window");
+  w.classList.remove("open");
+  w.setAttribute("aria-hidden", "true");
+  renderDock();
+}
+
+/* =========================================================
+   KONTO-APP
+   ========================================================= */
+function mountKonto(el) {
+  el.innerHTML = `
+    <section class="balance">
+      <div>
+        <div class="lbl">Dein Kontostand</div>
+        <div class="big"><i class="coin"></i><span id="kBalance">0</span></div>
+      </div>
+      <div class="stats" id="kStats"></div>
+    </section>
+    <div class="two-col">
+      <section class="panel"><h3>Letzte Käufe</h3><div id="kOrders"></div></section>
+      <section class="panel"><h3>Transaktionen</h3><div id="kTx"></div></section>
+    </div>`;
+}
+
+function updateKonto() {
+  const bal = Number(state.profile?.balance) || 0;
+  const spent = state.txs.filter(t => t.amount < 0).reduce((s, t) => s - t.amount, 0);
+  const open = state.orders.filter(o => o.status !== "geliefert").length;
+  $("#kBalance").textContent = fmt(bal);
+  $("#kStats").innerHTML = `
+    <div class="stat"><b>${fmt(spent)}</b><span>Coins ausgegeben</span></div>
+    <div class="stat"><b>${fmt(state.orders.length)}</b><span>Bestellungen</span></div>
+    <div class="stat"><b>${fmt(open)}</b><span>noch unterwegs</span></div>`;
+
+  $("#kOrders").innerHTML = state.orders.length ? state.orders.slice(0, 12).map(o => `
+    <div class="row">
+      <div class="grow"><b>${esc(o.itemTitle)}</b><span class="muted small">${fmtDate(o.timestamp)}</span></div>
+      <span class="badge st-${esc(o.status)}">${esc(STATUS[o.status] || o.status)}</span>
+      <span class="price">${COIN}${fmt(o.price)}</span>
+    </div>`).join("") : `<div class="empty">${icon("bag", 34)}Du hast noch nichts gekauft. Schau im Shop vorbei!</div>`;
+
+  $("#kTx").innerHTML = state.txs.length ? state.txs.map(t => `
+    <div class="row">
+      <div class="grow"><b>${esc(t.description || "Transaktion")}</b><span class="muted small">${fmtDate(t.timestamp)}</span></div>
+      <span class="amt ${t.amount >= 0 ? "plus" : "minus"}">${t.amount >= 0 ? "+" : "−"}${fmt(Math.abs(t.amount))}</span>
+    </div>`).join("") : `<div class="empty">${icon("receipt", 34)}Noch keine Bewegungen auf deinem Konto.</div>`;
+}
+
+/* ---------- Coins ausgeben (Basis für Spiele) ---------- */
+async function spendCoins(amount, description, type) {
+  const uid = state.user.uid;
+  const userRef = doc(db, "users", uid);
+  const txRef = doc(collection(db, "users", uid, "transactions"));
+  await runTransaction(db, async tx => {
+    const u = await tx.get(userRef);
+    const bal = Number(u.data()?.balance) || 0;
+    if (bal < amount) throw new AppError("Nicht genügend Coins.");
+    tx.update(userRef, { balance: bal - amount });
+    tx.set(txRef, { amount: -amount, type, description, timestamp: serverTimestamp() });
+  });
+}
+
+/* =========================================================
+   SHOP-APP
+   ========================================================= */
+function mountShop(el) {
+  el.innerHTML = `
+    <div class="toolbar">
+      <input class="search" id="shopSearch" type="search" placeholder="Artikel suchen" style="max-width:320px" aria-label="Artikel suchen">
+      <div class="chips" id="shopChips"></div>
+    </div>
+    <div id="shopGrid"></div>`;
+  const s = $("#shopSearch");
+  s.value = state.shopSearch;
+  s.addEventListener("input", () => { state.shopSearch = s.value; updateShopGrid(); });
+}
+
+function updateShop() {
+  const cats = ["Alle", ...new Set(state.items.map(i => i.category).filter(Boolean))];
+  if (!cats.includes(state.shopCat)) state.shopCat = "Alle";
+  $("#shopChips").innerHTML = cats.map(c => `<button class="chip ${c === state.shopCat ? "active" : ""}" data-action="shop-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  updateShopGrid();
+}
+
+function updateShopGrid() {
+  const q = state.shopSearch.trim().toLowerCase();
+  const list = state.items.filter(i =>
+    (state.shopCat === "Alle" || i.category === state.shopCat) &&
+    (!q || String(i.title).toLowerCase().includes(q)));
+  const bal = Number(state.profile?.balance) || 0;
+  $("#shopGrid").innerHTML = list.length ? `<div class="grid-items">${list.map(i => {
+    const stock = Number(i.stock) || 0;
+    const stockTxt = stock <= 0 ? "Ausverkauft" : stock <= 3 ? `Nur noch ${stock}` : `${stock} auf Lager`;
+    const stockCls = stock <= 0 ? "out" : stock <= 3 ? "low" : "";
+    return `
+      <article class="item">
+        <div class="thumb">${thumbHTML(i.imageUrl, "package", 44)}</div>
+        <div class="item-body">
+          ${i.category ? `<span class="muted small">${esc(i.category)}</span>` : ""}
+          <h4>${esc(i.title)}</h4>
+          <div class="item-foot"><span class="price">${COIN}${fmt(i.price)}</span><span class="stock ${stockCls}">${stockTxt}</span></div>
+          <button class="btn primary block" data-action="buy" data-id="${i.id}" ${stock <= 0 ? "disabled" : ""}>${stock <= 0 ? "Ausverkauft" : (bal < i.price ? "Zu wenig Coins" : "Kaufen")}</button>
+        </div>
+      </article>`;
+  }).join("")}</div>` : `<div class="empty">${icon("package", 40)}${state.items.length ? "Kein Artikel passt zu deiner Suche." : "Der Shop ist noch leer."}</div>`;
+}
+
+async function buyFlow(itemId) {
+  const it = state.items.find(i => i.id === itemId);
+  if (!it) throw new AppError("Dieser Artikel existiert nicht mehr.");
+  const price = Number(it.price) || 0;
+  const bal = Number(state.profile?.balance) || 0;
+  if ((Number(it.stock) || 0) <= 0) throw new AppError("Ausverkauft.");
+  if (bal < price) throw new AppError(`Nicht genügend Coins. Dir fehlen noch ${fmt(price - bal)}.`);
+  const ok = await confirmDialog({
+    title: `${it.title} kaufen?`,
+    text: `Der Kauf kostet ${fmt(price)} Coins. Danach hast du noch ${fmt(bal - price)} Coins.`,
+    confirmLabel: "Jetzt kaufen"
+  });
+  if (!ok) return;
+  await buyItem(itemId);
+  toast(`${it.title} ist bestellt.`, "success");
+}
+
+async function buyItem(itemId) {
+  const uid = state.user.uid;
+  const userRef = doc(db, "users", uid);
+  const itemRef = doc(db, "items", itemId);
+  const orderRef = doc(collection(db, "orders"));
+  const txRef = doc(collection(db, "users", uid, "transactions"));
+  await runTransaction(db, async tx => {
+    const [u, i] = await Promise.all([tx.get(userRef), tx.get(itemRef)]);
+    if (!i.exists()) throw new AppError("Dieser Artikel existiert nicht mehr.");
+    const item = i.data();
+    const stock = Number(item.stock) || 0;
+    const price = Number(item.price) || 0;
+    const bal = Number(u.data()?.balance) || 0;
+    if (stock <= 0) throw new AppError("Ausverkauft.");
+    if (bal < price) throw new AppError("Nicht genügend Coins.");
+    tx.update(userRef, { balance: bal - price });
+    tx.update(itemRef, { stock: stock - 1 });
+    tx.set(orderRef, { userId: uid, itemId, itemTitle: item.title, price, timestamp: serverTimestamp(), status: "bestellt" });
+    tx.set(txRef, { amount: -price, type: "purchase", description: `Kauf: ${item.title}`, timestamp: serverTimestamp() });
+  });
+}
+
+/* =========================================================
+   SPIELE-APP
+   ========================================================= */
+function mountSpiele(el) {
+  el.innerHTML = `<div id="gamesList"></div>`;
+}
+
+function updateSpiele() {
+  const games = state.apps.filter(a => a.isGame);
+  $("#gamesList").innerHTML = games.length ? `<div class="grid-games">${games.map(g => {
+    const cost = Number(g.requiredCoins) || 0;
+    return `
+      <article class="game">
+        <div class="thumb">${thumbHTML(g.iconUrl, "gamepad", 32)}</div>
+        <div class="grow">
+          <h4>${esc(g.title)}</h4>
+          <span class="muted small">${cost > 0 ? `Kostet ${fmt(cost)} Coins pro Start` : "Gratis"}</span>
+          <div class="game-actions">
+            <button class="btn primary small" data-action="play" data-id="${g.id}">${cost > 0 ? COIN : ""}Spielen</button>
+            <button class="btn small" data-action="play-tab" data-id="${g.id}" data-icon-inline aria-label="In neuem Tab öffnen">${icon("external", 16)}Neuer Tab</button>
+          </div>
+        </div>
+      </article>`;
+  }).join("")}</div>` : `<div class="empty">${icon("gamepad", 40)}Noch keine Spiele. Der Admin kann welche hinzufügen.</div>`;
+}
+
+async function startGame(id, mode) {
+  const a = state.apps.find(x => x.id === id);
+  if (!a) throw new AppError("Diese App gibt es nicht mehr.");
+  const url = safeUrl(a.targetUrl);
+  if (!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
+  const cost = Number(a.requiredCoins) || 0;
+  if (cost > 0) {
+    const bal = Number(state.profile?.balance) || 0;
+    if (bal < cost) throw new AppError(`Nicht genügend Coins. ${a.title} kostet ${fmt(cost)} Coins.`);
+    const ok = await confirmDialog({ title: `${a.title} starten?`, text: `Ein Start kostet ${fmt(cost)} Coins.`, confirmLabel: `Für ${fmt(cost)} Coins starten` });
+    if (!ok) return;
+    await spendCoins(cost, `Spiel: ${a.title}`, "game");
+  }
+  if (mode === "tab") {
+    const w = window.open(url, "_blank", "noopener");
+    if (!w) toast("Der Browser hat das neue Tab blockiert. Bitte Pop-ups erlauben.", "error");
+  } else {
+    openGameFrame(a, url);
+  }
+}
+
+function openGameFrame(a, url) {
+  $("#gameTitle").innerHTML = `${icon("gamepad", 22)}<span class="t">${esc(a.title)}</span>`;
+  $("#gameExternal").href = url;
+  $("#gameFrame").src = url;
+  $("#gameView").hidden = false;
+}
+
+function closeGameFrame() {
+  const v = $("#gameView");
+  if (!v) return;
+  v.hidden = true;
+  $("#gameFrame").src = "about:blank";
+}
+
+/* =========================================================
+   ADMIN-APP
+   ========================================================= */
+function mountAdmin(el) {
+  el.innerHTML = `<div class="tabbar" id="adminTabs"></div><div id="adminContent"></div>`;
+}
+
+function updateAdmin() {
+  if (!isAdmin()) return;
+  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Spiele & Apps", "gamepad"], ["orders", "Bestellungen", "list"]];
+  $("#adminTabs").innerHTML = tabs.map(([id, label, ic]) =>
+    `<button class="chip ${state.adminTab === id ? "active" : ""}" data-action="admin-tab" data-tab="${id}">${icon(ic, 16)}${label}</button>`).join("");
+  const views = { users: adminUsers, items: adminItems, apps: adminApps, orders: adminOrders };
+  $("#adminContent").innerHTML = views[state.adminTab]();
+}
+
+function adminUsers() {
+  return `
+    <div class="toolbar"><button class="btn primary" data-action="user-new">${icon("plus", 18)}Nutzer anlegen</button></div>
+    ${state.allUsers.length ? state.allUsers.map(u => `
+      <div class="row">
+        <span class="avatar">${esc((u.name || u.email || "?").charAt(0).toUpperCase())}</span>
+        <div class="grow"><b>${esc(u.name || "Ohne Namen")}</b><span class="muted small">${esc(u.email)}</span></div>
+        <span class="badge ${u.role === "admin" ? "red" : "blue"}">${u.role === "admin" ? "Admin" : "Nutzer"}</span>
+        <span class="pill">${COIN}${fmt(u.balance)}</span>
+        <button class="btn small" data-action="coins" data-id="${u.id}">Coins ändern</button>
+      </div>`).join("") : `<div class="empty">${icon("user", 36)}Noch keine Nutzer.</div>`}`;
+}
+
+function adminItems() {
+  return `
+    <div class="toolbar">
+      <button class="btn primary" data-action="item-new">${icon("plus", 18)}Neuer Artikel</button>
+      ${state.items.length ? "" : `<button class="btn" data-action="seed">Beispiel-Süßigkeiten anlegen</button>`}
+    </div>
+    ${state.items.length ? state.items.map(i => `
+      <div class="row">
+        <div class="thumb">${thumbHTML(i.imageUrl, "package", 22)}</div>
+        <div class="grow"><b>${esc(i.title)}</b><span class="muted small">${esc(i.category || "Ohne Kategorie")}, Bestand ${fmt(i.stock)}</span></div>
+        <span class="price">${COIN}${fmt(i.price)}</span>
+        <button class="btn small" data-action="item-edit" data-id="${i.id}" aria-label="Bearbeiten">${icon("pencil", 16)}</button>
+        <button class="btn small" data-action="item-del" data-id="${i.id}" aria-label="Löschen">${icon("trash", 16)}</button>
+      </div>`).join("") : `<div class="empty">${icon("package", 36)}Noch keine Artikel im Shop.</div>`}`;
+}
+
+function adminApps() {
+  return `
+    <div class="toolbar"><button class="btn primary" data-action="app-new">${icon("plus", 18)}Neues Spiel oder Link</button></div>
+    ${state.apps.length ? state.apps.map(a => `
+      <div class="row">
+        <div class="thumb">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 22)}</div>
+        <div class="grow"><b>${esc(a.title)}</b><span class="muted small">${a.isGame ? "Spiel" : "Web-App auf dem Homescreen"}${Number(a.requiredCoins) > 0 ? `, ${fmt(a.requiredCoins)} Coins pro Start` : ""}</span></div>
+        <button class="btn small" data-action="app-edit" data-id="${a.id}" aria-label="Bearbeiten">${icon("pencil", 16)}</button>
+        <button class="btn small" data-action="app-del" data-id="${a.id}" aria-label="Löschen">${icon("trash", 16)}</button>
+      </div>`).join("") : `<div class="empty">${icon("gamepad", 36)}Noch keine Spiele oder Links.</div>`}`;
+}
+
+function adminOrders() {
+  const f = state.orderFilter;
+  const list = state.allOrders.filter(o => f === "alle" || o.status === f);
+  const chips = [["alle", "Alle"], ...Object.entries(STATUS)].map(([k, v]) =>
+    `<button class="chip ${f === k ? "active" : ""}" data-action="order-filter" data-status="${k}">${v}</button>`).join("");
+  return `
+    <div class="toolbar"><div class="chips">${chips}</div></div>
+    ${list.length ? list.map(o => {
+      const u = state.allUsers.find(x => x.id === o.userId);
+      return `
+      <div class="row">
+        <div class="grow"><b>${esc(o.itemTitle)}</b><span class="muted small">${esc(u?.name || u?.email || o.userId)}, ${fmtDate(o.timestamp)}</span></div>
+        <span class="price">${COIN}${fmt(o.price)}</span>
+        <select data-change="order-status" data-id="${o.id}" aria-label="Status">
+          ${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${o.status === k ? "selected" : ""}>${v}</option>`).join("")}
+        </select>
+      </div>`;
+    }).join("") : `<div class="empty">${icon("list", 36)}Keine Bestellungen in dieser Ansicht.</div>`}`;
+}
+
+/* ---------- Admin-Aktionen ---------- */
+async function adjustCoins(uid, delta, reason) {
+  const ref = doc(db, "users", uid);
+  const txRef = doc(collection(db, "users", uid, "transactions"));
+  await runTransaction(db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists()) throw new AppError("Nutzer nicht gefunden.");
+    const bal = Number(s.data().balance) || 0;
+    if (bal + delta < 0) throw new AppError(`Das Guthaben kann nicht unter 0 fallen (aktuell ${fmt(bal)} Coins).`);
+    tx.update(ref, { balance: bal + delta });
+    tx.set(txRef, { amount: delta, type: "admin", description: reason || (delta > 0 ? "Gutschrift vom Admin" : "Abzug vom Admin"), timestamp: serverTimestamp() });
+  });
+}
+
+function coinsDialog(uid) {
+  const u = state.allUsers.find(x => x.id === uid);
+  if (!u) throw new AppError("Nutzer nicht gefunden.");
+  showModal({
+    title: `Coins ändern: ${u.name || u.email}`,
+    text: `Aktuell ${fmt(u.balance)} Coins.`,
+    submitLabel: "Speichern",
+    fields: [
+      { name: "mode", label: "Aktion", type: "select", value: "add", options: [{ value: "add", label: "Coins hinzufügen" }, { value: "sub", label: "Coins abziehen" }] },
+      { name: "amount", label: "Anzahl", type: "number", min: 1, value: 10, required: true },
+      { name: "reason", label: "Grund (optional)", placeholder: "z. B. Taschengeld" }
+    ],
+    onSubmit: async v => {
+      const n = Math.floor(v.amount);
+      if (!(n > 0)) throw new AppError("Bitte eine Anzahl größer als 0 eingeben.");
+      await adjustCoins(uid, v.mode === "sub" ? -n : n, v.reason);
+      toast(`${v.mode === "sub" ? "Abgezogen" : "Hinzugefügt"}: ${fmt(n)} Coins.`, "success");
     }
+  });
+}
+
+let secondaryAuth = null;
+function userNewDialog() {
+  showModal({
+    title: "Nutzer anlegen",
+    text: "Das neue Konto startet mit " + START_BALANCE + " Coins. Du bleibst als Admin angemeldet.",
+    submitLabel: "Konto erstellen",
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "email", label: "E-Mail", type: "email", required: true },
+      { name: "password", label: "Passwort (mind. 6 Zeichen)", type: "text", required: true }
+    ],
+    onSubmit: async v => {
+      if (v.password.length < 6) throw new AppError("Das Passwort braucht mindestens 6 Zeichen.");
+      if (!secondaryAuth) secondaryAuth = getAuth(initializeApp(firebaseConfig, "secondary"));
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, v.email, v.password);
+      try {
+        await setDoc(doc(db, "users", cred.user.uid), { email: v.email, role: "user", name: v.name, balance: START_BALANCE });
+      } finally {
+        await signOut(secondaryAuth);
+      }
+      toast(`${v.name} wurde angelegt.`, "success");
+    }
+  });
+}
+
+function validateItem(v) {
+  if (!v.title) throw new AppError("Bitte einen Titel eingeben.");
+  const price = Math.floor(v.price), stock = Math.floor(v.stock);
+  if (!(price >= 0)) throw new AppError("Der Preis muss 0 oder größer sein.");
+  if (!(stock >= 0)) throw new AppError("Der Bestand muss 0 oder größer sein.");
+  if (v.imageUrl && !safeUrl(v.imageUrl)) throw new AppError("Bitte eine gültige Bild-URL mit https:// angeben.");
+  return { title: v.title, price, stock, category: v.category, imageUrl: v.imageUrl ? safeUrl(v.imageUrl) : "" };
+}
+
+function itemDialog(id) {
+  const it = id ? state.items.find(i => i.id === id) : null;
+  showModal({
+    title: it ? "Artikel bearbeiten" : "Neuer Artikel",
+    submitLabel: it ? "Änderungen speichern" : "Artikel anlegen",
+    fields: [
+      { name: "title", label: "Titel", required: true, value: it?.title },
+      { name: "price", label: "Preis in Coins", type: "number", min: 0, required: true, value: it?.price ?? 5 },
+      { name: "stock", label: "Bestand", type: "number", min: 0, required: true, value: it?.stock ?? 10 },
+      { name: "category", label: "Kategorie", value: it?.category ?? "Süßigkeiten" },
+      { name: "imageUrl", label: "Bild-URL", type: "url", value: it?.imageUrl, placeholder: "https://…" }
+    ],
+    onSubmit: async v => {
+      const data = validateItem(v);
+      if (it) await updateDoc(doc(db, "items", id), data);
+      else await addDoc(collection(db, "items"), data);
+      toast(it ? "Artikel gespeichert." : "Artikel angelegt.", "success");
+    }
+  });
+}
+
+async function itemDelete(id) {
+  const it = state.items.find(i => i.id === id);
+  if (!it) return;
+  if (await confirmDialog({ title: `${it.title} löschen?`, text: "Der Artikel verschwindet aus dem Shop. Bestehende Bestellungen bleiben erhalten.", confirmLabel: "Löschen", danger: true })) {
+    await deleteDoc(doc(db, "items", id));
+    toast("Artikel gelöscht.", "success");
   }
+}
 
-  $('dailyRewardBtn').addEventListener('click', async () => {
-     if(!currentUser) return;
-     const todayDate = new Date().toDateString();
-     if(currentUser.lastLoginDate === todayDate) return;
-     
-     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-     if(currentUser.lastLoginDate === yesterday.toDateString()) currentUser.loginStreak = (currentUser.loginStreak || 0) + 1;
-     else currentUser.loginStreak = 1;
-     currentUser.lastLoginDate = todayDate;
+async function seedItems() {
+  const demo = [["Gummibärchen", 8, 20], ["Schokoriegel", 10, 15], ["Lakritz", 6, 12], ["Brausestäbchen", 4, 30], ["Lolli", 3, 40], ["Kaugummi", 2, 50]];
+  const batch = writeBatch(db);
+  demo.forEach(([title, price, stock]) => batch.set(doc(collection(db, "items")), { title, price, stock, category: "Süßigkeiten", imageUrl: "" }));
+  await batch.commit();
+  toast("Beispiel-Artikel angelegt.", "success");
+}
 
-     const giftConfig = state.dailyGifts.today[isVip(currentUser) ? 'vip' : 'normal'];
-     let rewardText = "";
-     let multiplier = (currentUser.loginStreak % 5 === 0) ? 2 : 1;
-     let finalAmount = giftConfig.amount * multiplier;
-
-     if(giftConfig.type === 'coins') { currentUser.coins += finalAmount; rewardText = `${finalAmount} 🪙`; }
-     else if(giftConfig.type === 'tickets') { currentUser.tickets = (currentUser.tickets||0) + finalAmount; rewardText = `${finalAmount} 🎟️`; }
-     else if(giftConfig.type === 'xp') { updateLevelAndXp(finalAmount); rewardText = `${finalAmount} ✨ XP`; }
-
-     addLog(currentUser.name, `🎁 Tagesgeschenk (Streak: ${currentUser.loginStreak})`, finalAmount, giftConfig.type, 'gift');
-     await saveState(); renderAll();
-     alert(`🎉 Tagesgeschenk abgeholt!\nDu erhältst: ${rewardText}\nAktuelle Login-Streak: ${currentUser.loginStreak} Tage!`);
+function appDialog(id) {
+  const a = id ? state.apps.find(x => x.id === id) : null;
+  showModal({
+    title: a ? "Eintrag bearbeiten" : "Neues Spiel oder Link",
+    submitLabel: a ? "Änderungen speichern" : "Anlegen",
+    fields: [
+      { name: "title", label: "Titel", required: true, value: a?.title },
+      { name: "targetUrl", label: "Ziel-URL", type: "url", required: true, value: a?.targetUrl, placeholder: "https://…" },
+      { name: "iconUrl", label: "Icon-URL", type: "url", value: a?.iconUrl, placeholder: "https://…" },
+      { name: "requiredCoins", label: "Coins pro Start (0 = gratis)", type: "number", min: 0, value: a?.requiredCoins ?? 0 },
+      { name: "isGame", label: "Ist ein Spiel (erscheint in der Spiele-App)", type: "checkbox", value: a ? !!a.isGame : true }
+    ],
+    onSubmit: async v => {
+      if (!v.title) throw new AppError("Bitte einen Titel eingeben.");
+      if (!safeUrl(v.targetUrl)) throw new AppError("Bitte eine gültige Ziel-URL mit https:// angeben.");
+      if (v.iconUrl && !safeUrl(v.iconUrl)) throw new AppError("Bitte eine gültige Icon-URL mit https:// angeben.");
+      const data = { title: v.title, targetUrl: safeUrl(v.targetUrl), iconUrl: v.iconUrl ? safeUrl(v.iconUrl) : "", isGame: v.isGame, requiredCoins: Math.max(0, Math.floor(v.requiredCoins) || 0) };
+      if (a) await updateDoc(doc(db, "apps", id), data);
+      else await addDoc(collection(db, "apps"), data);
+      toast(a ? "Eintrag gespeichert." : "Eintrag angelegt.", "success");
+    }
   });
+}
 
-  $('backFromLocked').addEventListener('click', () => showScreen('screen-auth'));
-  $('passwordModalCancel').addEventListener('click', () => $('passwordModal').classList.remove('active'));
-  $('passwordModalSubmit').addEventListener('click', () => {
-    if(selectedUserForAuth && $('userPasswordInput').value === selectedUserForAuth.password) {
-      if($('rememberMeInput').checked) localStorage.setItem('arcade_remembered_user', selectedUserForAuth.id);
-      $('passwordModal').classList.remove('active'); loginAsUser(selectedUserForAuth);
-    } else $('passwordModalMsg').textContent = 'Falsches Passwort!';
-  });
+async function appDelete(id) {
+  const a = state.apps.find(x => x.id === id);
+  if (!a) return;
+  if (await confirmDialog({ title: `${a.title} löschen?`, text: "Der Eintrag wird für alle entfernt.", confirmLabel: "Löschen", danger: true })) {
+    await deleteDoc(doc(db, "apps", id));
+    toast("Eintrag gelöscht.", "success");
+  }
+}
 
-  $('logoutBtn').addEventListener('click', () => { currentUser = null; showScreen('screen-auth'); renderAll(); });
-  
-  $('settingsBtn').addEventListener('click', () => { $('changePasswordInput').value = ''; $('userSettingsModal').classList.add('active'); });
-  $('closeSettingsBtn').addEventListener('click', () => { $('userSettingsModal').classList.remove('active'); });
-  $('saveNewPasswordBtn').addEventListener('click', async () => {
-    const newPw = $('changePasswordInput').value.trim();
-    if(!newPw) { alert('Bitte ein neues Passwort eingeben.'); return; }
-    currentUser.password = newPw; await saveState(); alert('Passwort erfolgreich geändert!'); $('userSettingsModal').classList.remove('active');
-  });
-  $('fullLogoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('arcade_remembered_user'); currentUser = null; $('userSettingsModal').classList.remove('active'); showScreen('screen-auth'); renderAll();
-  });
+/* =========================================================
+   Modal & Toast
+   ========================================================= */
+let modalCloseCb = null;
 
-  $('registerBtn').addEventListener('click', () => { $('regNameInput').value = ''; $('regPasswordInput').value = ''; $('registerMsg').textContent = ''; $('registerModal').classList.add('active'); });
-  $('registerCancel').addEventListener('click', () => $('registerModal').classList.remove('active'));
-  $('registerSubmit').addEventListener('click', async () => {
-    const name = $('regNameInput').value.trim(); const pw = $('regPasswordInput').value.trim();
-    if(!name){ $('registerMsg').textContent = 'Name eingeben!'; return; }
-    const newId = 'u_' + Date.now();
-    if($('regRememberMeInput').checked) localStorage.setItem('arcade_remembered_user', newId);
-    state.users.push({
-      id: newId, name, password: pw, approved: false, isAdmin: false, unlimitedCoins: false,
-      coins: 10, tickets: 0, xp: 0, level: 1, loginStreak: 0, lastLoginDate: '', redeemedPromos: [],
-      lastDailyClaim: 0, isLocked: false, lockReason: '', message: '', unlockedThemes: ['default'], currentTheme: 'default', completedAchievements: [], forcedLoot: null,
-      vipUntil: 0, currentAnim: 'anim_standard', unlockedAnims: ['anim_standard'], currentNameColor: 'default', unlockedNameColors: ['default'], currentBadge: 'none', unlockedBadges: ['none'],
-      inventory: { multi: 0, noDud: 0, discount: 0, infinite: 0 }, boosts: { multi: 0, noDud: 0, discount: 0, infinite: 0 }
-    });
-    await saveState(); $('registerModal').classList.remove('active'); alert('Anfrage gesendet!'); renderAll();
-  });
+function fieldHTML(f) {
+  if (f.type === "checkbox") return `<label class="check"><input type="checkbox" name="${f.name}" ${f.value ? "checked" : ""}><span>${esc(f.label)}</span></label>`;
+  if (f.type === "select") return `<label class="field"><span>${esc(f.label)}</span><select name="${f.name}">${f.options.map(o => `<option value="${esc(o.value)}" ${o.value === f.value ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>`;
+  const num = f.type === "number" ? `min="${f.min ?? 0}" step="${f.step ?? 1}"` : "";
+  return `<label class="field"><span>${esc(f.label)}</span><input name="${f.name}" type="${f.type || "text"}" value="${esc(f.value ?? "")}" placeholder="${esc(f.placeholder || "")}" ${num} ${f.required ? "required" : ""} autocomplete="off"></label>`;
+}
 
-  // STORE TRACKING
-  $('openEpicShopBtn').addEventListener('click', () => { 
-     $('epicShopFullscreen').classList.add('active'); 
-     storeStartTime = Date.now();
-     renderShopItems();
-  });
-  $('closeEpicShopBtn').addEventListener('click', () => { 
-     $('epicShopFullscreen').classList.remove('active'); 
-     if(storeStartTime > 0) {
-        const minutes = (Date.now() - storeStartTime) / 60000;
-        if(minutes > 0.5) { addPlaytime(currentUser.name, 'Arcade Store', minutes, true); updateLevelAndXp(Math.floor(minutes * 2)); saveState(); }
-        storeStartTime = 0;
-     }
-     renderAll();
-  });
+function readForm(form, fields) {
+  const out = {};
+  for (const f of fields) {
+    const el = form.elements[f.name];
+    if (f.type === "checkbox") out[f.name] = el.checked;
+    else if (f.type === "number") out[f.name] = Number(el.value);
+    else out[f.name] = el.value.trim();
+  }
+  return out;
+}
 
-  document.querySelectorAll('.shop-sidebar-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.shop-sidebar-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.brawl-section').forEach(s => s.classList.remove('active'));
-      btn.classList.add('active'); $(btn.dataset.brawltab).classList.add('active');
-    });
-  });
-
-  function renderShopItems(){
-    if(!currentUser) return;
-    $('shopCoinsVal').textContent = currentUser.unlimitedCoins ? '♾️' : currentUser.coins;
-    $('shopTicketsVal').textContent = currentUser.tickets;
-    $('shopXpVal').textContent = currentUser.xp;
-    $('shopVipBadge').innerHTML = isVip(currentUser) ? '👑 <b style="color:var(--gold);">VIP</b>' : '';
-
-    $('buyVipBtn').innerHTML = `Kaufen (${getPriceHtml(200)})`;
-    $('buyTicketBrawlBtn').innerHTML = `Kaufen (${getPriceHtml(70)})`;
-    $('buyBoostMulti').innerHTML = `Kaufen (${getPriceHtml(80)})`;
-    $('buyBoostNoDud').innerHTML = `Kaufen (${getPriceHtml(50)})`;
-    $('buyBoostDiscount').innerHTML = `Kaufen (${getPriceHtml(60)})`;
-    $('buyBoostInfinite').innerHTML = `Kaufen (${getPriceHtml(25)})`;
-    $('buyAnnounceBtn').innerHTML = `📢 Senden (${getPriceHtml(20)})`;
-
-    // THEMEN RENDER
-    const themeBox = $('shopThemesList'); themeBox.innerHTML = '';
-    THEMES.forEach(t => {
-      const isUnlocked = (currentUser.unlockedThemes || []).includes(t.id);
-      const isActive = currentUser.currentTheme === t.id;
-      const card = document.createElement('div'); card.className = 'brawl-card' + (t.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : (t.cost === 0 ? 'Kostenlos' : `Kaufen (${getPriceHtml(t.cost)})`));
-      card.innerHTML = `${t.vip ? '<div class="vip-badge">VIP</div>' : ''}
-        <div class="card-icon">${t.icon}</div>
-        <div class="card-title">${t.name}</div>
-        <div class="card-desc">Farb-Design für die App</div>
-        <button class="buy-btn ${t.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
-        if(isActive) return;
-        if(isUnlocked || t.cost === 0){ currentUser.currentTheme = t.id; applyTheme(t.id); await saveState(); renderShopItems(); return; }
-        if(t.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        const finalPrice = getActualPrice(t.cost);
-        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
-        currentUser.unlockedThemes.push(t.id); currentUser.currentTheme = t.id; applyTheme(t.id);
-        addLog(currentUser.name, `🎨 Theme gekauft: ${t.name}`, -finalPrice, '🪙', 'buy');
-        await saveState(); renderShopItems(); alert(`🎉 Theme "${t.name}" freigeschaltet!`);
-      });
-      themeBox.appendChild(card);
-    });
-
-    // ANIMATIONEN RENDER
-    const animBox = $('shopAnimList'); animBox.innerHTML = '';
-    ANIMATIONS.forEach(a => {
-      const isUnlocked = (currentUser.unlockedAnims || []).includes(a.id);
-      const isActive = currentUser.currentAnim === a.id;
-      const card = document.createElement('div'); card.className = 'brawl-card' + (a.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `Kaufen (${getPriceHtml(a.cost)})`);
-      card.innerHTML = `${a.vip ? '<div class="vip-badge">VIP</div>' : ''}
-        <div class="card-icon">${a.icon}</div><div class="card-title">${a.name}</div><div class="card-desc">Lootbox-Animation</div>
-        <button class="buy-btn ${a.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
-        if(isActive) return;
-        if(isUnlocked){ currentUser.currentAnim = a.id; await saveState(); renderShopItems(); return; }
-        if(a.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        const finalPrice = getActualPrice(a.cost);
-        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
-        currentUser.unlockedAnims.push(a.id); currentUser.currentAnim = a.id;
-        addLog(currentUser.name, `🎬 Animation gekauft: ${a.name}`, -finalPrice, '🪙', 'buy');
-        await saveState(); renderShopItems(); alert(`🎉 Animation "${a.name}" freigeschaltet!`);
-      });
-      animBox.appendChild(card);
-    });
-
-    // NAMENSFARBEN RENDER
-    const colorBox = $('shopNameColorsList'); colorBox.innerHTML = '';
-    NAME_COLORS.forEach(c => {
-      const isUnlocked = (currentUser.unlockedNameColors || []).includes(c.id);
-      const isActive = currentUser.currentNameColor === c.id;
-      const card = document.createElement('div'); card.className = 'brawl-card' + (c.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `Kaufen (${getPriceHtml(c.cost)})`);
-      card.innerHTML = `${c.vip ? '<div class="vip-badge">VIP</div>' : ''}
-        <div class="card-icon" style="color:${c.color}">🎨</div><div class="card-title" style="color:${c.color}">${c.name}</div><div class="card-desc">Namensfarbe im Profil</div>
-        <button class="buy-btn ${c.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
-        if(isActive) return;
-        if(isUnlocked){ currentUser.currentNameColor = c.id; await saveState(); renderShopItems(); return; }
-        if(c.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        const finalPrice = getActualPrice(c.cost);
-        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
-        currentUser.unlockedNameColors.push(c.id); currentUser.currentNameColor = c.id;
-        addLog(currentUser.name, `🎨 Namensfarbe gekauft: ${c.name}`, -finalPrice, '🪙', 'buy');
-        await saveState(); renderShopItems(); alert(`🎉 Namensfarbe "${c.name}" freigeschaltet!`);
-      });
-      colorBox.appendChild(card);
-    });
-
-    // BADGES RENDER
-    const badgeBox = $('shopBadgesList'); badgeBox.innerHTML = '';
-    BADGES.forEach(b => {
-      const isUnlocked = (currentUser.unlockedBadges || []).includes(b.id);
-      const isActive = currentUser.currentBadge === b.id;
-      const card = document.createElement('div'); card.className = 'brawl-card' + (b.vip ? ' vip-card' : '');
-      let btnText = isActive ? 'Aktiv' : (isUnlocked ? 'Wählen' : `Kaufen (${getPriceHtml(b.cost)})`);
-      card.innerHTML = `${b.vip ? '<div class="vip-badge">VIP</div>' : ''}
-        <div class="card-icon">${b.icon}</div><div class="card-title">${b.name}</div><div class="card-desc">Icon vor deinem Namen</div>
-        <button class="buy-btn ${b.vip?'vip-buy':''}">${btnText}</button>`;
-      card.querySelector('button').addEventListener('click', async () => {
-        if(isActive) return;
-        if(isUnlocked){ currentUser.currentBadge = b.id; await saveState(); renderShopItems(); return; }
-        if(b.vip && !isVip(currentUser)){ alert('Dafür benötigst du den VIP-Pass!'); return; }
-        const finalPrice = getActualPrice(b.cost);
-        if(!currentUser.unlimitedCoins && currentUser.coins < finalPrice){ alert('Nicht genug Coins!'); return; }
-        if(!currentUser.unlimitedCoins) currentUser.coins -= finalPrice;
-        currentUser.unlockedBadges.push(b.id); currentUser.currentBadge = b.id;
-        addLog(currentUser.name, `🏆 Badge gekauft: ${b.name}`, -finalPrice, '🪙', 'buy');
-        await saveState(); renderShopItems(); alert(`🎉 Badge "${b.name}" freigeschaltet!`);
-      });
-      badgeBox.appendChild(card);
-    });
-
-    // BOOSTS TAB (INVENTAR + AKTIVATION)
-    const bStatus = $('boostsStatusContainer'); bStatus.innerHTML = '';
-    const now = Date.now(); const inv = currentUser.inventory || { multi: 0, noDud: 0, discount: 0, infinite: 0 };
-    bStatus.innerHTML += `<div style="background:#1c1536; padding:14px; border-radius:14px; border:2px solid #3d2f66; margin-bottom:15px; display:flex; flex-direction:column; gap:10px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div><b>⚡ 1,25x Multiplikator</b> (Lager: ${inv.multi||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.multi > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.multi-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
-        <button class="btn btn-secondary btn-sm" onclick="activateBoost('multi', 12*3600000)">Aktivieren</button>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3d2f66; padding-top:10px;">
-        <div><b>🛡️ Pechschutz</b> (Lager: ${inv.noDud||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.noDud > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.noDud-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
-        <button class="btn btn-secondary btn-sm" onclick="activateBoost('noDud', 600000)">Aktivieren</button>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3d2f66; padding-top:10px;">
-        <div><b>🏷️ 15% Rabatt-Pass</b> (Lager: ${inv.discount||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.discount > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.discount-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
-        <button class="btn btn-secondary btn-sm" onclick="activateBoost('discount', 1200000)">Aktivieren</button>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #3d2f66; padding-top:10px;">
-        <div><b>♾️ Unendlich Spielen Pass</b> (Lager: ${inv.infinite||0})<br><small style="color:var(--cream-dim);">${currentUser.boosts.infinite > now ? 'Aktiv: noch ' + Math.ceil((currentUser.boosts.infinite-now)/60000) + ' Min' : 'Inaktiv'}</small></div>
-        <button class="btn btn-secondary btn-sm" onclick="activateBoost('infinite', 12*3600000)">Aktivieren</button>
+function showModal({ title, text = "", fields = [], submitLabel = "Speichern", danger = false, onSubmit, onClose }) {
+  closeModal();
+  modalCloseCb = onClose || null;
+  $("#modalRoot").innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <h3>${esc(title)}</h3>
+        ${text ? `<p class="muted modal-text">${esc(text)}</p>` : ""}
+        <form id="modalForm">
+          ${fields.map(fieldHTML).join("")}
+          <p class="form-error" id="modalError" hidden></p>
+          <div class="modal-actions">
+            <button type="button" class="btn ghost" data-action="close-modal">Abbrechen</button>
+            <button type="submit" class="btn ${danger ? "danger" : "primary"}">${esc(submitLabel)}</button>
+          </div>
+        </form>
       </div>
     </div>`;
-
-    const sendSelect = $('sendGiftTargetUser'); sendSelect.innerHTML = '';
-    state.users.filter(u => u.approved && u.id !== currentUser.id).forEach(u => {
-      const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.name; sendSelect.appendChild(opt);
-    });
-  }
-
-  window.activateBoost = async function(type, durationMs) {
-    if(!currentUser.inventory) currentUser.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 };
-    if((currentUser.inventory[type] || 0) <= 0) { alert('Du besitzt diesen Pass nicht im Inventar! Kaufe ihn zuerst im Store.'); return; }
-    currentUser.inventory[type] -= 1; currentUser.boosts[type] = Date.now() + durationMs;
-    await saveState(); renderAll(); alert('🎉 Pass erfolgreich aktiviert!');
-  };
-
-  // SHOP KÄUFE
-  $('buyVipBtn').addEventListener('click', async () => {
-    const cost = getActualPrice(200);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.vipUntil = Date.now() + (7 * 24 * 60 * 60 * 1000);
-    addLog(currentUser.name, '👑 VIP-Pass gekauft (7 Tage)', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('🎉 VIP-Pass für 7 Tage aktiviert!');
-  });
-  $('buyTicketBrawlBtn').addEventListener('click', async () => {
-    const cost = getActualPrice(70);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.tickets = (currentUser.tickets || 0) + 1;
-    addLog(currentUser.name, '🎟️ Ticket gekauft', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('🎉 1 Ticket gekauft!');
-  });
-  $('buyBoostMulti').addEventListener('click', async () => {
-    const cost = getActualPrice(80);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.inventory.multi = (currentUser.inventory.multi || 0) + 1;
-    addLog(currentUser.name, '⚡ Boost 1,25x gekauft', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('⚡ 1,25x Multiplikator im Inventar!');
-  });
-  $('buyBoostNoDud').addEventListener('click', async () => {
-    const cost = getActualPrice(50);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.inventory.noDud = (currentUser.inventory.noDud || 0) + 1;
-    addLog(currentUser.name, '🛡️ Pechschutz gekauft', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('🛡️ Pechschutz im Inventar!');
-  });
-  $('buyBoostDiscount').addEventListener('click', async () => {
-    const cost = getActualPrice(60);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.inventory.discount = (currentUser.inventory.discount || 0) + 1;
-    addLog(currentUser.name, '🏷️ Rabatt-Pass gekauft', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('🏷️ Rabatt-Pass im Inventar!');
-  });
-  $('buyBoostInfinite').addEventListener('click', async () => {
-    const cost = getActualPrice(25);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    currentUser.inventory.infinite = (currentUser.inventory.infinite || 0) + 1;
-    addLog(currentUser.name, '♾️ Unendlich Spielen Pass gekauft', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('♾️ Unendlich Spielen Pass im Inventar!');
-  });
-  $('buyAnnounceBtn').addEventListener('click', async () => {
-    const text = $('buyAnnounceText').value.trim(); if(!text) return;
-    const cost = getActualPrice(20);
-    if(!currentUser.unlimitedCoins && currentUser.coins < cost){ alert(`Du brauchst ${cost} Coins!`); return; }
-    if(!currentUser.unlimitedCoins) currentUser.coins -= cost;
-    state.globalAnnouncement = `${currentUser.name}: ${text}`;
-    addLog(currentUser.name, '📢 Globale Nachricht gekauft', -cost, '🪙', 'buy');
-    await saveState(); renderShopItems(); alert('📢 Nachricht veröffentlicht!'); $('buyAnnounceText').value = '';
-  });
-
-  // PROMO CODES (USER)
-  $('shopRedeemPromoBtn').addEventListener('click', async () => {
-     const code = $('shopPromoInput').value.trim().toUpperCase();
-     if(!code) return;
-     if(!currentUser.redeemedPromos) currentUser.redeemedPromos = [];
-     if(currentUser.redeemedPromos.includes(code)) { alert('Diesen Code hast du schon eingelöst!'); return; }
-     
-     const promo = state.promoCodes.find(p => p.code === code);
-     if(!promo) { alert('Ungültiger Code!'); return; }
-     
-     if(promo.type === 'coins') currentUser.coins += promo.amount;
-     else if(promo.type === 'tickets') currentUser.tickets = (currentUser.tickets||0) + promo.amount;
-     else if(promo.type === 'xp') updateLevelAndXp(promo.amount);
-
-     currentUser.redeemedPromos.push(code);
-     addLog(currentUser.name, `🎟️ Promo Code eingelöst: ${code}`, promo.amount, promo.type, 'gift');
-     await saveState(); renderAll();
-     $('shopPromoInput').value = '';
-     alert(`🎉 Promo Code erfolgreich eingelöst: +${promo.amount} ${promo.type.toUpperCase()}!`);
-  });
-
-  // XP UMTAUSCH SHOP
-  $('buyXpToCoins').addEventListener('click', async () => {
-     if((currentUser.xp || 0) < 100) { alert('Nicht genug XP! Du brauchst 100 XP.'); return; }
-     const reward = isVip(currentUser) ? 15 : 10;
-     currentUser.xp -= 100; currentUser.coins += reward;
-     addLog(currentUser.name, '✨ XP Umtausch (Coins)', reward, '🪙', 'buy');
-     await saveState(); renderAll(); alert(`🎉 100 XP in ${reward} Coins umgewandelt!`);
-  });
-  $('buyXpToTicket').addEventListener('click', async () => {
-     if((currentUser.xp || 0) < 500) { alert('Nicht genug XP! Du brauchst 500 XP.'); return; }
-     currentUser.xp -= 500; currentUser.tickets = (currentUser.tickets||0) + 1;
-     addLog(currentUser.name, '✨ XP Umtausch (Ticket)', 1, '🎟️', 'buy');
-     await saveState(); renderAll(); alert(`🎉 500 XP in 1 Ticket umgewandelt!`);
-  });
-
-  $('sendGiftSubmitBtn').addEventListener('click', async () => {
-    const targetId = $('sendGiftTargetUser').value; const targetUser = state.users.find(u => u.id === targetId);
-    if(!targetUser) return;
-    const type = $('sendGiftType').value; const amount = parseInt($('sendGiftAmount').value, 10) || 0;
-    if(amount <= 0) return;
-    if(type === 'coins'){
-      if(!currentUser.unlimitedCoins && currentUser.coins < amount){ alert('Nicht genug Coins!'); return; }
-      if(!currentUser.unlimitedCoins) currentUser.coins -= amount;
-      targetUser.coins += amount; addLog(currentUser.name, `🎁 Geschenk an ${targetUser.name}: Coins`, -amount, '🪙', 'gift');
-    } else {
-      if(!currentUser.unlimitedCoins && currentUser.tickets < amount){ alert('Nicht genug Tickets!'); return; }
-      if(!currentUser.unlimitedCoins) currentUser.tickets -= amount;
-      targetUser.tickets = (targetUser.tickets || 0) + amount; addLog(currentUser.name, `🎁 Geschenk an ${targetUser.name}: Tickets`, -amount, '🎟️', 'gift');
-    }
-    await saveState(); renderShopItems(); alert(`🎁 Geschenk an ${targetUser.name} gesendet!`);
-  });
-
-  // 3D UNBOXING
-  window.start3dUnboxing = function(key){
-    const cfg = BOX_CONFIGS[key];
-    if(cfg.vipOnly && !isVip(currentUser)){ alert('Diese Kiste ist exklusiv für VIP-Mitglieder!'); return; }
-    if(currentUser.tickets < cfg.costTickets){ alert(`Du brauchst ${cfg.costTickets} Ticket(s) für diese Box!`); return; }
-
-    currentUser.tickets -= cfg.costTickets;
-    addLog(currentUser.name, `📦 Lootbox: ${cfg.name}`, -cfg.costTickets, '🎟️', 'buy');
-    
-    currentUnboxingKey = key; currentStepIndex = 0; accumulatedCoins = 0; accumulatedTickets = 0;
-    let result = { coins: 0, tickets: 0 };
-    
-    if (currentUser.forcedLoot) {
-        const override = currentUser.forcedLoot; currentUser.forcedLoot = null;
-        if(override.type === 'coins') result.coins = override.amount;
-        else if(override.type === 'tickets') result.tickets = override.amount;
-    } else {
-        const r = getSecureRandom(); const hasNoDud = isBoostActive(currentUser, 'noDud');
-        result = cfg.open(r, hasNoDud);
-    }
-
-    unboxingBaseCoins = result.coins; unboxingBoostedCoins = result.coins;
-    if(result.coins > 0 && isBoostActive(currentUser, 'multi')){ unboxingBoostedCoins = Math.round(result.coins * 1.25); }
-
-    if(unboxingBoostedCoins > 0){ revealSteps = splitIntoRandomChunks(unboxingBoostedCoins); }
-    else if(result.tickets > 0){ revealSteps = [{type: 'ticket', val: result.tickets}]; }
-    else { revealSteps = [{type: 'niete', val: 0}]; }
-
-    saveState(); renderAll();
-
-    const backdrop = $('unboxingFullscreen'); const activeAnim = currentUser.currentAnim || 'anim_standard';
-    backdrop.className = `unboxing-fullscreen-backdrop active shaking anim-fx-${activeAnim}`;
-    
-    $('unboxingTitle').textContent = `BOX WIRD GEÖFFNET...`;
-    $('revealDropBox').style.display = 'none'; $('summaryBox').style.display = 'none';
-
-    document.querySelectorAll('.box-face, .box-lid-face').forEach(el => {
-      el.style.borderColor = cfg.themeColor; el.style.boxShadow = `inset 0 0 25px ${cfg.themeColor}66, inset 0 0 50px rgba(0,0,0,0.8)`;
-    });
-
-    setTimeout(() => {
-      backdrop.classList.remove('shaking'); backdrop.classList.add('opened');
-      $('unboxingTitle').textContent = 'KLICKE FÜR LOOT!';
-      setTimeout(() => { showNextDropStep(); }, 1200);
-    }, 4000);
-  };
-
-  function showNextDropStep(){
-    if(currentStepIndex < revealSteps.length){
-      const step = revealSteps[currentStepIndex];
-      if(step.type === 'coin'){ 
-        accumulatedCoins += step.val; 
-        if(isBoostActive(currentUser, 'multi') && unboxingBaseCoins > 0){
-          $('revealItemText').innerHTML = `<s style="opacity:0.5; font-size:16px;">+${Math.round(step.val/1.25)} 🪙</s><br><span style="color:var(--gold); font-size:24px;">+${step.val} Münzen (+25% Multi) 🪙</span>`;
-        } else { $('revealItemText').textContent = `+${step.val} Münzen 🪙`; }
-      }
-      else if(step.type === 'ticket'){ accumulatedTickets += step.val; $('revealItemText').textContent = `+${step.val} Tickets 🎟️`; }
-      else { $('revealItemText').textContent = `Leider Niete! ❌`; }
-      $('revealDropBox').style.display = 'block';
-    } else {
-      $('revealDropBox').style.display = 'none';
-      let summaryText = "";
-      if(accumulatedCoins > 0){
-        if(isBoostActive(currentUser, 'multi') && unboxingBaseCoins > 0) summaryText = `<s style="opacity:0.5; font-size:16px;">+${unboxingBaseCoins} 🪙</s><br><span style="color:var(--gold); font-size:20px;">+${accumulatedCoins} Münzen (+25% Multiplikator)! 🪙</span>`;
-        else summaryText = `+${accumulatedCoins} Münzen Gesamtausbeute! 🪙`;
-      }
-      else if(accumulatedTickets > 0) summaryText = `+${accumulatedTickets} Tickets Gesamtausbeute! 🎟️`;
-      else summaryText = "Leider kein Gewinn diesmal! 😭";
-      
-      $('summaryItemsList').innerHTML = summaryText; $('summaryBox').style.display = 'block';
-
-      if(accumulatedCoins > 0){ currentUser.coins += accumulatedCoins; updateLevelAndXp(Math.floor(accumulatedCoins/10)); addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedCoins, '🪙', 'game'); }
-      if(accumulatedTickets > 0){ currentUser.tickets += accumulatedTickets; addLog(currentUser.name, `🎉 Loot-Gewinn: ${BOX_CONFIGS[currentUnboxingKey].name}`, accumulatedTickets, '🎟️', 'game'); }
-      saveState(); renderAll();
-    }
-  }
-
-  $('unboxingFullscreen').addEventListener('click', (e) => {
-    if(e.target.id === 'finishUnboxingBtn') return;
-    if($('revealDropBox').style.display === 'block'){
-      currentStepIndex++; $('revealDropBox').style.display = 'none';
-      setTimeout(() => { showNextDropStep(); }, 150);
+  const form = $("#modalForm");
+  const first = form.querySelector("input,select");
+  (first || form.querySelector("button[type=submit]")).focus();
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true;
+    try {
+      await onSubmit(readForm(form, fields));
+      closeModal();
+    } catch (ex) {
+      console.error(ex);
+      const box = $("#modalError");
+      if (box) { box.textContent = errMsg(ex); box.hidden = false; }
+      btn.disabled = false;
     }
   });
+}
 
-  $('finishUnboxingBtn').addEventListener('click', () => {
-    $('unboxingFullscreen').className = 'unboxing-fullscreen-backdrop';
-    if($('epicShopFullscreen').classList.contains('active')) renderShopItems(); else showScreen('screen-home');
-  });
+function closeModal() {
+  const root = $("#modalRoot");
+  if (!root || !root.innerHTML) return;
+  root.innerHTML = "";
+  const cb = modalCloseCb;
+  modalCloseCb = null;
+  if (cb) cb();
+}
 
-  // ADMIN PANEL
-  function renderGiftSelects(){
-    const uSelect = $('giftTargetUserSelect'); uSelect.innerHTML = '';
-    state.users.filter(u => u.approved).forEach(u => {
-      const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.name; uSelect.appendChild(opt);
-    });
-  }
-
-  $('giftTypeSelect').addEventListener('change', (e) => {
-    const val = e.target.value; const itemGroup = $('giftItemSelectGroup'); const amountGroup = $('giftAmountGroup');
-    const itemSelect = $('giftItemSelect'); itemSelect.innerHTML = '';
-    if(val === 'coins' || val === 'tickets' || val === 'vip' || val === 'xp'){
-      itemGroup.style.display = 'none'; amountGroup.style.display = val === 'vip' ? 'none' : 'block';
-    } else {
-      amountGroup.style.display = 'none'; itemGroup.style.display = 'block';
-      if(val === 'theme'){ THEMES.forEach(t => { const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.name; itemSelect.appendChild(opt); }); } 
-      else if(val === 'animation'){ ANIMATIONS.forEach(a => { const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name; itemSelect.appendChild(opt); }); } 
-      else if(val === 'nameColor'){ NAME_COLORS.forEach(c => { const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; itemSelect.appendChild(opt); }); } 
-      else if(val === 'badge'){ BADGES.forEach(b => { const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; itemSelect.appendChild(opt); }); }
-    }
-  });
-
-  $('executeGiftBtn').addEventListener('click', async () => {
-    const targetId = $('giftTargetUserSelect').value; const targetUser = state.users.find(u => u.id === targetId);
-    if(!targetUser) return;
-    const giftType = $('giftTypeSelect').value; const amount = parseInt($('giftAmountInput').value, 10) || 0; const itemId = $('giftItemSelect').value;
-
-    if(giftType === 'coins'){ targetUser.coins += amount; addLog(targetUser.name, `🎁 Admin-Geschenk Coins`, amount, '🪙', 'gift'); alert(`${amount} Coins an ${targetUser.name} geschenkt!`); } 
-    else if(giftType === 'tickets'){ targetUser.tickets = (targetUser.tickets || 0) + amount; addLog(targetUser.name, `🎁 Admin-Geschenk Tickets`, amount, '🎟️', 'gift'); alert(`${amount} Tickets an ${targetUser.name} geschenkt!`); } 
-    else if(giftType === 'xp'){ targetUser.xp = (targetUser.xp || 0) + amount; targetUser.level = getLevel(targetUser.xp); addLog(targetUser.name, `🎁 Admin-Geschenk XP`, amount, '✨', 'gift'); alert(`${amount} XP an ${targetUser.name} geschenkt!`); }
-    else if(giftType === 'vip'){ targetUser.vipUntil = Date.now() + (7 * 24 * 60 * 60 * 1000); addLog(targetUser.name, `🎁 Admin-Geschenk VIP Pass (7 Tage)`, 0, '', 'gift'); alert(`VIP-Pass an ${targetUser.name} geschenkt!`); } 
-    else if(giftType === 'theme'){ if(!targetUser.unlockedThemes) targetUser.unlockedThemes = ['default']; if(!targetUser.unlockedThemes.includes(itemId)) targetUser.unlockedThemes.push(itemId); alert(`Theme an ${targetUser.name} geschenkt!`); } 
-    else if(giftType === 'animation'){ if(!targetUser.unlockedAnims) targetUser.unlockedAnims = ['anim_standard']; if(!targetUser.unlockedAnims.includes(itemId)) targetUser.unlockedAnims.push(itemId); alert(`Animation an ${targetUser.name} geschenkt!`); } 
-    else if(giftType === 'nameColor'){ if(!targetUser.unlockedNameColors) targetUser.unlockedNameColors = ['default']; if(!targetUser.unlockedNameColors.includes(itemId)) targetUser.unlockedNameColors.push(itemId); alert(`Namensfarbe an ${targetUser.name} geschenkt!`); } 
-    else if(giftType === 'badge'){ if(!targetUser.unlockedBadges) targetUser.unlockedBadges = ['none']; if(!targetUser.unlockedBadges.includes(itemId)) targetUser.unlockedBadges.push(itemId); alert(`Badge an ${targetUser.name} geschenkt!`); }
-    await saveState(); renderAll();
-  });
-
-  // ADMIN ZURÜCKSETZEN
-  $('resetVipBtn').addEventListener('click', async () => { if(!selectedUserForEdit) return; selectedUserForEdit.vipUntil = 0; await saveState(); renderAll(); alert(`VIP entfernt!`); });
-  $('resetThemeBtn').addEventListener('click', async () => { if(!selectedUserForEdit) return; selectedUserForEdit.currentTheme = 'default'; selectedUserForEdit.unlockedThemes = ['default']; await saveState(); renderAll(); alert(`Theme zurückgesetzt!`); });
-  $('resetNameColorBtn').addEventListener('click', async () => { if(!selectedUserForEdit) return; selectedUserForEdit.currentNameColor = 'default'; selectedUserForEdit.unlockedNameColors = ['default']; await saveState(); renderAll(); alert(`Namensfarben zurückgesetzt!`); });
-  $('resetAnimBtn').addEventListener('click', async () => { if(!selectedUserForEdit) return; selectedUserForEdit.currentAnim = 'anim_standard'; selectedUserForEdit.unlockedAnims = ['anim_standard']; await saveState(); renderAll(); alert(`Animationen zurückgesetzt!`); });
-  $('resetBadgeBtn').addEventListener('click', async () => { if(!selectedUserForEdit) return; selectedUserForEdit.currentBadge = 'none'; selectedUserForEdit.unlockedBadges = ['none']; await saveState(); renderAll(); alert(`Badges zurückgesetzt!`); });
-  $('clearBoostsBtn').addEventListener('click', async () => { if(!selectedUserForEdit) return; selectedUserForEdit.inventory = { multi: 0, noDud: 0, discount: 0, infinite: 0 }; selectedUserForEdit.boosts = { multi: 0, noDud: 0, discount: 0, infinite: 0 }; await saveState(); renderAll(); alert(`Aktive Boosts & Inventar gelöscht!`); });
-
-  function renderUserAchievementsList(){
-    const list = $('userAchievementsList'); list.innerHTML = ''; const completed = currentUser.completedAchievements || [];
-    DAILY_ACHIEVEMENTS.forEach(ach => {
-      const isDone = completed.includes(ach.id);
-      const item = document.createElement('div'); item.className = 'task-item' + (isDone ? ' completed' : '');
-      item.innerHTML = `<div>${ach.title}</div><div>${isDone ? '<span style="color:var(--cyan); font-weight:bold; font-size:12px;">✓ Erledigt</span>' : `<button class="task-claim-btn">+${ach.reward} 🪙</button>`}</div>`;
-      if(!isDone){
-        item.querySelector('button').addEventListener('click', async () => {
-          if(confirm(`Hast du "${ach.title}" geschafft?`)){
-            let rew = ach.reward; if(isBoostActive(currentUser, 'multi')) rew = Math.round(rew * 1.25);
-            currentUser.coins += rew; currentUser.completedAchievements.push(ach.id); updateLevelAndXp(Math.floor(rew/2));
-            addLog(currentUser.name, `🏆 Erfolg: ${ach.title}`, rew, '🪙', 'game');
-            await saveState(); renderAll(); alert(`🎉 Erfolg: +${rew} Coins!`);
-          }
-        });
-      }
-      list.appendChild(item);
-    });
-  }
-
-  function renderLuckTab(){
-    const uSelect = $('luckTargetUserSelect'); uSelect.innerHTML = '';
-    state.users.filter(u => u.approved).forEach(u => {
-      const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.name; uSelect.appendChild(opt);
-    });
-    const display = $('activeLuckDisplay'); display.innerHTML = '';
-    const forcedUsers = state.users.filter(u => u.forcedLoot);
-    if(forcedUsers.length > 0){
-      display.innerHTML = '<b>Aktivierte Garantie-Gewinne:</b><br>';
-      forcedUsers.forEach(u => {
-        const f = u.forcedLoot; let text = f.type === 'niete' ? '❌ Niete' : `+${f.amount} ${f.type === 'coins' ? '🪙' : '🎟️'}`;
-        display.innerHTML += `• ${escapeHtml(u.name)}: ${text}<br>`;
-      });
-    } else { display.innerHTML = '<span style="color:var(--cream-dim);">Keine manipulierten Boxen.</span>'; }
-  }
-
-  $('luckTypeSelect').addEventListener('change', (e) => { if(e.target.value === 'niete') $('luckAmountGroup').style.display = 'none'; else $('luckAmountGroup').style.display = 'block'; });
-  $('saveLuckBtn').addEventListener('click', async () => {
-    const targetUser = state.users.find(u => u.id === $('luckTargetUserSelect').value);
-    if(!targetUser) return;
-    targetUser.forcedLoot = { type: $('luckTypeSelect').value, amount: parseInt($('luckAmountInput').value, 10) || 0 };
-    await saveState(); renderAll(); alert(`Gespeichert für ${targetUser.name}!`);
-  });
-
-  function renderAdminAccounts(){
-    const pendingList = $('adminPendingAccountsList'); pendingList.innerHTML = '';
-    const activeList = $('adminActiveAccountsList'); activeList.innerHTML = '';
-    state.users.filter(u => !u.approved).forEach(u => {
-      const row = document.createElement('div'); row.className = 'games-list-item';
-      row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b></span><button class="btn btn-secondary btn-sm" style="color:var(--cyan)">✓</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
-      row.children[1].addEventListener('click', async () => { u.approved = true; await saveState(); renderAll(); });
-      row.children[2].addEventListener('click', async () => { state.users = state.users.filter(x => x.id !== u.id); await saveState(); renderAll(); });
-      pendingList.appendChild(row);
-    });
-    state.users.filter(u => u.approved).forEach(u => {
-      const row = document.createElement('div'); row.className = 'games-list-item'; row.style.cursor = 'pointer';
-      const lockBadge = u.isLocked ? ' 🔒' : '';
-      row.innerHTML = `<span class="glabel"><b>${escapeHtml(u.name)}</b> ${u.isAdmin ? '👑' : ''}${lockBadge}<br><small style="color:var(--cream-dim)">Coins: ${u.unlimitedCoins ? '♾️' : u.coins} | Tickets: ${u.tickets || 0} | Lvl: ${u.level||1}</small></span><span>⚙️ Edit</span>`;
-      row.addEventListener('click', () => loadUserIntoEditForm(u));
-      activeList.appendChild(row);
-    });
-  }
-
-  function loadUserIntoEditForm(u){
-    selectedUserForEdit = u;
-    $('accountEditPlaceholder').style.display = 'none'; $('accountEditForm').style.display = 'block';
-    $('editAccName').value = u.name; $('editAccCoins').value = u.coins; $('editAccTickets').value = u.tickets || 0; $('editAccXp').value = u.xp || 0;
-    $('editAccMsg').value = u.message || ''; $('editAccLockReason').value = u.lockReason || '';
-    $('permLocked').checked = !!u.isLocked; $('permAdmin').checked = !!u.isAdmin; $('permUnlimited').checked = !!u.unlimitedCoins;
-  }
-
-  $('saveAccChangesBtn').addEventListener('click', async () => {
-    if(!selectedUserForEdit) return;
-    const diffCoins = (parseInt($('editAccCoins').value, 10) || 0) - selectedUserForEdit.coins;
-    if(diffCoins !== 0) addLog(selectedUserForEdit.name, '⚙️ Admin Anpassung Coins', diffCoins, '🪙', 'system');
-    selectedUserForEdit.name = $('editAccName').value.trim() || selectedUserForEdit.name;
-    selectedUserForEdit.coins = parseInt($('editAccCoins').value, 10) || 0;
-    selectedUserForEdit.tickets = parseInt($('editAccTickets').value, 10) || 0;
-    selectedUserForEdit.xp = parseInt($('editAccXp').value, 10) || 0;
-    selectedUserForEdit.level = getLevel(selectedUserForEdit.xp);
-    selectedUserForEdit.message = $('editAccMsg').value.trim();
-    selectedUserForEdit.isLocked = $('permLocked').checked;
-    selectedUserForEdit.lockReason = $('editAccLockReason').value.trim();
-    selectedUserForEdit.isAdmin = $('permAdmin').checked;
-    selectedUserForEdit.unlimitedCoins = $('permUnlimited').checked;
-    await saveState(); renderAll(); alert('Gespeichert!');
-  });
-
-  $('deleteAccBtn').addEventListener('click', async () => {
-    if(!selectedUserForEdit) return;
-    if(confirm(`"${selectedUserForEdit.name}" löschen?`)){
-      state.users = state.users.filter(x => x.id !== selectedUserForEdit.id);
-      selectedUserForEdit = null; $('accountEditForm').style.display = 'none'; $('accountEditPlaceholder').style.display = 'block';
-      await saveState(); renderAll();
-    }
-  });
-
-  $('saveGlobalAnnounceBtn').addEventListener('click', async () => { state.globalAnnouncement = $('globalAnnounceInput').value.trim(); await saveState(); renderAll(); alert('Veröffentlicht!'); });
-  $('clearGlobalAnnounceBtn').addEventListener('click', async () => { state.globalAnnouncement = ''; $('globalAnnounceInput').value = ''; await saveState(); renderAll(); alert('Gelöscht!'); });
-
-  function createGameCard(g){
-    const card = document.createElement('div'); card.className = 'game-card';
-    if (g.isDiamond) { card.style.borderColor = '#00f2fe'; card.style.background = 'linear-gradient(180deg, #0a2540 0%, #100a20 100%)'; }
-    if (g.isVip) { card.style.borderColor = 'var(--gold)'; card.style.background = 'linear-gradient(180deg, #2b2005 0%, #100a20 100%)'; }
-    let badgeHtml = '';
-    if (g.isVip) badgeHtml += '<div style="font-size:9px; background:var(--gold); color:black; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px; font-weight:bold;">VIP</div> ';
-    if (g.isDiamond) badgeHtml += '<div style="font-size:9px; background:#00f2fe; color:black; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px; font-weight:bold;">DIAMANT</div>';
-    card.innerHTML = `${badgeHtml}<br><span class="emoji">${g.emoji || '🎮'}</span><span class="name">${escapeHtml(g.name)}</span>`;
-    card.addEventListener('click', () => { 
-      if(g.isVip && !isVip(currentUser)) { alert('Dieses Spiel ist exklusiv für VIP-Mitglieder! Du kannst den Pass im Arcade Store kaufen.'); return; }
-      selectedGame = g; startSession(); 
-    });
-    return card;
-  }
-
-  function renderGameGrid(){
-    const qGrid = $('quickPlayGrid'); qGrid.innerHTML = ''; const nGrid = $('normalPlayGrid'); nGrid.innerHTML = '';
-    state.games.filter(g => g.category === 'quick').forEach(g => qGrid.appendChild(createGameCard(g)));
-    state.games.filter(g => g.category !== 'quick').forEach(g => nGrid.appendChild(createGameCard(g)));
-  }
-
-  function renderAdminGamesList(){
-    const list = $('adminGamesList'); list.innerHTML = '';
-    state.games.forEach(g => {
-      const row = document.createElement('div'); row.className = 'games-list-item';
-      let extraBadges = ''; if(g.isVip) extraBadges += '👑 '; if(g.isDiamond) extraBadges += '💎 '; if(g.isAd) extraBadges += '📢 '; if(g.isIframe) extraBadges += '🖼️ ';
-      row.innerHTML = `<span style="cursor:pointer;" class="game-edit-trigger">${g.emoji || '🎮'}</span><span class="glabel game-edit-trigger" style="cursor:pointer;">${escapeHtml(g.name)} <small>${extraBadges}</small></span><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
-      row.querySelectorAll('.game-edit-trigger').forEach(el => el.addEventListener('click', () => {
-        $('editGameId').value = g.id; $('newGameName').value = g.name; $('newGameUrl').value = g.url; $('newGameEmoji').value = g.emoji || '🎮'; $('newGameCategory').value = g.category || 'normal';
-        $('newGameIsVip').checked = !!g.isVip; $('newGameIsDiamond').checked = !!g.isDiamond; $('newGameIsAd').checked = !!g.isAd; $('newGameIsIframe').checked = !!g.isIframe;
-        $('adminGameFormTitle').textContent = 'Spiel bearbeiten'; $('addGameBtn').style.display = 'none'; $('saveEditGameBtn').style.display = 'block'; $('cancelEditGameBtn').style.display = 'block';
-      }));
-      row.querySelector('button').addEventListener('click', async () => { state.games = state.games.filter(x => x.id !== g.id); await saveState(); renderAll(); resetGameForm(); });
-      list.appendChild(row);
-    });
-  }
-
-  function resetGameForm() {
-    $('editGameId').value = ''; $('newGameName').value = ''; $('newGameUrl').value = ''; $('newGameEmoji').value = ''; $('newGameCategory').value = 'normal';
-    $('newGameIsVip').checked = false; $('newGameIsDiamond').checked = false; $('newGameIsAd').checked = false; $('newGameIsIframe').checked = false;
-    $('adminGameFormTitle').textContent = 'Neues Spiel hinzufügen'; $('addGameBtn').style.display = 'block'; $('saveEditGameBtn').style.display = 'none'; $('cancelEditGameBtn').style.display = 'none';
-  }
-  $('cancelEditGameBtn').addEventListener('click', resetGameForm);
-
-  function renderUserTasksList() {
-    const list = $('userTasksList'); list.innerHTML = '';
-    if(!state.tasks.length) { list.innerHTML = '<div style="text-align:center; color:var(--cream-dim); padding:10px;">Keine sonstigen Aufgaben vorhanden.</div>'; return; }
-    state.tasks.forEach(t => {
-      const item = document.createElement('div'); item.className = 'task-item';
-      item.innerHTML = `<div class="task-name">📝 ${escapeHtml(t.name)}</div><button class="task-claim-btn">+${t.reward} 🪙</button>`;
-      item.querySelector('.task-claim-btn').addEventListener('click', async () => {
-        if(confirm(`"${t.name}" erledigt?`)){
-          let rew = t.reward; if(isBoostActive(currentUser, 'multi')) rew = Math.round(rew * 1.25);
-          currentUser.coins += rew; addLog(currentUser.name, `📝 Aufgabe: ${t.name}`, rew, '🪙', 'game'); updateLevelAndXp(Math.floor(rew/2));
-          state.tasks = state.tasks.filter(x => x.id !== t.id); await saveState(); renderAll(); alert(`🎉 +${rew} Coins!`);
-        }
-      });
-      list.appendChild(item);
-    });
-  }
-
-  function renderAdminTasksList(){
-    const list = $('adminTasksList'); list.innerHTML = '';
-    state.tasks.forEach(t => {
-      const row = document.createElement('div'); row.className = 'games-list-item';
-      row.innerHTML = `<span class="glabel">${escapeHtml(t.name)} (${t.reward} 🪙)</span><button class="btn btn-ghost btn-sm" style="color:var(--danger)">✕</button>`;
-      row.querySelector('button').addEventListener('click', async () => { state.tasks = state.tasks.filter(x => x.id !== t.id); await saveState(); renderAll(); });
-      list.appendChild(row);
-    });
-  }
-
-  // LOGS & PLAYTIME ADMIN FILTER LOGIC
-  function renderAdminGiftsAndPromos() {
-     const t = state.dailyGifts.today; const tm = state.dailyGifts.tomorrow;
-     $('giftTodayNormalType').value = t.normal.type; $('giftTodayNormalAmount').value = t.normal.amount;
-     $('giftTodayVipType').value = t.vip.type; $('giftTodayVipAmount').value = t.vip.amount;
-     $('giftTomorrowNormalType').value = tm.normal.type; $('giftTomorrowNormalAmount').value = tm.normal.amount;
-     $('giftTomorrowVipType').value = tm.vip.type; $('giftTomorrowVipAmount').value = tm.vip.amount;
-
-     const promoList = $('adminPromoList'); promoList.innerHTML = '';
-     state.promoCodes.forEach((p, idx) => {
-        promoList.innerHTML += `<div style="background:#0f0a1e; padding:10px; margin-bottom:8px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-           <span><b>${p.code}</b> (${p.amount} ${p.type})</span>
-           <button class="btn btn-danger btn-sm" onclick="deletePromo(${idx})">✕</button>
-        </div>`;
-     });
-  }
-
-  $('saveDailyGiftsBtn').addEventListener('click', async () => {
-     state.dailyGifts = {
-        today: { normal: { type: $('giftTodayNormalType').value, amount: parseInt($('giftTodayNormalAmount').value) }, vip: { type: $('giftTodayVipType').value, amount: parseInt($('giftTodayVipAmount').value) } },
-        tomorrow: { normal: { type: $('giftTomorrowNormalType').value, amount: parseInt($('giftTomorrowNormalAmount').value) }, vip: { type: $('giftTomorrowVipType').value, amount: parseInt($('giftTomorrowVipAmount').value) } }
-     };
-     await saveState(); alert('Tagesgeschenke gespeichert!');
-  });
-
-  $('addPromoBtn').addEventListener('click', async () => {
-     const code = $('newPromoCode').value.trim().toUpperCase(); if(!code) return;
-     state.promoCodes.push({ code: code, type: $('newPromoType').value, amount: parseInt($('newPromoAmount').value) });
-     $('newPromoCode').value = ''; await saveState(); renderAdminGiftsAndPromos();
-  });
-  window.deletePromo = async function(idx) { state.promoCodes.splice(idx, 1); await saveState(); renderAdminGiftsAndPromos(); }
-
-  $('btnViewLog').addEventListener('click', () => { $('btnViewLog').classList.add('active'); $('btnViewPlaytime').classList.remove('active'); $('sub-tab-log').classList.add('active'); $('sub-tab-playtime').classList.remove('active'); });
-  $('btnViewPlaytime').addEventListener('click', () => { $('btnViewPlaytime').classList.add('active'); $('btnViewLog').classList.remove('active'); $('sub-tab-playtime').classList.add('active'); $('sub-tab-log').classList.remove('active'); });
-
-  function renderAdminLogsAndPlaytime() {
-     const uFilterLog = $('filterLogUser'); const uFilterPt = $('filterPlaytimeUser');
-     uFilterLog.innerHTML = '<option value="all">Alle Spieler</option>'; uFilterPt.innerHTML = '<option value="all">Alle Spieler</option>';
-     state.users.forEach(u => { uFilterLog.innerHTML += `<option value="${u.name}">${u.name}</option>`; uFilterPt.innerHTML += `<option value="${u.name}">${u.name}</option>`; });
-     updateLogTable(); updatePlaytimeTable();
-  }
-
-  function updateLogTable() {
-     const userFilter = $('filterLogUser').value; const typeFilter = $('filterLogType').value; const minAmt = parseInt($('filterLogAmountMin').value) || 0;
-     const tbody = $('transactionLogBody'); tbody.innerHTML = '';
-     let filteredLogs = (state.logs||[]).filter(l => {
-        if(userFilter !== 'all' && l.userName !== userFilter) return false;
-        if(typeFilter !== 'all' && l.category !== typeFilter) return false;
-        if(Math.abs(l.amount) < minAmt) return false;
-        return true;
-     });
-     filteredLogs.forEach(l => {
-        const dateStr = new Date(l.timestamp).toLocaleString('de-DE'); const colorClass = l.amount > 0 ? 'log-plus' : (l.amount < 0 ? 'log-minus' : '');
-        tbody.innerHTML += `<tr><td>${dateStr}</td><td><b>${l.userName}</b></td><td>${l.typeReason}</td><td class="${colorClass}">${l.amount > 0 ? '+':''}${l.amount} ${l.unit}</td></tr>`;
-     });
-  }
-
-  function updatePlaytimeTable() {
-     const userFilter = $('filterPlaytimeUser').value; const typeFilter = $('filterPlaytimeType').value;
-     let hour=0, today=0, total=0; const now = Date.now();
-     const tbody = $('playtimeLogBody'); tbody.innerHTML = '';
-     let filteredPts = (state.playtimeHistory||[]).filter(p => {
-        if(userFilter !== 'all' && p.userName !== userFilter) return false;
-        if(typeFilter === 'game' && p.isStore) return false;
-        if(typeFilter === 'store' && !p.isStore) return false;
-        total += p.minutes; if(now - p.timestamp < 3600000) hour += p.minutes; if(now - p.timestamp < 86400000) today += p.minutes;
-        return true;
-     });
-     $('ptHour').textContent = hour.toFixed(1) + ' Min'; $('ptToday').textContent = today.toFixed(1) + ' Min'; $('ptTotal').textContent = total.toFixed(1) + ' Min';
-     filteredPts.forEach(p => {
-        const dateStr = new Date(p.timestamp).toLocaleString('de-DE');
-        tbody.innerHTML += `<tr><td>${dateStr}</td><td><b>${p.userName}</b></td><td>${p.isStore ? '🛒 ' : '🎮 '}${p.locationName}</td><td><span style="color:var(--cyan)">${p.minutes.toFixed(1)} Min</span></td></tr>`;
-     });
-  }
-
-  ['filterLogUser', 'filterLogType', 'filterLogAmountMin'].forEach(id => $(id).addEventListener('change', updateLogTable));
-  ['filterPlaytimeUser', 'filterPlaytimeType'].forEach(id => $(id).addEventListener('change', updatePlaytimeTable));
-
-  $('resetAnalyticsBtn').addEventListener('click', async () => {
-    if(confirm('Analytics-Verlauf und Playtime komplett löschen?')){ state.logs = []; state.playtimeHistory = []; await saveState(); renderAll(); alert('Analytics zurückgesetzt!'); }
-  });
-
-  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-  function formatSeconds(totalSeconds){ const m = Math.floor(totalSeconds / 60); const s = totalSeconds % 60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
-
-  $('playBtn').addEventListener('click', () => $('gameSelectFullscreen').classList.add('active'));
-  $('closeGameSelectBtn').addEventListener('click', () => $('gameSelectFullscreen').classList.remove('active'));
-  $('tasksBtn').addEventListener('click', () => showScreen('screen-tasks'));
-  $('backFromTasks').addEventListener('click', () => showScreen('screen-home'));
-
-  $('closeFullscreenGameBtn').addEventListener('click', () => {
-    $('gameFullscreenContainer').style.display = 'none'; $('gameIframe').src = '';
-    if (document.fullscreenElement) { document.exitFullscreen().catch(err => console.log(err)); } else if (document.webkitFullscreenElement) { document.webkitExitFullscreen(); }
-  });
-
-  function startSession(){
-    $('activeGameTitle').textContent = selectedGame.name; $('gameSelectFullscreen').classList.remove('active');
-    if (selectedGame.isIframe) {
-        const gameContainer = $('gameFullscreenContainer'); const gameIframe = $('gameIframe');
-        gameIframe.src = selectedGame.url; gameContainer.style.display = 'block';
-        if (gameContainer.requestFullscreen) { gameContainer.requestFullscreen().catch(err => console.log(err)); } else if (gameContainer.webkitRequestFullscreen) { gameContainer.webkitRequestFullscreen(); }
-    } else { window.open(selectedGame.url, '_blank'); }
-    
-    showScreen('screen-active-session');
-    activeSessionStartTime = Date.now(); localStorage.setItem('activeSessionStart', activeSessionStartTime); localStorage.setItem('activeSessionGame', JSON.stringify(selectedGame));
-    if(currentUser) localStorage.setItem('activeSessionUser', currentUser.id);
-
-    sessionSeconds = 0; updateStopwatchUI(); clearInterval(stopwatchInterval); stopwatchInterval = setInterval(sessionTick, 1000);
-  }
-
-  function sessionTick() {
-    if (!activeSessionStartTime) activeSessionStartTime = Date.now();
-    sessionSeconds = Math.floor((Date.now() - activeSessionStartTime) / 1000);
-    updateStopwatchUI();
-
-    if (currentUser && !currentUser.unlimitedCoins && !isBoostActive(currentUser, 'infinite')) {
-      const playedMinutes = sessionSeconds / 60; const baseCost = Math.max(1, Math.ceil(playedMinutes) * 1);
-      let currentCost = getActualPrice(baseCost);
-      if (currentUser.coins - currentCost < 0) {
-        clearInterval(stopwatchInterval); currentUser.coins -= currentCost; currentUser.isLocked = true; currentUser.lockReason = 'Guthaben während des Spielens aufgebraucht.';
-        addPlaytime(currentUser.name, selectedGame.name, playedMinutes, false); clearSessionStorage();
-        saveState().then(() => { renderAll(); checkLockStatus(); });
-        
-        $('gameFullscreenContainer').style.display = 'none'; $('gameIframe').src = '';
-        if (document.fullscreenElement) document.exitFullscreen().catch(e => {});
-
-        $('lockedReasonText').textContent = currentUser.lockReason; showScreen('screen-locked');
-      }
-    }
-  }
-
-  function updateStopwatchUI(){
-    const timeText = formatSeconds(sessionSeconds);
-    $('sessionStopwatchDisplay').textContent = timeText; $('iframeOverlayTimer').textContent = timeText;
-
-    const baseCost = Math.max(1, Math.ceil(sessionSeconds / 60) * 1);
-    if(currentUser.unlimitedCoins || isBoostActive(currentUser, 'infinite')) {
-      const unendlichHtml = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">0 🪙 (Unendlich Pass)</span>`;
-      $('currentCalculatedCost').innerHTML = unendlichHtml; $('iframeOverlayCost').innerHTML = unendlichHtml; return;
-    }
-    if(isBoostActive(currentUser, 'discount')) {
-      const discCost = Math.max(1, Math.floor(baseCost * 0.85));
-      const discHtml = `<s style="opacity:0.6; font-size:11px;">${baseCost} 🪙</s> <span style="color:var(--cyan); font-weight:bold;">${discCost} 🪙 (-15%)</span>`;
-      $('currentCalculatedCost').innerHTML = discHtml; $('iframeOverlayCost').innerHTML = discHtml;
-    } else {
-      const stdHtml = `${baseCost} 🪙`; $('currentCalculatedCost').textContent = stdHtml; $('iframeOverlayCost').textContent = stdHtml;
-    }
-  }
-
-  $('reopenGameBtn').addEventListener('click', () => { 
-    if(selectedGame) {
-      if(selectedGame.isIframe) {
-          const gameContainer = $('gameFullscreenContainer'); $('gameIframe').src = selectedGame.url; gameContainer.style.display = 'block';
-          if (gameContainer.requestFullscreen) { gameContainer.requestFullscreen().catch(e => {}); } else if (gameContainer.webkitRequestFullscreen) { gameContainer.webkitRequestFullscreen(); }
-      } else { window.open(selectedGame.url, '_blank'); }
-    }
-  });
-
-  $('stopAndBillBtn').addEventListener('click', async () => {
-    clearInterval(stopwatchInterval); const playedMinutes = sessionSeconds / 60; const baseCost = Math.max(1, Math.ceil(playedMinutes) * 1);
-    let costCoins = getActualPrice(baseCost); if(isBoostActive(currentUser, 'infinite')) { costCoins = 0; }
-
-    if(!currentUser.unlimitedCoins) {
-      currentUser.coins -= costCoins; addLog(currentUser.name, `🎮 Spielzeit: ${selectedGame.name}`, -costCoins, '🪙', 'game');
-      if(currentUser.coins < 0) { currentUser.isLocked = true; currentUser.lockReason = `Guthaben aufgebraucht.`; }
-    }
-    
-    addPlaytime(currentUser.name, selectedGame.name, playedMinutes, false);
-    updateLevelAndXp(Math.floor(playedMinutes * 3)); // XP für spielen
-    clearSessionStorage(); await saveState(); renderAll();
-    
-    if(currentUser.isLocked) { $('lockedReasonText').textContent = currentUser.lockReason; showScreen('screen-locked'); } 
-    else { showScreen('screen-home'); }
-  });
-
-  $('openAdminDashboardBtn').addEventListener('click', () => { renderAll(); $('adminPanelBackdrop').classList.add('active'); });
-  $('closeAdminPanel').addEventListener('click', () => { $('adminPanelBackdrop').classList.remove('active'); resetGameForm(); });
-
-  document.querySelectorAll('.admin-nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active'); $(btn.dataset.tab).classList.add('active');
+function confirmDialog({ title, text, confirmLabel = "Bestätigen", danger = false }) {
+  return new Promise(resolve => {
+    let done = false;
+    showModal({
+      title, text, submitLabel: confirmLabel, danger,
+      onSubmit: async () => { done = true; resolve(true); },
+      onClose: () => { if (!done) resolve(false); }
     });
   });
+}
 
-  $('addGameBtn').addEventListener('click', async () => {
-    const name = $('newGameName').value.trim(); const url = $('newGameUrl').value.trim(); const emoji = $('newGameEmoji').value.trim(); const category = $('newGameCategory').value;
-    if(!name || !url) return;
-    state.games.push({ 
-      id: 'g' + Date.now(), name, url, emoji: emoji || '🎮', category: category || 'normal',
-      isVip: $('newGameIsVip').checked, isDiamond: $('newGameIsDiamond').checked, isAd: $('newGameIsAd').checked, isIframe: $('newGameIsIframe').checked
-    });
-    await saveState(); renderAll(); resetGameForm();
-  });
+function toast(msg, type = "info") {
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  t.textContent = msg;
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.remove(), type === "error" ? 5500 : 3200);
+}
 
-  $('saveEditGameBtn').addEventListener('click', async () => {
-    const id = $('editGameId').value; const game = state.games.find(g => g.id === id); if(!game) return;
-    game.name = $('newGameName').value.trim(); game.url = $('newGameUrl').value.trim(); game.emoji = $('newGameEmoji').value.trim(); game.category = $('newGameCategory').value;
-    game.isVip = $('newGameIsVip').checked; game.isDiamond = $('newGameIsDiamond').checked; game.isAd = $('newGameIsAd').checked; game.isIframe = $('newGameIsIframe').checked;
-    await saveState(); renderAll(); resetGameForm(); alert('Spiel erfolgreich aktualisiert!');
-  });
+/* =========================================================
+   Event-Delegation
+   ========================================================= */
+const actions = {
+  "auth-tab": el => setAuthMode(el.dataset.tab),
+  "reset-pw": resetPassword,
+  "toggle-profile": () => { const m = $("#profileMenu"); m.hidden = !m.hidden; },
+  "logout": () => signOut(auth),
+  "open-app": el => openApp(el.dataset.app),
+  "home": closeApp,
+  "open-link": el => startGame(el.dataset.id, "tab"),
+  "play": el => startGame(el.dataset.id, "frame"),
+  "play-tab": el => startGame(el.dataset.id, "tab"),
+  "close-frame": closeGameFrame,
+  "frame-home": () => { closeGameFrame(); closeApp(); },
+  "close-modal": closeModal,
+  "buy": el => buyFlow(el.dataset.id),
+  "shop-cat": el => { state.shopCat = el.dataset.cat; updateShop(); },
+  "admin-tab": el => { state.adminTab = el.dataset.tab; updateAdmin(); },
+  "coins": el => coinsDialog(el.dataset.id),
+  "user-new": userNewDialog,
+  "item-new": () => itemDialog(),
+  "item-edit": el => itemDialog(el.dataset.id),
+  "item-del": el => itemDelete(el.dataset.id),
+  "seed": seedItems,
+  "app-new": () => appDialog(),
+  "app-edit": el => appDialog(el.dataset.id),
+  "app-del": el => appDelete(el.dataset.id),
+  "order-filter": el => { state.orderFilter = el.dataset.status; updateAdmin(); }
+};
 
-  $('addTaskBtn').addEventListener('click', async () => {
-    const name = $('newTaskName').value.trim(); const reward = parseInt($('newTaskReward').value, 10);
-    if(!name || !reward || reward < 1 || reward > 50) return;
-    state.tasks.push({ id: 't' + Date.now(), name, reward });
-    await saveState(); renderAll(); $('newTaskName').value = ''; $('newTaskReward').value = '';
-  });
+document.addEventListener("click", async e => {
+  const menu = $("#profileMenu");
+  if (menu && !menu.hidden && !e.target.closest("#profileWrap")) menu.hidden = true;
+  if (e.target.classList?.contains("modal-backdrop")) return closeModal();
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const fn = actions[el.dataset.action];
+  if (!fn) return;
+  try { await fn(el); }
+  catch (err) { console.error(err); toast(errMsg(err), "error"); }
+});
 
-  loadState();
-})();
+document.addEventListener("change", async e => {
+  const el = e.target.closest("[data-change]");
+  if (!el || el.dataset.change !== "order-status") return;
+  try {
+    await updateDoc(doc(db, "orders", el.dataset.id), { status: el.value });
+    toast("Status aktualisiert.", "success");
+  } catch (err) {
+    console.error(err);
+    toast(errMsg(err), "error");
+  }
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if ($("#modalRoot").innerHTML) closeModal();
+  else if (!$("#gameView").hidden) closeGameFrame();
+  else if (state.openApp) closeApp();
+});
+
+/* ---------------- Start ---------------- */
+$$("[data-icon]").forEach(el => el.insertAdjacentHTML("afterbegin", icon(el.dataset.icon, 18)));
+if (!ALLOW_REGISTRATION) $("#registerTab").hidden = true;
+setAuthMode("login");
 </script>
 </body>
 </html>
