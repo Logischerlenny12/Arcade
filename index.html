@@ -195,6 +195,32 @@ a{color:inherit;text-decoration:none}
 /* Themes */
 .theme-dark{--solid:#161827;--ink:#f5f3ff;--muted:#b8b3cc;--soft:#23263a;--line:#3a3e58}.theme-dark #statusbar,.theme-dark #dock{background:rgba(20,22,38,.78)}.theme-dark .os-widget{background:rgba(25,28,45,.78)}
 .theme-neon{--accent:#00e5ff;--accent-2:#ff00c8}.theme-neon .tile-icon,.theme-neon .dock-btn{filter:saturate(1.35) drop-shadow(0 0 10px rgba(0,229,255,.25))}
+/* iOS-style Home Screen */
+#desktop{position:relative;overflow:hidden;padding-bottom:120px;touch-action:pan-y}
+#homeViewport{position:absolute;inset:0 0 90px;overflow:hidden}
+#homePages{display:flex;width:100%;height:100%;transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.home-page{flex:0 0 100%;width:100%;height:100%;overflow-y:auto;padding:34px 22px 120px;max-width:100%;}
+.home-page-inner{max-width:980px;margin:0 auto}
+#appGrid{grid-template-columns:repeat(5,minmax(80px,1fr));gap:26px 16px}
+.app-page-grid{display:grid;grid-template-columns:repeat(5,minmax(80px,1fr));gap:26px 16px}
+.home-page .toolbar.home-tools{margin-bottom:10px}
+.edit-mode #appGrid .tile,.edit-mode .os-widget,.edit-mode #dock .dock-btn{animation:wiggle .16s alternate infinite}
+.edit-mode #appGrid .tile{position:relative}
+.edit-mode .tile::after{content:'−';position:absolute;left:4px;top:0;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#ff3b30;color:#fff;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+@keyframes wiggle{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
+#homeEditBar{position:fixed;z-index:55;left:50%;top:68px;transform:translateX(-50%) translateY(-10px);display:none;align-items:center;gap:8px;padding:9px 12px;border-radius:22px;background:rgba(255,255,255,.88);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.95);box-shadow:0 15px 40px rgba(43,27,74,.2)}
+.editing #homeEditBar{display:flex}
+#pageDots{position:fixed;z-index:35;left:50%;bottom:92px;transform:translateX(-50%);display:flex;gap:7px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.55);backdrop-filter:blur(12px)}
+.page-dot{width:7px;height:7px;border-radius:50%;background:rgba(43,27,74,.35)}.page-dot.active{background:var(--ink);transform:scale(1.25)}
+#widgetPicker{position:fixed;z-index:70;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 28px));max-height:75vh;overflow:auto;background:var(--solid);border:1px solid var(--line);border-radius:30px;padding:22px;box-shadow:0 30px 100px rgba(0,0,0,.35)}
+.widget-picker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.widget-choice{display:flex;gap:12px;align-items:center;padding:15px;border-radius:20px;background:var(--soft);border:1px solid var(--line);text-align:left}.widget-choice:hover{transform:translateY(-2px)}
+#notificationPanel{position:fixed;z-index:75;right:16px;top:70px;width:min(430px,calc(100% - 32px));max-height:calc(100% - 150px);overflow:auto;background:rgba(255,255,255,.88);backdrop-filter:blur(25px);border:1px solid rgba(255,255,255,.95);border-radius:28px;padding:18px;box-shadow:0 30px 90px rgba(43,27,74,.28)}
+.notification-item{padding:13px;border-radius:17px;background:rgba(255,255,255,.55);margin-top:8px;border:1px solid var(--line)}
+.notification-item.read{opacity:.58}
+.dock-edit-btn{background:linear-gradient(145deg,#777,#333)!important}.dock-add-btn{background:linear-gradient(145deg,#20c997,#087f5b)!important}.dock-remove{position:absolute;right:-3px;top:-5px;width:22px;height:22px;border-radius:50%;background:#ff3b30;color:#fff;font-weight:900}
+@media(max-width:800px){#appGrid,.app-page-grid{grid-template-columns:repeat(4,minmax(70px,1fr))}.widget-picker-grid{grid-template-columns:1fr}.home-page{padding-left:16px;padding-right:16px}}
+@media(max-width:560px){#appGrid,.app-page-grid{grid-template-columns:repeat(4,1fr);gap:20px 8px}.tile-icon{width:68px;height:68px;border-radius:22px}.tile-label{font-size:.8rem}.home-page{padding-top:28px}}
+
 /* Widgets & Chat */
 #widgetArea{margin-top:34px}.widget-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.widget-head h2{display:flex;align-items:center;gap:8px;font-size:1.15rem}.widget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.os-widget{display:flex;gap:12px;text-align:left;padding:16px;border-radius:22px;background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 14px 30px -20px rgba(43,27,74,.45)}.widget-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1,#7b5cff),var(--c2,#4b33d6));flex:none}.widget-content b{display:block;font-family:var(--font-head);font-size:1.15rem}.widget-content span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}.w-green{--c1:#20c997;--c2:#0a7d5c}.w-orange{--c1:#ff9f43;--c2:#e5541b}.w-purple{--c1:#8f74ff;--c2:#4b33d6}.w-pink{--c1:#ff6fae;--c2:#a93ee8}.w-blue{--c1:#18a0fb;--c2:#3567ff}.w-custom{--c1:#667eea;--c2:#764ba2}.chat-layout{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:520px}.chat-list{background:var(--solid);border:1.5px solid var(--line);border-radius:22px;padding:10px;overflow:auto}.chat-contact{display:flex;gap:10px;align-items:center;padding:11px;border-radius:15px;width:100%;text-align:left}.chat-contact.active{background:var(--soft)}.chat-contact .avatar{width:38px;height:38px}.chat-main{display:flex;flex-direction:column;background:var(--solid);border:1.5px solid var(--line);border-radius:22px;overflow:hidden}.chat-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.chat-messages{flex:1;overflow:auto;padding:16px;display:grid;align-content:start;gap:9px;min-height:350px}.chat-bubble{max-width:78%;padding:10px 13px;border-radius:18px;background:var(--soft);justify-self:start}.chat-bubble.mine{justify-self:end;background:linear-gradient(135deg,#e9ddff,#fbd7e8)}.chat-bubble img{max-width:240px;max-height:240px;border-radius:14px;display:block;margin-top:6px}.chat-meta{font-size:.7rem;color:var(--muted);margin-top:4px}.chat-compose{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:end}.chat-compose textarea{min-height:42px;max-height:120px;resize:vertical;flex:1}.chat-actions{display:flex;gap:6px}.chat-official{background:linear-gradient(135deg,#f0e8ff,#fff1f7)}
 @media(max-width:760px){.chat-layout{grid-template-columns:1fr}.chat-list{max-height:180px}.chat-messages{min-height:300px}}
@@ -279,11 +305,16 @@ a{color:inherit;text-decoration:none}
   </header>
 
   <main id="desktop">
-    <h1 id="greeting"></h1>
-    <p id="dateLine" class="muted"></p>
-    <div class="toolbar home-tools"><button class="btn small" data-action="new-folder">＋ Ordner</button><button class="btn small" data-action="open-app" data-app="wishlist">🎁 Wunschliste</button></div>
-    <div id="appGrid"></div>
+    <div id="homeViewport"><div id="homePages"></div></div>
+    <div id="pageDots" aria-label="Homescreen-Seiten"></div>
   </main>
+  <div id="homeEditBar">
+    <button class="btn small" data-action="add-widget">＋ Widget</button>
+    <button class="btn small" data-action="add-home-page">＋ Seite</button>
+    <button class="btn primary small" data-action="exit-edit">Fertig</button>
+  </div>
+  <div id="widgetPicker" hidden></div>
+  <div id="notificationPanel" hidden></div>
 
   <nav id="dock" aria-label="Dock"></nav>
 
@@ -504,7 +535,7 @@ async function ensureProfile(user) {
     installedApps: [],
     ownedDesigns: [],
     usage: { date: usageDateKey(), totalSeconds: 0, appSeconds: {}, events: [] },
-    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard"
+    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard", homePages: [], dockApps: []
   });
 }
 
@@ -747,52 +778,73 @@ function isAppActive(a) {
   return !exp || exp > Date.now();
 }
 
-function renderDesktop() {
-  const p = state.profile;
-  $("#greeting").textContent = `Hallo, ${p.name || "du"}!`;
-  $("#dateLine").textContent = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
-  const builtin = Object.entries(APPS).filter(([, a]) => !a.adminOnly || isAdmin());
-  const installed = getInstalledApps().map(e => state.apps.find(a => a.id === e.appId)).filter(Boolean);
-  $("#appGrid").innerHTML =
-    builtin.map(([id, a]) => `
-      <button class="tile" data-action="open-app" data-app="${id}">
-        <span class="tile-icon" style="--c1:${a.c1};--c2:${a.c2}">${icon(a.icon, 38)}</span>
-        <span class="tile-label">${a.title}</span>
-      </button>`).join("") +
-    installed.map(a => `
-      <button class="tile" data-action="open-installed" data-id="${a.id}" title="${esc(a.title)}">
-        <span class="tile-icon" style="--c1:#4dabf7;--c2:#1c7ed6">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 36)}</span>
-        <span class="tile-label">${esc(a.title)}</span>
-      </button>`).join("");
-  const folders=Array.isArray(state.profile?.folders)?state.profile.folders:[];
-  if(folders.length) $("#appGrid").insertAdjacentHTML("beforeend",folders.map(f=>`<button class="tile" data-action="open-folder" data-id="${esc(f.id)}"><span class="tile-icon" style="--c1:#ffb347;--c2:#ff7a18">${icon("gift",38)}</span><span class="tile-label">${esc(f.title)}</span></button>`).join(""));
+let currentHomePage=0, editMode=false, longPressTimer=null, homeTouchStartX=0;
+function normalizedHomePages(){
+  const builtin=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id);
+  const installed=getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id));
+  const all=[...builtin,...installed];
+  let pages=Array.isArray(state.profile?.homePages)?state.profile.homePages.map(p=>Array.isArray(p)?p.filter(id=>all.includes(id)):[]):[];
+  pages=pages.filter((p,i)=>i===0||p.length);
+  if(!pages.length) pages=[[]];
+  const used=new Set(pages.flat());
+  all.forEach(id=>{if(!used.has(id)){pages[0].push(id);used.add(id)}});
+  return pages.length?pages:[[]];
+}
+function renderDesktop(){
+  const pages=normalizedHomePages(); if(currentHomePage>=pages.length) currentHomePage=pages.length-1;
+  const p=state.profile||{};
+  const builtins=Object.fromEntries(Object.entries(APPS));
+  const pageHTML=pages.map((ids,pi)=>`<section class="home-page" data-page="${pi}"><div class="home-page-inner">
+    ${pi===0?`<h1 id="greeting">Hallo, ${esc(p.name||"du")}!</h1><p id="dateLine" class="muted">${new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</p>`:`<h2 class="page-title">Seite ${pi+1}</h2>`}
+    ${pi===0?`<div class="toolbar home-tools"><button class="btn small" data-action="new-folder">＋ Ordner</button><button class="btn small" data-action="open-app" data-app="wishlist">🎁 Wunschliste</button></div>`:""}
+    <div class="app-page-grid" id="appGrid-${pi}">${ids.map(id=>{const a=builtins[id]||state.apps.find(x=>x.id===id);if(!a)return "";const custom=!builtins[id];return `<button draggable="${editMode}" class="tile" data-action="${custom?"open-installed":"open-app"}" data-id="${custom?id:""}" data-app="${custom?"":id}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span><span class="tile-label">${esc(a.title)}</span></button>`}).join("")}</div>
+    ${pi===0?`<section id="widgetArea"></section>`:""}
+  </div></section>`).join("");
+  $("#homePages").innerHTML=pageHTML;
+  $("#homePages").style.transform=`translateX(-${currentHomePage*100}%)`;
+  $("#pageDots").innerHTML=pages.map((_,i)=>`<button class="page-dot ${i===currentHomePage?"active":""}" data-action="page" data-page="${i}" aria-label="Seite ${i+1}"></button>`).join("");
   renderWidgets();
+  bindHomeGestures();
 }
-
 function renderWidgets(){
-  let box=$("#widgetArea");
-  if(!box){ const d=$("#desktop"); box=document.createElement("section"); box.id="widgetArea"; d.appendChild(box); }
+  const box=$("#widgetArea"); if(!box)return;
   const p=state.profile||{}; const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(Boolean);
-  const unread=0;
-  const builtins=[
-    {id:"konto",title:"Konto",icon:"wallet",cls:"w-green",html:`<b>${COIN}${fmt(p.balance)}</b><span>aktuelles Guthaben</span>`},
-    {id:"shop",title:"Shop",icon:"bag",cls:"w-orange",html:`<b>${fmt(state.orders.filter(o=>o.status!=="geliefert").length)}</b><span>Bestellungen unterwegs</span>`},
-    {id:"appstore",title:"App Store",icon:"store",cls:"w-purple",html:`<b>${fmt(getInstalledApps().length)}</b><span>Apps installiert</span>`},
-    {id:"designstore",title:"Design Store",icon:"palette",cls:"w-pink",html:`<b>${esc((designById(localStorage.getItem("coinos_current_design"))||DESIGNS[0]).title)}</b><span>aktuelles Design</span>`},
-    {id:"chat",title:"Chat",icon:"message",cls:"w-blue",html:`<b>💬</b><span>Nachrichten öffnen</span>`}
-  ];
-  const custom=installed.filter(a=>a.widgetEnabled).map(a=>({id:a.id,title:a.widgetTitle||a.title,icon:"widget",cls:"w-custom",html:`<b>${esc(a.widgetValue||"Widget")}</b><span>${esc(a.widgetText||a.title)}</span>`}));
-  const all=builtins.concat(custom);
-  box.innerHTML=`<div class="widget-head"><h2>${icon("widget",20)} Widgets</h2><span class="muted small">Deine Übersicht</span></div><div class="widget-grid">${all.map(w=>`<button class="os-widget ${w.cls}" data-action="open-app" data-app="${esc(w.id)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span></button>`).join("")}</div>`;
+  const layout=Array.isArray(p.widgetLayout)&&p.widgetLayout.length?p.widgetLayout:["konto","shop","appstore","designstore","chat"];
+  const builtins={
+    konto:{title:"Konto",icon:"wallet",cls:"w-green",html:`<b>${COIN}${fmt(p.balance)}</b><span>aktuelles Guthaben</span>`},
+    shop:{title:"Shop",icon:"bag",cls:"w-orange",html:`<b>${fmt(state.orders.filter(o=>o.status!=="geliefert").length)}</b><span>Bestellungen unterwegs</span>`},
+    appstore:{title:"App Store",icon:"store",cls:"w-purple",html:`<b>${fmt(getInstalledApps().length)}</b><span>Apps installiert</span>`},
+    designstore:{title:"Design Store",icon:"palette",cls:"w-pink",html:`<b>${esc((designById(localStorage.getItem("coinos_current_design"))||DESIGNS[0]).title)}</b><span>aktuelles Design</span>`},
+    chat:{title:"Chat",icon:"message",cls:"w-blue",html:`<b>💬</b><span>Nachrichten öffnen</span>`}
+  };
+  const all=[...layout.map(id=>builtins[id] ? {id,...builtins[id]} : (()=>{const a=installed.find(x=>x.id===id);return a&&a.widgetEnabled?{id:a.id,title:a.widgetTitle||a.title,icon:"widget",cls:"w-custom",html:`<b>${esc(a.widgetValue||"Widget")}</b><span>${esc(a.widgetText||a.title)}</span>`}:null})()).filter(Boolean)];
+  box.innerHTML=`<div class="widget-head"><h2>${icon("widget",20)} Widgets</h2><span class="muted small">Deine Übersicht</span></div><div class="widget-grid">${all.map(w=>`<button class="os-widget ${w.cls}" data-action="open-widget-app" data-app="${esc(w.id)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span></button>`).join("")}</div>`;
 }
-
-function renderDock() {
-  const builtin = Object.entries(APPS).filter(([, a]) => !a.adminOnly || isAdmin());
-  $("#dock").innerHTML =
-    `<button class="dock-btn home ${state.openApp ? "" : "active"}" data-action="home" title="Home" aria-label="Home">${icon("home", 26)}</button>` +
-    builtin.map(([id, a]) => `
-      <button class="dock-btn ${state.openApp === id ? "active" : ""}" style="--c1:${a.c1};--c2:${a.c2}" data-action="open-app" data-app="${id}" title="${a.title}" aria-label="${a.title}">${icon(a.icon, 26)}</button>`).join("");
+function renderDock(){
+  const builtin=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin());
+  const ids=Array.isArray(state.profile?.dockApps)&&state.profile.dockApps.length?state.profile.dockApps:builtin.map(([id])=>id).slice(0,8);
+  const apps=ids.map(id=>{const a=APPS[id]||state.apps.find(x=>x.id===id);return a?{id,a}:null}).filter(Boolean);
+  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${id}" title="${esc(a.title)}">${a.icon?icon(a.icon,26):thumbHTML(a.iconUrl,"globe",26)}${editMode?'<span class="dock-remove">−</span>':''}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button><button class="dock-btn dock-edit-btn" data-action="edit-home" title="Bearbeiten">${icon("pencil",22)}</button>`;
 }
+function editTileAction(el){if(!editMode)return openApp(el.dataset.app);const id=el.dataset.id||el.dataset.app;if(!id)return;if(APPS[id]){removeHomeApp(id);toast("App vom Homescreen entfernt.","success");}else{removeHomeApp(id);toast("App entfernt.","success");}}
+function removeDockApp(id){const ids=[...document.querySelectorAll('#dock [data-action="dock-open"]')].map(x=>x.dataset.app).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});renderDock();toast("App aus dem Dock entfernt.","success");}
+function addDockDialog(){const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];const available=[...Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>({id,title:a.title,icon:a.icon})),...state.apps.filter(a=>!current.includes(a.id)).map(a=>({id:a.id,title:a.title,icon:"widget"}))].filter(a=>!current.includes(a.id));const r=$("#widgetPicker");r.hidden=false;r.innerHTML=`<h2>App ins Dock</h2><p class="muted">Wähle eine App für die untere Leiste.</p><div class="widget-picker-grid">${available.map(a=>`<button class="widget-choice" data-action="choose-dock" data-id="${esc(a.id)}"><span class="widget-icon">${a.icon?icon(a.icon,22):icon("widget",22)}</span><span><b>${esc(a.title)}</b><small class="muted">Ins Dock aufnehmen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;}
+async function chooseDock(id){const ids=Array.isArray(state.profile?.dockApps)&&state.profile.dockApps.length?[...state.profile.dockApps]:Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id).slice(0,8);if(!ids.includes(id))ids.push(id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});closeWidgetPicker();toast("App ins Dock gelegt.","success");}
+function enterEdit(){editMode=true;document.body.classList.add("editing");document.documentElement.classList.add("edit-mode");renderDesktop();renderDock();}
+function exitEdit(){editMode=false;document.body.classList.remove("editing");document.documentElement.classList.remove("edit-mode");closeWidgetPicker();saveHomeLayout();renderDesktop();renderDock();}
+function saveHomeLayout(){if(!state.user)return;const pages=normalizedHomePages();const dock=[...$("#dock").querySelectorAll('[data-action="dock-open"]')].map(x=>x.dataset.app);updateDoc(doc(db,"users",state.user.uid),{homePages:pages,dockApps:dock}).catch(console.debug)}
+function addHomePage(){const pages=normalizedHomePages();pages.push([]);updateDoc(doc(db,"users",state.user.uid),{homePages:pages});currentHomePage=pages.length-1;renderDesktop()}
+function goPage(i){const pages=normalizedHomePages();currentHomePage=Math.max(0,Math.min(i,pages.length-1));renderDesktop()}
+function bindHomeGestures(){const v=$("#homeViewport");if(!v||v.dataset.bound)return;v.dataset.bound="1";v.addEventListener("pointerdown",e=>{homeTouchStartX=e.clientX;});v.addEventListener("pointerup",e=>{const dx=e.clientX-homeTouchStartX;if(Math.abs(dx)>55&&!editMode)goPage(currentHomePage+(dx<0?1:-1));});}
+function addWidgetDialog(){
+  const p=state.profile||{}; const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(a=>a&&a.widgetEnabled);
+  const choices=[{id:"konto",title:"Konto",icon:"wallet"},{id:"shop",title:"Shop",icon:"bag"},{id:"appstore",title:"App Store",icon:"store"},{id:"designstore",title:"Design Store",icon:"palette"},{id:"chat",title:"Chat",icon:"message"},...installed.map(a=>({id:a.id,title:a.widgetTitle||a.title,icon:"widget"}))];
+  const root=$("#widgetPicker");root.hidden=false;root.innerHTML=`<h2>Widgets hinzufügen</h2><p class="muted">Wähle ein Widget für deinen Homescreen.</p><div class="widget-picker-grid">${choices.map(c=>`<button class="widget-choice" data-action="choose-widget" data-id="${esc(c.id)}"><span class="widget-icon">${icon(c.icon,22)}</span><span><b>${esc(c.title)}</b><small class="muted">Zum Homescreen hinzufügen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
+}
+function closeWidgetPicker(){const r=$("#widgetPicker");if(r){r.hidden=true;r.innerHTML=""}}
+async function chooseWidget(id){const p=state.profile||{};const layout=Array.isArray(p.widgetLayout)?[...p.widgetLayout]:[];if(!layout.includes(id))layout.push(id);await updateDoc(doc(db,"users",state.user.uid),{widgetLayout:layout});closeWidgetPicker();toast("Widget hinzugefügt.","success")}
+function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));const nextPages=pages.map((p,i)=>i===0?p: p);updateDoc(doc(db,"users",state.user.uid),{homePages:nextPages});renderDesktop()}
+function removeWidget(id){const layout=(state.profile?.widgetLayout||[]).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{widgetLayout:layout});renderWidgets()}
 
 function tickClock() {
   $("#clock").textContent = new Date().toLocaleString("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -1084,6 +1136,14 @@ async function chatCoinsDialog(){
 }
 async function toggleChatInvisible(){const next=!state.profile?.chatInvisible;await updateDoc(doc(db,"users",state.user.uid),{chatInvisible:next});toast(next?"Du bist im Chat jetzt unsichtbar.":"Du bist im Chat wieder sichtbar.","success");}
 async function officialMessageDialog(){showModal({title:"Offizielle Nachricht",fields:[{name:"text",label:"Nachricht",required:true,placeholder:"Nachricht an alle CoinOS-Mitglieder…"}],submitLabel:"Senden",onSubmit:async v=>{await addDoc(collection(db,"chats","official","messages"),{senderId:state.user.uid,senderName:"CoinOS",type:"system",text:v.text,timestamp:serverTimestamp()});toast("Offizielle Nachricht gesendet.","success");}})}
+
+/* Home-Screen Bearbeitung: lange drücken wie bei iOS */
+document.addEventListener("pointerdown",e=>{if(!osShown||e.target.closest("button,input,textarea,select,a"))return;longPressTimer=setTimeout(()=>enterEdit(),650);});
+document.addEventListener("pointerup",()=>{clearTimeout(longPressTimer);longPressTimer=null;});
+document.addEventListener("dragstart",e=>{if(!editMode)return;const t=e.target.closest(".tile,.dock-btn");if(t)e.dataTransfer.setData("text/plain",t.dataset.id||t.dataset.app||"");});
+document.addEventListener("dragover",e=>{if(editMode&&e.target.closest(".tile,.dock-btn"))e.preventDefault();});
+document.addEventListener("drop",async e=>{if(!editMode)return;const target=e.target.closest(".tile,.dock-btn");if(!target)return;e.preventDefault();const dragged=e.dataTransfer.getData("text/plain");if(!dragged)return;const tile=target.closest(".tile");if(tile){const pages=normalizedHomePages();const page=pages.find(p=>p.includes(dragged));if(page){const from=page.indexOf(dragged),to=page.indexOf(target.dataset.id||target.dataset.app);if(to>=0){page.splice(from,1);page.splice(to,0,dragged);await updateDoc(doc(db,"users",state.user.uid),{homePages:pages});renderDesktop();}}}else if(target.classList.contains("dock-btn")&&target.dataset.app){const ids=[...document.querySelectorAll('#dock [data-action="dock-open"]')].map(x=>x.dataset.app);const from=ids.indexOf(dragged),to=ids.indexOf(target.dataset.app);if(from>=0&&to>=0){ids.splice(from,1);ids.splice(to,0,dragged);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});renderDock();}}});
+document.addEventListener("click",e=>{if(!editMode)return;const tile=e.target.closest(".tile"),dock=e.target.closest('.dock-btn[data-action="dock-open"]');if(tile){const id=tile.dataset.id||tile.dataset.app;if(id&&!APPS[id]){removeHomeApp(id);toast("App vom Homescreen entfernt.","success");}}else if(dock){const id=dock.dataset.app;const ids=[...document.querySelectorAll('#dock [data-action="dock-open"]')].map(x=>x.dataset.app).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});renderDock();toast("App aus dem Dock entfernt.","success");}});
 
 /* =========================================================
    DESIGN-STORE
@@ -1534,7 +1594,14 @@ function confirmDialog({ title, text, confirmLabel = "Bestätigen", danger = fal
   });
 }
 
-function showNotifications(){const notes=[];state.orders.slice(0,6).forEach(o=>notes.push({t:`📦 ${o.itemTitle}`,d:STATUS[o.status]||o.status}));state.txs.slice(0,8).forEach(t=>notes.push({t:`${Number(t.amount)>=0?"🪙":"💸"} ${t.description||"Transaktion"}`,d:`${Number(t.amount)>=0?"+":""}${fmt(t.amount)} Coins`}));showModal({title:"🔔 Benachrichtigungen",text:notes.length?notes.slice(0,12).map(n=>`${n.t} — ${n.d}`).join("\n\n"):"Keine neuen Benachrichtigungen.",submitLabel:"Schließen",fields:[],onSubmit:async()=>{}});}
+function showNotifications(){
+  const notes=[];state.orders.slice(0,8).forEach(o=>notes.push({id:"order_"+o.id,t:`📦 ${o.itemTitle}`,d:STATUS[o.status]||o.status}));state.txs.slice(0,10).forEach(t=>notes.push({id:"tx_"+t.id,t:`${Number(t.amount)>=0?"🪙":"💸"} ${t.description||"Transaktion"}`,d:`${Number(t.amount)>=0?"+":""}${fmt(t.amount)} Coins`}));
+  const read=JSON.parse(localStorage.getItem("coinos_read_notifications")||"[]");
+  const panel=$("#notificationPanel");panel.hidden=false;panel.innerHTML=`<div class="widget-head"><h2>🔔 Benachrichtigungen</h2><button class="btn small" data-action="close-notifications">Schließen</button></div>${notes.length?notes.map(n=>`<div class="notification-item ${read.includes(n.id)?"read":""}"><b>${esc(n.t)}</b><div class="muted small">${esc(n.d)}</div></div>`).join(""):"<p class=\"muted\">Keine Benachrichtigungen.</p>"}<div class="modal-actions"><button class="btn small" data-action="read-notifications">Als gelesen markieren</button></div>`;
+}
+function closeNotifications(){const p=$("#notificationPanel");if(p)p.hidden=true}
+function readNotifications(){const ids=[];$("#notificationPanel")?.querySelectorAll(".notification-item").forEach((e,i)=>{});const notes=[];state.orders.slice(0,8).forEach(o=>notes.push("order_"+o.id));state.txs.slice(0,10).forEach(t=>notes.push("tx_"+t.id));localStorage.setItem("coinos_read_notifications",JSON.stringify(notes));showNotifications();}
+
 
 function toast(msg, type = "info") {
   const t = document.createElement("div");
@@ -1551,16 +1618,17 @@ const actions = {
   "auth-tab": el => setAuthMode(el.dataset.tab),
   "reset-pw": resetPassword,
   "toggle-profile": () => { const m = $("#profileMenu"); m.hidden = !m.hidden; },
-  "notifications": showNotifications,
+  "notifications": showNotifications, "close-notifications": closeNotifications, "read-notifications": readNotifications,
+  "edit-home": enterEdit, "add-dock": addDockDialog, "choose-dock": el=>chooseDock(el.dataset.id), "exit-edit": exitEdit, "add-widget": addWidgetDialog, "close-widget-picker": closeWidgetPicker, "choose-widget": el=>chooseWidget(el.dataset.id), "add-home-page": addHomePage, "page": el=>goPage(Number(el.dataset.page)), "dock-open": el=>editMode ? (removeDockApp(el.dataset.app)) : openApp(el.dataset.app), "open-widget-app": el=>openApp(el.dataset.app),
   "theme": el => applyTheme(el.dataset.theme),
   "wishlist-toggle": el => toggleWishlist(el.dataset.id),
   "new-folder": newFolderDialog,
   "open-folder": el => openFolder(el.dataset.id),
   "logout": () => signOut(auth),
-  "open-app": el => openApp(el.dataset.app),
+  "open-app": el => editMode ? editTileAction(el) : openApp(el.dataset.app),
   "home": closeApp,
   "open-link": el => openInstalledApp(el.dataset.id),
-  "open-installed": el => openInstalledApp(el.dataset.id),
+  "open-installed": el => editMode ? editTileAction(el) : openInstalledApp(el.dataset.id),
   "install-app": el => installApp(el.dataset.id),
   "renew-app": el => installApp(el.dataset.id),
   "uninstall-app": el => uninstallApp(el.dataset.id),
