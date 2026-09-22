@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3e4ff">
+<title>CoinOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   CoinOS – Design-Tokens
+   Farben: Zuckerwatte-Wallpaper, Trauben-Tinte, Goldmünze
+   Schrift: Bricolage Grotesque (Überschriften/Zahlen), Figtree (Text)
+   ========================================================= */
+:root{
+  --ink:#2b1b4a; --muted:#6f6489; --line:rgba(43,27,74,.12);
+  --surface:rgba(255,255,255,.82); --solid:#fff; --soft:rgba(43,27,74,.05);
+  --primary:#7b5cff; --primary-2:#4b33d6;
+  --accent:var(--primary); --accent-2:var(--primary-2);
+  --gold:#ffc233; --gold-deep:#e59a00;
+  --green:#12b886; --red:#e5384f; --amber:#f08c00; --blue:#1c7ed6;
+  --font-head:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --font-body:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --shadow:0 24px 60px -18px rgba(75,51,214,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-body);color:var(--ink);background:#f3e4ff;overflow:hidden;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45}
+h1,h2,h3,h4{font-family:var(--font-head);font-weight:700;letter-spacing:-.01em;line-height:1.15}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.muted{color:var(--muted)}
+.small{font-size:.84rem}
+.grow{flex:1;min-width:0}
+.ic{flex:none;display:block}
+
+.wallpaper{position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(900px 620px at 8% 8%,#ffc9e2 0%,transparent 62%),
+    radial-gradient(800px 600px at 95% 12%,#c9e8ff 0%,transparent 60%),
+    radial-gradient(900px 700px at 70% 105%,#ffe7b8 0%,transparent 58%),
+    radial-gradient(700px 600px at 0% 100%,#d8ccff 0%,transparent 60%),
+    #f3e4ff;}
+
+/* ---------- Münz-Motiv ---------- */
+.coin{display:inline-block;flex:none;width:1.15em;height:1.15em;border-radius:50%;position:relative;vertical-align:-.2em;
+  background:radial-gradient(circle at 32% 28%,#fff1b8 0%,var(--gold) 45%,var(--gold-deep) 100%);
+  box-shadow:0 1px 2px rgba(120,80,0,.45)}
+.coin::after{content:"";position:absolute;inset:.2em;border-radius:50%;border:.11em solid rgba(150,90,0,.45)}
+
+/* ---------- Buttons & Formulare ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:700;background:var(--solid);border:1.5px solid var(--line);transition:transform .12s,box-shadow .12s,background .12s}
+.btn:hover{box-shadow:0 6px 16px -8px rgba(43,27,74,.5)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+.btn.danger{background:var(--red);color:#fff;border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.small{padding:7px 13px;font-size:.85rem}
+.btn.block{display:flex;width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none}
+.link{color:var(--primary-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;margin-top:12px;display:block;width:100%;text-align:center}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field>span{font-size:.85rem;font-weight:700;color:var(--muted)}
+.field input,.field select,.search{width:100%;padding:12px 14px;border-radius:14px;background:var(--solid);border:1.5px solid var(--line)}
+.field input:focus,.field select:focus,.search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.check{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-weight:600}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.form-error{background:#ffe3e7;color:#a31629;padding:10px 12px;border-radius:12px;font-weight:600;margin-bottom:12px;font-size:.9rem}
+
+/* ---------- Badges ---------- */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--soft)}
+.badge.red{background:#ffe3e7;color:#a31629}
+.badge.blue{background:#dcebff;color:#0b4a94}
+.badge.st-bestellt{background:#fff0d1;color:#8a5200}
+.badge.st-gepackt{background:#dcebff;color:#0b4a94}
+.badge.st-geliefert{background:#d3f5e8;color:#0a6c4b}
+.price{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-family:var(--font-head);font-size:1.1rem}
+
+/* ---------- Boot / Auth ---------- */
+#boot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3e4ff}
+.spinner{width:44px;height:44px;border-radius:50%;border:5px solid rgba(123,92,255,.2);border-top-color:var(--primary);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#auth{position:relative;z-index:2;min-height:100%;display:grid;place-items:center;padding:20px;overflow:auto}
+.auth-card{width:min(420px,100%);background:var(--surface);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1.5px solid rgba(255,255,255,.9);border-radius:32px;padding:34px 28px;box-shadow:var(--shadow)}
+.auth-logo{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;margin:0 auto 16px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;font-size:2rem;box-shadow:0 14px 30px -10px rgba(75,51,214,.7)}
+.auth-logo .coin{width:38px;height:38px}
+.auth-card h1{text-align:center;font-size:2.1rem;font-weight:800}
+.auth-card>p{text-align:center;margin:6px 0 22px}
+.tabs{display:flex;gap:6px;background:var(--soft);padding:5px;border-radius:999px;margin-bottom:20px}
+.tabs button{flex:1;padding:9px;border-radius:999px;font-weight:700;color:var(--muted)}
+.tabs button.active{background:var(--solid);color:var(--ink);box-shadow:0 4px 12px -6px rgba(43,27,74,.5)}
+
+/* ---------- OS-Layout ---------- */
+#os{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
+#statusbar{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;padding-top:env(safe-area-inset-top,0);background:rgba(255,255,255,.6);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1.5px solid rgba(255,255,255,.85);position:relative;z-index:35}
+.sb-left,.sb-right{display:flex;align-items:center;gap:14px}
+.brand{font-family:var(--font-head);font-weight:800;font-size:1.25rem}
+#clock{font-weight:600;font-size:.9rem}
+.coin-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;background:linear-gradient(135deg,#fff3c4,#ffd569);border:1.5px solid rgba(229,154,0,.45);font-family:var(--font-head);font-weight:800;font-size:1.05rem;color:#5c3a00}
+.coin-pill .coin{width:26px;height:26px}
+.coin-pill.bump{animation:bump .6s ease}
+@keyframes bump{30%{transform:scale(1.12)}100%{transform:scale(1)}}
+#profileWrap{position:relative}
+.avatar-btn,.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff7eb3,#7b5cff);flex:none}
+#profileMenu{position:absolute;right:0;top:48px;width:250px;background:var(--solid);border-radius:20px;padding:16px;box-shadow:var(--shadow);border:1.5px solid var(--line);display:grid;gap:8px;z-index:60}
+.pm-name{font-family:var(--font-head);font-weight:700;font-size:1.1rem}
+#pmRole{justify-self:start;margin-bottom:6px}
+
+#desktop{flex:1;overflow:auto;padding:34px 22px 130px;max-width:980px;width:100%;margin:0 auto}
+#desktop h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800}
+#dateLine{margin:4px 0 30px;font-weight:600;text-transform:none}
+#appGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:26px 14px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px;border-radius:24px;transition:transform .15s}
+.tile:hover{transform:translateY(-4px)}
+.tile-icon{position:relative;width:84px;height:84px;border-radius:28px;display:grid;place-items:center;color:#fff;overflow:hidden;
+  background:linear-gradient(145deg,var(--c1),var(--c2));box-shadow:0 16px 28px -14px var(--c2)}
+.tile-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.tile-label{font-weight:700;font-size:.95rem;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0));transform:translateX(-50%);z-index:36;display:flex;gap:10px;padding:10px 14px;border-radius:30px;background:rgba(255,255,255,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--shadow)}
+.dock-btn{position:relative;width:52px;height:52px;border-radius:18px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1),var(--c2));transition:transform .15s}
+.dock-btn:hover{transform:translateY(-5px) scale(1.06)}
+.dock-btn.home{background:linear-gradient(145deg,#6f6489,#2b1b4a)}
+.dock-btn.active::after{content:"";position:absolute;bottom:-8px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--ink)}
+
+/* ---------- App-Fenster ---------- */
+#window{position:fixed;z-index:30;top:72px;bottom:104px;left:50%;width:min(1060px,calc(100% - 24px));display:flex;flex-direction:column;border-radius:30px;overflow:hidden;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1.5px solid #fff;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transform:translateX(-50%) translateY(24px) scale(.97);transition:opacity .22s,transform .22s}
+#window.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0) scale(1)}
+.win-head{flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px;color:#fff;background:linear-gradient(120deg,var(--accent),var(--accent-2))}
+.win-head h2{flex:1;display:flex;align-items:center;gap:10px;font-size:1.3rem;min-width:0}
+.win-head h2 span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.head-btn{background:rgba(255,255,255,.2)!important;color:#fff!important;border:1.5px solid rgba(255,255,255,.4)!important;padding:8px 14px}
+.head-btn:hover{background:rgba(255,255,255,.32)!important}
+.head-spacer{width:1px}
+.win-body{flex:1;overflow:auto;padding:22px}
+
+#gameView{position:fixed;z-index:45;left:0;right:0;bottom:0;top:58px;display:flex;flex-direction:column;background:#fff}
+#gameView iframe{flex:1;border:0;width:100%;background:#fff}
+#gameView .win-head{padding-top:12px}
+
+.panel{background:var(--solid);border:1.5px solid var(--line);border-radius:22px;padding:18px}
+.panel h3{font-size:1.1rem;margin-bottom:12px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--soft);margin-bottom:9px;flex-wrap:wrap}
+.row:last-child{margin-bottom:0}
+.row b{display:block;overflow:hidden;text-overflow:ellipsis}
+.empty{display:grid;place-items:center;gap:10px;text-align:center;padding:34px 16px;color:var(--muted);font-weight:600}
+.empty .ic{opacity:.6}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 15px;border-radius:999px;font-weight:700;background:var(--solid);border:1.5px solid var(--line)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.thumb{position:relative;overflow:hidden;background:linear-gradient(135deg,#f4ecff,#ffe9d1);display:grid;place-items:center;color:var(--muted)}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* Konto */
+.balance{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:26px;border-radius:26px;color:#fff;background:linear-gradient(130deg,#12b886,#0a7d5c)}
+.balance .lbl{font-weight:600;opacity:.9}
+.balance .big{display:flex;align-items:center;gap:14px;font-family:var(--font-head);font-weight:800;font-size:clamp(2.6rem,9vw,4.4rem);line-height:1}
+.balance .big .coin{width:.75em;height:.75em}
+.stats{display:flex;gap:26px;flex-wrap:wrap}
+.stat b{display:block;font-family:var(--font-head);font-size:1.6rem}
+.stat span{font-size:.85rem;opacity:.9;font-weight:600}
+.amt{font-family:var(--font-head);font-weight:800;font-size:1.05rem}
+.amt.plus{color:var(--green)}
+.amt.minus{color:var(--red)}
+
+/* Shop */
+.grid-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.item{display:flex;flex-direction:column;background:var(--solid);border:1.5px solid var(--line);border-radius:26px;overflow:hidden}
+.item .thumb{aspect-ratio:4/3}
+.item-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.item-body h4{font-size:1.15rem}
+.item-foot{display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px}
+.stock{font-size:.82rem;font-weight:700;color:var(--muted)}
+.stock.low{color:var(--amber)}
+.stock.out{color:var(--red)}
+.item-body .btn{margin-top:auto}
+
+/* Spiele */
+.game{display:flex;gap:14px;align-items:center;padding:14px;background:var(--solid);border:1.5px solid var(--line);border-radius:24px}
+.game .thumb{width:72px;height:72px;border-radius:22px;flex:none}
+.game-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.design-preview{min-height:150px;aspect-ratio:16/9}
+.grid-games{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+
+
+/* Themes */
+.theme-dark{--solid:#161827;--ink:#f5f3ff;--muted:#b8b3cc;--soft:#23263a;--line:#3a3e58}.theme-dark #statusbar,.theme-dark #dock{background:rgba(20,22,38,.78)}.theme-dark .os-widget{background:rgba(25,28,45,.78)}
+.theme-neon{--accent:#00e5ff;--accent-2:#ff00c8}.theme-neon .tile-icon,.theme-neon .dock-btn{filter:saturate(1.35) drop-shadow(0 0 10px rgba(0,229,255,.25))}
+/* iOS-style Home Screen */
+#desktop{position:relative;overflow:hidden;padding-bottom:120px;touch-action:pan-y}
+#homeViewport{position:absolute;inset:0 0 90px;overflow:hidden}
+#homePages{display:flex;width:100%;height:100%;transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.home-page{flex:0 0 100%;width:100%;height:100%;overflow-y:auto;padding:34px 22px 120px;max-width:100%;}
+.home-page-inner{max-width:980px;margin:0 auto}
+#appGrid{grid-template-columns:repeat(5,minmax(80px,1fr));gap:26px 16px}
+.app-page-grid{display:grid;grid-template-columns:repeat(5,minmax(80px,1fr));gap:26px 16px}
+.home-page .toolbar.home-tools{margin-bottom:10px}
+.edit-mode #appGrid .tile,.edit-mode .os-widget,.edit-mode #dock .dock-btn{animation:wiggle .16s alternate infinite}
+.edit-mode #appGrid .tile{position:relative}
+.edit-mode .tile::after{content:'−';position:absolute;left:4px;top:0;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#ff3b30;color:#fff;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+@keyframes wiggle{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
+#homeEditBar{position:fixed;z-index:55;left:50%;top:68px;transform:translateX(-50%) translateY(-10px);display:none;align-items:center;gap:8px;padding:9px 12px;border-radius:22px;background:rgba(255,255,255,.88);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.95);box-shadow:0 15px 40px rgba(43,27,74,.2)}
+.editing #homeEditBar{display:flex}
+#pageDots{position:fixed;z-index:35;left:50%;bottom:92px;transform:translateX(-50%);display:flex;gap:7px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.55);backdrop-filter:blur(12px)}
+.page-dot{width:7px;height:7px;border-radius:50%;background:rgba(43,27,74,.35)}.page-dot.active{background:var(--ink);transform:scale(1.25)}
+#widgetPicker{position:fixed;z-index:70;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 28px));max-height:75vh;overflow:auto;background:var(--solid);border:1px solid var(--line);border-radius:30px;padding:22px;box-shadow:0 30px 100px rgba(0,0,0,.35)}
+.widget-picker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.widget-choice{display:flex;gap:12px;align-items:center;padding:15px;border-radius:20px;background:var(--soft);border:1px solid var(--line);text-align:left}.widget-choice:hover{transform:translateY(-2px)}
+#notificationPanel{position:fixed;z-index:75;right:16px;top:70px;width:min(430px,calc(100% - 32px));max-height:calc(100% - 150px);overflow:auto;background:rgba(255,255,255,.88);backdrop-filter:blur(25px);border:1px solid rgba(255,255,255,.95);border-radius:28px;padding:18px;box-shadow:0 30px 90px rgba(43,27,74,.28)}
+.notification-item{padding:13px;border-radius:17px;background:rgba(255,255,255,.55);margin-top:8px;border:1px solid var(--line)}
+.notification-item.read{opacity:.58}
+.dock-edit-btn{background:linear-gradient(145deg,#777,#333)!important}.dock-add-btn{background:linear-gradient(145deg,#20c997,#087f5b)!important}.dock-remove{position:absolute;right:-3px;top:-5px;width:22px;height:22px;border-radius:50%;background:#ff3b30;color:#fff;font-weight:900}
+@media(max-width:800px){#appGrid,.app-page-grid{grid-template-columns:repeat(4,minmax(70px,1fr))}.widget-picker-grid{grid-template-columns:1fr}.home-page{padding-left:16px;padding-right:16px}}
+@media(max-width:560px){#appGrid,.app-page-grid{grid-template-columns:repeat(4,1fr);gap:20px 8px}.tile-icon{width:68px;height:68px;border-radius:22px}.tile-label{font-size:.8rem}.home-page{padding-top:28px}}
+
+/* Widgets & Chat */
+#widgetArea{margin-top:34px}.widget-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.widget-head h2{display:flex;align-items:center;gap:8px;font-size:1.15rem}.widget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.os-widget{display:flex;gap:12px;text-align:left;padding:16px;border-radius:22px;background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 14px 30px -20px rgba(43,27,74,.45)}.widget-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1,#7b5cff),var(--c2,#4b33d6));flex:none}.widget-content b{display:block;font-family:var(--font-head);font-size:1.15rem}.widget-content span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}.w-green{--c1:#20c997;--c2:#0a7d5c}.w-orange{--c1:#ff9f43;--c2:#e5541b}.w-purple{--c1:#8f74ff;--c2:#4b33d6}.w-pink{--c1:#ff6fae;--c2:#a93ee8}.w-blue{--c1:#18a0fb;--c2:#3567ff}.w-custom{--c1:#667eea;--c2:#764ba2}.chat-layout{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:520px}.chat-list{background:var(--solid);border:1.5px solid var(--line);border-radius:22px;padding:10px;overflow:auto}.chat-contact{display:flex;gap:10px;align-items:center;padding:11px;border-radius:15px;width:100%;text-align:left}.chat-contact.active{background:var(--soft)}.chat-contact .avatar{width:38px;height:38px}.chat-main{display:flex;flex-direction:column;background:var(--solid);border:1.5px solid var(--line);border-radius:22px;overflow:hidden}.chat-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.chat-messages{flex:1;overflow:auto;padding:16px;display:grid;align-content:start;gap:9px;min-height:350px}.chat-bubble{max-width:78%;padding:10px 13px;border-radius:18px;background:var(--soft);justify-self:start}.chat-bubble.mine{justify-self:end;background:linear-gradient(135deg,#e9ddff,#fbd7e8)}.chat-bubble img{max-width:240px;max-height:240px;border-radius:14px;display:block;margin-top:6px}.chat-meta{font-size:.7rem;color:var(--muted);margin-top:4px}.chat-compose{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:end}.chat-compose textarea{min-height:42px;max-height:120px;resize:vertical;flex:1}.chat-actions{display:flex;gap:6px}.chat-official{background:linear-gradient(135deg,#f0e8ff,#fff1f7)}
+@media(max-width:760px){.chat-layout{grid-template-columns:1fr}.chat-list{max-height:180px}.chat-messages{min-height:300px}}
+/* Admin */
+.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tabbar .chip{display:inline-flex;align-items:center;gap:8px}
+.row .thumb{width:46px;height:46px;border-radius:14px;flex:none}
+.row select{padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--solid);font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-family:var(--font-head)}
+
+/* Modal / Toast */
+#modalRoot{position:relative;z-index:80}
+.modal-backdrop{position:fixed;inset:0;background:rgba(43,27,74,.45);backdrop-filter:blur(4px);display:grid;place-items:center;padding:16px;animation:fade .15s}
+.modal{width:min(440px,100%);max-height:calc(100% - 20px);overflow:auto;background:var(--solid);border-radius:28px;padding:26px;box-shadow:0 30px 80px -20px rgba(43,27,74,.6);animation:pop .18s}
+.modal h3{font-size:1.4rem;margin-bottom:6px}
+.modal>p,.modal-text{margin-bottom:16px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}}
+#toasts{position:fixed;z-index:90;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0));transform:translateX(-50%);display:grid;gap:10px;width:min(440px,calc(100% - 24px));pointer-events:none}
+.toast{padding:13px 18px;border-radius:18px;font-weight:700;color:#fff;background:var(--ink);box-shadow:0 14px 30px -10px rgba(0,0,0,.5);animation:pop .2s;pointer-events:auto}
+.toast.error{background:var(--red)}
+.toast.success{background:#0a7d5c}
+
+@media (max-width:700px){
+  .two-col{grid-template-columns:1fr}
+  #window{top:62px;bottom:92px;width:100%;border-radius:26px 26px 0 0;border-bottom:0}
+  .win-body{padding:16px}
+  #clock{display:none}
+  .grid-items{grid-template-columns:repeat(2,1fr);gap:12px}
+  .item-body{padding:12px}
+  #desktop{padding:24px 16px 130px}
+  .tile-icon{width:76px;height:76px;border-radius:26px}
+  .grid-games{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wallpaper"></div>
+
+<div id="boot"><div class="spinner" role="status" aria-label="Lädt"></div></div>
+
+<!-- ===================== LOGIN ===================== -->
+<main id="auth" hidden>
+  <div class="auth-card">
+    <div class="auth-logo"><i class="coin"></i></div>
+    <h1>CoinOS</h1>
+    <p class="muted">Dein Konto, dein Shop, deine Apps.</p>
+    <div class="tabs" id="authTabs">
+      <button type="button" class="active" data-action="auth-tab" data-tab="login">Anmelden</button>
+      <button type="button" data-action="auth-tab" data-tab="register" id="registerTab">Registrieren</button>
+    </div>
+    <form id="authForm">
+      <label class="field" id="nameField" hidden><span>Name</span><input id="authName" autocomplete="name" placeholder="Dein Name"></label>
+      <label class="field"><span>E-Mail</span><input id="authEmail" type="email" required autocomplete="email" placeholder="name@beispiel.de"></label>
+      <label class="field"><span>Passwort</span><input id="authPass" type="password" required minlength="6" autocomplete="current-password" placeholder="Mindestens 6 Zeichen"></label>
+      <p class="form-error" id="authError" hidden></p>
+      <button class="btn primary block" id="authSubmit" type="submit">Anmelden</button>
+      <button type="button" class="link" data-action="reset-pw">Passwort vergessen?</button>
+    </form>
+  </div>
+</main>
+
+<!-- ===================== OS ===================== -->
+<div id="os" hidden>
+  <header id="statusbar">
+    <div class="sb-left"><span class="brand">CoinOS</span><span id="clock" class="muted"></span></div>
+    <div class="sb-right">
+      <button class="btn icon-btn" data-action="notifications" title="Benachrichtigungen">🔔</button>
+      <div class="coin-pill" id="coinPill" title="Dein Kontostand"><i class="coin"></i><b id="sbCoins">0</b></div>
+      <div id="profileWrap">
+        <button class="avatar-btn" id="avatarBtn" data-action="toggle-profile" aria-label="Profil öffnen"></button>
+        <div id="profileMenu" hidden>
+          <div class="pm-name" id="pmName"></div>
+          <div class="muted small" id="pmMail"></div>
+          <span class="badge" id="pmRole"></span>
+          <button class="btn block" data-action="open-app" data-app="profil">👤 Profil</button><button class="btn block" data-action="logout" data-icon="logout">Abmelden</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="desktop">
+    <div id="homeViewport"><div id="homePages"></div></div>
+    <div id="pageDots" aria-label="Homescreen-Seiten"></div>
+  </main>
+  <div id="homeEditBar">
+    <button class="btn small" data-action="add-widget">＋ Widget</button>
+    <button class="btn small" data-action="add-home-page">＋ Seite</button>
+    <button class="btn primary small" data-action="exit-edit">Fertig</button>
+  </div>
+  <div id="widgetPicker" hidden></div>
+  <div id="notificationPanel" hidden></div>
+
+  <nav id="dock" aria-label="Dock"></nav>
+
+  <section id="window" aria-hidden="true" aria-labelledby="winTitle">
+    <header class="win-head">
+      <button class="btn head-btn" data-action="home" data-icon="home" aria-label="Zum Homescreen">Home</button>
+      <h2 id="winTitle"></h2>
+      <span class="head-spacer"></span>
+    </header>
+    <div class="win-body" id="winBody"></div>
+  </section>
+</div>
+
+<section id="gameView" hidden>
+  <header class="win-head" style="--accent:#7b5cff;--accent-2:#4b33d6">
+    <button class="btn head-btn" data-action="close-frame" data-icon="arrow-left">Zurück</button>
+    <h2 id="gameTitle"></h2>
+    <a id="gameExternal" class="btn head-btn" target="_blank" rel="noopener" data-icon="external">Im Tab öffnen</a>
+    <button class="btn head-btn" data-action="frame-home" data-icon="home" aria-label="Zum Homescreen"></button>
+  </header>
+  <iframe id="gameFrame" title="Spiel" allow="fullscreen; gamepad; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals"></iframe>
+</section>
+
+<div id="modalRoot"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script type="module">
+/* =========================================================
+   Firebase (SDK v10 über CDN) – nur Auth + Firestore
+   ========================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signOut, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, where,
+  orderBy, limit, onSnapshot, runTransaction, serverTimestamp, writeBatch, increment
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ---------------- KONFIGURATION ---------------- */
+// WICHTIG: Hier deine Admin-E-Mail eintragen. Das Konto mit dieser Adresse wird beim
+// ersten Login als Admin angelegt. Dieselbe Adresse gehört auch in die Firestore-Regeln.
+const ADMIN_EMAIL = "DEINE-ADMIN-MAIL@example.com";
+// Nach dem Anlegen aller Konten auf false setzen (oder in Firebase die Registrierung sperren).
+// Neue Nutzer kann der Admin dann trotzdem in der Admin-App anlegen.
+const ALLOW_REGISTRATION = true;
+const START_BALANCE = 100;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB1cAF8dfjxu_l0oz58gR7x0q6CCV55e08",
+  authDomain: "as-1e226.firebaseapp.com",
+  projectId: "as-1e226",
+  storageBucket: "as-1e226.firebasestorage.app",
+  messagingSenderId: "758093946816",
+  appId: "1:758093946816:web:ab79a017d57899ac337225",
+  measurementId: "G-R7XV84H2WJ"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+/* ---------------- Helfer ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = n => new Intl.NumberFormat("de-DE").format(Number(n) || 0);
+const tsMs = ts => (ts && ts.toMillis ? ts.toMillis() : Date.now());
+const fmtDate = ts => new Date(tsMs(ts)).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const safeUrl = u => { try { const x = new URL(String(u || "").trim()); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : ""; } catch { return ""; } };
+
+class AppError extends Error {}
+
+const STATUS = { bestellt: "Bestellt", gepackt: "Gepackt", geliefert: "Geliefert" };
+
+function errMsg(e) {
+  if (e instanceof AppError) return e.message;
+  const code = String(e?.code || "").replace("firestore/", "").replace("auth/", "");
+  const map = {
+    "invalid-credential": "E-Mail oder Passwort ist falsch.",
+    "wrong-password": "E-Mail oder Passwort ist falsch.",
+    "user-not-found": "Zu dieser E-Mail gibt es kein Konto.",
+    "invalid-email": "Bitte eine gültige E-Mail-Adresse eingeben.",
+    "email-already-in-use": "Diese E-Mail wird bereits verwendet.",
+    "weak-password": "Das Passwort braucht mindestens 6 Zeichen.",
+    "too-many-requests": "Zu viele Versuche. Bitte kurz warten und erneut probieren.",
+    "network-request-failed": "Keine Internetverbindung.",
+    "missing-password": "Bitte ein Passwort eingeben.",
+    "operation-not-allowed": "E-Mail/Passwort-Login ist in Firebase noch nicht aktiviert.",
+    "permission-denied": "Keine Berechtigung. Bitte die Firestore-Regeln prüfen.",
+    "unavailable": "Der Server ist gerade nicht erreichbar.",
+    "failed-precondition": "Firestore braucht dafür noch eine Einrichtung (siehe Browser-Konsole)."
+  };
+  return map[code] || e?.message || "Etwas ist schiefgelaufen.";
+}
+
+/* ---------------- Icons (Lucide-Stil) ---------------- */
+const ICONS = {
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  gamepad: '<line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  package: '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/>',
+  "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  palette: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 0-3.6h-.7a1.8 1.8 0 0 1 0-3.6H15a6 6 0 0 0 0-12z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="10" cy="6.8" r=".8"/><circle cx="14" cy="6.8" r=".8"/>',
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  store: '<path d="M4 9h16v11H4z"/><path d="M3 9l2-5h14l2 5"/><path d="M8 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M8 13h8"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
+  message: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.5-4A8.3 8.3 0 0 1 3 12a8.5 8.5 0 0 1 9-8.5 8.5 8.5 0 0 1 9 8z"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  gift: '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18"/><path d="M12 8H8.5a2.5 2.5 0 1 1 2.5-2.5V8ZM12 8h3.5A2.5 2.5 0 1 0 13 5.5V8Z"/>',
+  eyeoff: '<path d="m3 3 18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c5 0 9 3.5 10 8a11.2 11.2 0 0 1-4 5.6"/><path d="M6.6 6.6A11.1 11.1 0 0 0 2 12c1 4.5 5 8 10 8 1.4 0 2.7-.3 3.9-.8"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  widget: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'
+};
+const icon = (name, size = 20) => `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+const COIN = '<i class="coin"></i>';
+const thumbHTML = (url, fb = "image", size = 30) => {
+  const u = safeUrl(url);
+  return `${icon(fb, size)}${u ? `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}`;
+};
+
+/* ---------------- App-Registry ---------------- */
+const APPS = {
+  konto:     { title: "Konto",       icon: "wallet",  c1: "#20c997", c2: "#0a7d5c", mount: mountKonto,     update: updateKonto },
+  shop:      { title: "Shop",        icon: "bag",     c1: "#ff9f43", c2: "#e5541b", mount: mountShop,      update: updateShop },
+  appstore:  { title: "App Store",   icon: "store",   c1: "#8f74ff", c2: "#4b33d6", mount: mountAppStore,  update: updateAppStore },
+  designstore:{ title: "Design Store",icon: "palette", c1: "#ff6fae", c2: "#a93ee8", mount: mountDesignStore,update: updateDesignStore },
+  chat:      { title: "Chat",         icon: "message", c1: "#18a0fb", c2: "#3567ff", mount: mountChat,        update: updateChat },
+  profil:    { title: "Profil",       icon: "user",    c1: "#7b5cff", c2: "#4b33d6", mount: mountProfile,    update: updateProfile },
+  wishlist:  { title: "Wunschliste", icon: "gift",    c1: "#ff6fae", c2: "#e64980", mount: mountWishlist,  update: updateWishlist },
+  admin:     { title: "Admin",       icon: "shield",  c1: "#ff5d73", c2: "#a81e36", mount: mountAdmin,     update: updateAdmin, adminOnly: true }
+};
+
+/* ---------------- State ---------------- */
+const state = {
+  user: null, profile: null,
+  items: [], apps: [], orders: [], txs: [], designs: [],
+  allUsers: [], allOrders: [],
+  openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle",
+  adminTab: "users", orderFilter: "alle", chatUserId: "official", chatSearch: "", chatMessages: [], chatUnsub: null
+};
+let unsubs = [];
+let adminSubs = false;
+let osShown = false;
+let pendingName = "";
+let authMode = "login";
+const isAdmin = () => state.profile?.role === "admin";
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+function setAuthMode(mode) {
+  authMode = (mode === "register" && ALLOW_REGISTRATION) ? "register" : "login";
+  $$("#authTabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === authMode));
+  $("#nameField").hidden = authMode !== "register";
+  $("#authSubmit").textContent = authMode === "register" ? "Konto erstellen" : "Anmelden";
+  $("#authPass").autocomplete = authMode === "register" ? "new-password" : "current-password";
+  $("#authError").hidden = true;
+}
+
+$("#authForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("#authEmail").value.trim();
+  const pass = $("#authPass").value;
+  const err = $("#authError");
+  const btn = $("#authSubmit");
+  err.hidden = true;
+  btn.disabled = true;
+  try {
+    if (authMode === "register") {
+      pendingName = $("#authName").value.trim();
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } else {
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+  } catch (ex) {
+    err.textContent = errMsg(ex);
+    err.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+async function resetPassword() {
+  const email = $("#authEmail").value.trim();
+  if (!email) throw new AppError("Bitte zuerst deine E-Mail-Adresse eintragen.");
+  await sendPasswordResetEmail(auth, email);
+  toast("Wir haben dir eine E-Mail zum Zurücksetzen geschickt.", "success");
+}
+
+async function ensureProfile(user) {
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return;
+  const admin = (user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  await setDoc(ref, {
+    email: user.email,
+    role: admin ? "admin" : "user",
+    name: pendingName || user.displayName || (user.email || "").split("@")[0],
+    balance: START_BALANCE,
+    installedApps: [],
+    ownedDesigns: [],
+    usage: { date: usageDateKey(), totalSeconds: 0, appSeconds: {}, events: [] },
+    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard", homePages: [], dockApps: []
+  });
+}
+
+onAuthStateChanged(auth, async user => {
+  stopListeners();
+  $("#boot").hidden = true;
+  if (!user) {
+    state.user = null;
+    state.profile = null;
+    showAuth();
+    return;
+  }
+  state.user = user;
+  try {
+    await ensureProfile(user);
+    startListeners(user);
+  } catch (e) {
+    console.error(e);
+    toast(errMsg(e), "error");
+    await signOut(auth);
+  } finally {
+    pendingName = "";
+  }
+});
+
+function showAuth() {
+  $("#os").hidden = true;
+  $("#auth").hidden = false;
+  osShown = false;
+  $("#authPass").value = "";
+  setAuthMode("login");
+}
+
+function showOS() {
+  $("#auth").hidden = true;
+  $("#os").hidden = false;
+  osShown = true;
+}
+
+/* =========================================================
+   Echtzeit-Listener (onSnapshot)
+   ========================================================= */
+const docs = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+const onErr = e => { console.error(e); toast(errMsg(e), "error"); };
+
+function startListeners(user) {
+  const uid = user.uid;
+  unsubs.push(onSnapshot(doc(db, "users", uid), snap => {
+    if (!snap.exists()) return;
+    state.profile = { id: snap.id, ...snap.data() };
+    if (isAdmin() && !adminSubs) startAdminListeners();
+    if (!osShown) showOS();
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(collection(db, "users"), snap => {
+    state.allUsers = docs(snap).filter(u => u.id !== uid).sort((a,b) => String(a.name||a.email).localeCompare(String(b.name||b.email), "de"));
+    if (state.openApp === "chat") scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(collection(db, "items"), snap => {
+    state.items = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(collection(db, "apps"), snap => {
+    state.apps = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(collection(db, "designs"), snap => {
+    state.designs = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
+    restoreDesign();
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(query(collection(db, "orders"), where("userId", "==", uid)), snap => {
+    state.orders = docs(snap).sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
+    scheduleRender();
+  }, onErr));
+
+  unsubs.push(onSnapshot(query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"), limit(60)), snap => {
+    state.txs = docs(snap);
+    scheduleRender();
+  }, onErr));
+}
+
+function startAdminListeners() {
+  adminSubs = true;
+  unsubs.push(onSnapshot(collection(db, "users"), snap => {
+    state.allUsers = docs(snap).sort((a, b) => String(a.email).localeCompare(String(b.email)));
+    scheduleRender();
+  }, onErr));
+  unsubs.push(onSnapshot(collection(db, "orders"), snap => {
+    state.allOrders = docs(snap).sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
+    scheduleRender();
+  }, onErr));
+}
+
+function stopListeners() {
+  unsubs.forEach(u => { try { u(); } catch {} });
+  unsubs = [];
+  if (state.chatUnsub) { try { state.chatUnsub(); } catch {} state.chatUnsub = null; }
+  adminSubs = false;
+  Object.assign(state, { items: [], apps: [], orders: [], txs: [], designs: [], allUsers: [], allOrders: [], openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle", adminTab: "users", orderFilter: "alle" });
+  shownCoins = null;
+  $("#window")?.classList.remove("open");
+  closeGameFrame();
+  closeModal();
+}
+
+/* =========================================================
+   Rendering: Statusleiste, Desktop, Dock
+   ========================================================= */
+let renderQueued = false;
+function scheduleRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  queueMicrotask(() => { renderQueued = false; renderAll(); });
+}
+
+/* =========================================================
+   Nutzungsstatistik / Aktivität
+   ========================================================= */
+const usageTimer = { last: Date.now(), running: false };
+function usageDateKey(d=new Date()){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function usageAppId(){ return state.openApp || "homescreen"; }
+async function recordUsageSeconds(seconds, allowHidden=false){
+  if(!state.user || seconds<=0 || (!allowHidden && document.visibilityState!=="visible")) return;
+  const ref=doc(db,"users",state.user.uid), day=usageDateKey(), app=usageAppId();
+  try{
+    await runTransaction(db,async tx=>{
+      const snap=await tx.get(ref); if(!snap.exists())return;
+      const data=snap.data(); const old=data.usage||{}; const daily=old.date===day?old:{date:day,totalSeconds:0,appSeconds:{},events:[]};
+      const appSeconds={...(daily.appSeconds||{})}; appSeconds[app]=(Number(appSeconds[app])||0)+seconds;
+      const history={...(data.usageHistory||{})}; history[day]={totalSeconds:(Number(daily.totalSeconds)||0)+seconds,appSeconds};
+      const keys=Object.keys(history).sort(); while(keys.length>14) delete history[keys.shift()];
+      tx.update(ref,{usage:{...daily,totalSeconds:(Number(daily.totalSeconds)||0)+seconds,appSeconds,lastSeen:serverTimestamp()},usageHistory:history});
+    });
+  }catch(e){ console.debug("Usage-Tracking:",e); }
+}
+async function usageHeartbeat(force=false){
+  const now=Date.now(), elapsed=Math.min(90,Math.max(0,Math.round((now-usageTimer.last)/1000))); usageTimer.last=now;
+  if(force && elapsed>0) await recordUsageSeconds(elapsed,true); else if(elapsed>=20) await recordUsageSeconds(elapsed,false);
+}
+function startUsageTracking(){
+  usageTimer.last=Date.now();
+  const iv=setInterval(()=>{ if(document.visibilityState==="visible") usageHeartbeat(false); },30000);
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") usageHeartbeat(true); else usageTimer.last=Date.now(); });
+  window.addEventListener("beforeunload",()=>{ usageHeartbeat(true); });
+  return ()=>clearInterval(iv);
+}
+let stopUsageTracking=null;
+async function logUsageEvent(action, detail="", appId=state.openApp||"system"){
+  if(!state.user)return;
+  const ref=doc(db,"users",state.user.uid), day=usageDateKey();
+  try{ await runTransaction(db,async tx=>{ const snap=await tx.get(ref); if(!snap.exists())return; const data=snap.data(); const old=data.usage||{}; const daily=old.date===day?old:{date:day,totalSeconds:0,appSeconds:{},events:[]}; const events=Array.isArray(daily.events)?daily.events.slice(0,99):[]; events.unshift({action,detail,appId,at:new Date().toISOString()}); tx.update(ref,{usage:{...daily,events,lastSeen:serverTimestamp()}}); }); }catch(e){ console.debug("Activity-Log:",e); }
+}
+function adminUserDetails(uid){
+  const u=state.allUsers.find(x=>x.id===uid); if(!u)return;
+  const usage=u.usage||{}; const today=usage.date===usageDateKey()?usage:{}; const apps=today.appSeconds||{};
+  const labels={homescreen:"Homescreen",konto:"Konto",shop:"Shop",appstore:"App Store",designstore:"Design Store",chat:"Chat",admin:"Admin"};
+  const appRows=Object.entries(apps).sort((a,b)=>b[1]-a[1]).map(([id,sec])=>`<div class="row"><div class="grow"><b>${esc(labels[id]||state.apps.find(a=>a.id===id)?.title||id)}</b><span class="muted small">Heute</span></div><span class="pill">${Math.round(sec/60)} Min.</span></div>`).join("");
+  const events=(today.events||[]).slice(0,30).map(e=>`<div class="row"><div class="grow"><b>${esc(e.action)}</b><span class="muted small">${esc(e.detail||"")} · ${esc(new Date(e.at).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}))} · ${esc(labels[e.appId]||e.appId||"")}</span></div></div>`).join("");
+  const hist=u.usageHistory||{}; const historyRows=Object.entries(hist).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7).map(([day,v])=>`<div class="row"><div class="grow"><b>${esc(day)}</b><span class="muted small">Tagesgesamt</span></div><span class="pill">${Math.round((Number(v.totalSeconds)||0)/60)} Min.</span></div>`).join("");
+  showModal({title:`Aktivität: ${u.name||u.email}`,text:`Heute ca. ${Math.round((Number(today.totalSeconds)||0)/60)} Minuten aktiv auf CoinOS. Die Zeiten sind aktiv sichtbare CoinOS-Zeit und daher eine Näherung.`,submitLabel:"Schließen",fields:[] ,onSubmit:async()=>{}});
+  const root=$("#modalRoot .modal"); if(root) root.insertAdjacentHTML("beforeend",`<div class="panel"><h4>Apps heute</h4>${appRows||'<div class="muted">Noch keine Nutzungsdaten.</div>'}</div><div class="panel"><h4>Letzte Aktionen</h4>${events||'<div class="muted">Noch keine Aktionen protokolliert.</div>'}</div>`);
+  const form=$("#modalForm"); if(form){ const btn=form.querySelector('button[type="submit"]'); if(btn)btn.textContent="Schließen"; }
+}
+
+function renderAll() {
+  if (!state.profile) return;
+  renderStatus();
+  renderDesktop();
+  renderDock();
+  if (state.openApp && APPS[state.openApp]) APPS[state.openApp].update();
+}
+
+let shownCoins = null;
+function setCoins(n) {
+  const el = $("#sbCoins");
+  if (shownCoins === null || reduceMotion) {
+    el.textContent = fmt(n);
+  } else if (n !== shownCoins) {
+    const from = shownCoins, t0 = performance.now();
+    const step = t => {
+      const k = Math.min(1, (t - t0) / 600);
+      el.textContent = fmt(Math.round(from + (n - from) * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    const pill = $("#coinPill");
+    pill.classList.remove("bump");
+    void pill.offsetWidth;
+    pill.classList.add("bump");
+  }
+  shownCoins = n;
+}
+
+function applyTheme(name){const root=document.documentElement;root.classList.remove("theme-dark","theme-neon");if(name==="dark")root.classList.add("theme-dark");if(name==="neon")root.classList.add("theme-neon");localStorage.setItem("coinos_theme",name||"standard");}
+applyTheme(localStorage.getItem("coinos_theme")||"standard");
+function levelInfo(){const spent=state.txs.filter(t=>Number(t.amount)<0).reduce((n,t)=>n+Math.abs(Number(t.amount)||0),0);const level=Math.max(1,Math.floor(spent/100)+1);return {level,xp:spent,next:level*100};}
+function achievementList(){const installed=getInstalledApps().length, orders=state.orders.length, tx=state.txs.length, designs=Array.isArray(state.profile?.ownedDesigns)?state.profile.ownedDesigns.length:0;return [["🛍️","Erster Einkauf",orders>=1],["📱","App-Fan",installed>=5],["🎨","Design-Sammler",designs>=3],["💬","Erste Nachricht",state.chatUserId!=="official"||false],["💰","100 Coins ausgegeben",levelInfo().xp>=100],["🏆","10 Transaktionen",tx>=10]];}
+function mountProfile(el){el.innerHTML=`<section class="balance"><div><div class="lbl">Dein CoinOS-Profil</div><div class="big"><span id="profileLevel">Level 1</span></div><div class="small">${esc(state.profile?.email||"")}</div></div><div class="stats" id="profileStats"></div></section><div class="two-col"><section class="panel"><h3>🏆 Achievements</h3><div id="achievements"></div></section><section class="panel"><h3>🎨 Erscheinungsbild</h3><div class="toolbar"><button class="btn" data-action="theme" data-theme="standard">Standard</button><button class="btn" data-action="theme" data-theme="dark">Dark</button><button class="btn" data-action="theme" data-theme="neon">Neon</button></div><p class="muted small">Der Hintergrund bleibt unabhängig davon dein gewähltes Design.</p></section></div>`;}
+function updateProfile(){if(!$("#profileLevel"))return;const l=levelInfo();$("#profileLevel").textContent=`Level ${l.level}`;$("#profileStats").innerHTML=`<div class="stat"><b>${fmt(l.xp)}</b><span>XP</span></div><div class="stat"><b>${fmt(state.orders.length)}</b><span>Bestellungen</span></div><div class="stat"><b>${fmt(getInstalledApps().length)}</b><span>Apps</span></div>`;$("#achievements").innerHTML=achievementList().map(a=>`<div class="row"><span style="font-size:1.4rem">${a[0]}</span><div class="grow"><b>${a[1]}</b><span class="muted small">${a[2]?"Freigeschaltet":"Noch nicht freigeschaltet"}</span></div></div>`).join("");}
+function mountWishlist(el){el.innerHTML=`<div class="toolbar"><span class="muted">Deine gemerkten Apps, Shopartikel und Designs.</span></div><div id="wishlistGrid" class="grid-items"></div>`;}
+function updateWishlist(){const ids=Array.isArray(state.profile?.wishlist)?state.profile.wishlist:[];const rows=ids.map(id=>{const item=state.items.find(x=>x.id===id);const app=state.apps.find(x=>x.id===id);const d=designById(id);if(item)return {id,title:item.title,desc:`Shop · ${fmt(item.price)} Coins`,action:`open-app:shop`};if(app)return {id,title:app.title,desc:`App · ${appPrice(app)} Coins`,action:`open-app:appstore`};if(d)return {id,title:d.title,desc:`Design · ${designPrice(d)} Coins`,action:`open-app:designstore`};return null}).filter(Boolean);$("#wishlistGrid").innerHTML=rows.length?rows.map(r=>`<article class="item"><div class="item-body"><h4>${esc(r.title)}</h4><span class="muted small">${esc(r.desc)}</span><div class="game-actions"><button class="btn primary small" data-action="open-app" data-app="${r.action.split(":")[1]}">Öffnen</button><button class="btn small" data-action="wishlist-toggle" data-id="${esc(r.id)}">♥ Entfernen</button></div></div></article>`).join(""):`<div class="empty">${icon("gift",40)}Noch nichts gemerkt.</div>`;}
+async function toggleWishlist(id){const ref=doc(db,"users",state.user.uid);const snap=await getDoc(ref);if(!snap.exists())return;const list=Array.isArray(snap.data().wishlist)?snap.data().wishlist:[];const next=list.includes(id)?list.filter(x=>x!==id):[...list,id];await updateDoc(ref,{wishlist:next});toast(list.includes(id)?"Von der Wunschliste entfernt.":"Zur Wunschliste hinzugefügt.","success");}
+async function newFolderDialog(){showModal({title:"Neuen App-Ordner",fields:[{name:"title",label:"Ordnername",required:true,placeholder:"z. B. Spiele"},{name:"apps",label:"Apps (durch Komma getrennt)",placeholder:"App-ID oder App-Name"}],submitLabel:"Ordner erstellen",onSubmit:async v=>{const names=(v.apps||"").split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);const ids=state.apps.filter(a=>names.includes(a.id.toLowerCase())||names.includes(String(a.title).toLowerCase())).map(a=>a.id);const folders=Array.isArray(state.profile?.folders)?state.profile.folders:[];folders.push({id:"f"+Date.now(),title:v.title,apps:ids});await updateDoc(doc(db,"users",state.user.uid),{folders});toast("Ordner erstellt.","success");}})}
+function openFolder(id){const f=(state.profile?.folders||[]).find(x=>x.id===id);if(!f)return;showModal({title:f.title,text:f.apps.map(a=>state.apps.find(x=>x.id===a)?.title||a).join(" · ")||"Noch keine Apps im Ordner.",submitLabel:"Schließen",fields:[],onSubmit:async()=>{}});}
+
+function renderStatus() {
+  const p = state.profile;
+  $("#avatarBtn").textContent = (p.name || p.email || "?").charAt(0).toUpperCase();
+  $("#pmName").textContent = p.name || "";
+  $("#pmMail").textContent = p.email || "";
+  const r = $("#pmRole");
+  r.textContent = isAdmin() ? "Admin" : "Nutzer";
+  r.className = "badge " + (isAdmin() ? "red" : "blue");
+  setCoins(Number(p.balance) || 0);
+}
+
+function getInstalledApps() {
+  const list = Array.isArray(state.profile?.installedApps) ? state.profile.installedApps : [];
+  return list.map(x => typeof x === "string" ? { appId: x } : x).filter(x => x && x.appId);
+}
+
+function installedEntry(id) { return getInstalledApps().find(x => x.appId === id) || null; }
+function appPrice(a) { return Math.max(0, Math.floor(Number(a.price ?? a.requiredCoins) || 0)); }
+function appBilling(a) { return ["once","daily","weekly"].includes(a.billing) ? a.billing : "once"; }
+function billingLabel(a) { return appBilling(a) === "daily" ? "pro Tag" : appBilling(a) === "weekly" ? "pro Woche" : "einmalig"; }
+function entryExpiry(entry) {
+  if (!entry?.expiresAt) return null;
+  return entry.expiresAt?.toMillis ? entry.expiresAt.toMillis() : new Date(entry.expiresAt).getTime();
+}
+function isAppActive(a) {
+  const e = installedEntry(a.id);
+  if (!e) return false;
+  const exp = entryExpiry(e);
+  return !exp || exp > Date.now();
+}
+
+let currentHomePage=0, editMode=false, longPressTimer=null, homeTouchStartX=0;
+function normalizedHomePages(){
+  const builtin=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id);
+  const installed=getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id));
+  const all=[...builtin,...installed];
+  let pages=Array.isArray(state.profile?.homePages)?state.profile.homePages.map(p=>Array.isArray(p)?p.filter(id=>all.includes(id)):[]):[];
+  pages=pages.filter((p,i)=>i===0||p.length);
+  if(!pages.length) pages=[[]];
+  const used=new Set(pages.flat());
+  all.forEach(id=>{if(!used.has(id)){pages[0].push(id);used.add(id)}});
+  return pages.length?pages:[[]];
+}
+function renderDesktop(){
+  const pages=normalizedHomePages(); if(currentHomePage>=pages.length) currentHomePage=pages.length-1;
+  const p=state.profile||{};
+  const builtins=Object.fromEntries(Object.entries(APPS));
+  const pageHTML=pages.map((ids,pi)=>`<section class="home-page" data-page="${pi}"><div class="home-page-inner">
+    ${pi===0?`<h1 id="greeting">Hallo, ${esc(p.name||"du")}!</h1><p id="dateLine" class="muted">${new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</p>`:`<h2 class="page-title">Seite ${pi+1}</h2>`}
+    ${pi===0?`<div class="toolbar home-tools"><button class="btn small" data-action="new-folder">＋ Ordner</button><button class="btn small" data-action="open-app" data-app="wishlist">🎁 Wunschliste</button></div>`:""}
+    <div class="app-page-grid" id="appGrid-${pi}">${ids.map(id=>{const a=builtins[id]||state.apps.find(x=>x.id===id);if(!a)return "";const custom=!builtins[id];return `<button draggable="${editMode}" class="tile" data-action="${custom?"open-installed":"open-app"}" data-id="${custom?id:""}" data-app="${custom?"":id}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span><span class="tile-label">${esc(a.title)}</span></button>`}).join("")}</div>
+    ${pi===0?`<section id="widgetArea"></section>`:""}
+  </div></section>`).join("");
+  $("#homePages").innerHTML=pageHTML;
+  $("#homePages").style.transform=`translateX(-${currentHomePage*100}%)`;
+  $("#pageDots").innerHTML=pages.map((_,i)=>`<button class="page-dot ${i===currentHomePage?"active":""}" data-action="page" data-page="${i}" aria-label="Seite ${i+1}"></button>`).join("");
+  renderWidgets();
+  bindHomeGestures();
+}
+function renderWidgets(){
+  const box=$("#widgetArea"); if(!box)return;
+  const p=state.profile||{}; const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(Boolean);
+  const layout=Array.isArray(p.widgetLayout)&&p.widgetLayout.length?p.widgetLayout:["konto","shop","appstore","designstore","chat"];
+  const builtins={
+    konto:{title:"Konto",icon:"wallet",cls:"w-green",html:`<b>${COIN}${fmt(p.balance)}</b><span>aktuelles Guthaben</span>`},
+    shop:{title:"Shop",icon:"bag",cls:"w-orange",html:`<b>${fmt(state.orders.filter(o=>o.status!=="geliefert").length)}</b><span>Bestellungen unterwegs</span>`},
+    appstore:{title:"App Store",icon:"store",cls:"w-purple",html:`<b>${fmt(getInstalledApps().length)}</b><span>Apps installiert</span>`},
+    designstore:{title:"Design Store",icon:"palette",cls:"w-pink",html:`<b>${esc((designById(localStorage.getItem("coinos_current_design"))||DESIGNS[0]).title)}</b><span>aktuelles Design</span>`},
+    chat:{title:"Chat",icon:"message",cls:"w-blue",html:`<b>💬</b><span>Nachrichten öffnen</span>`}
+  };
+  const all=[...layout.map(id=>builtins[id] ? {id,...builtins[id]} : (()=>{const a=installed.find(x=>x.id===id);return a&&a.widgetEnabled?{id:a.id,title:a.widgetTitle||a.title,icon:"widget",cls:"w-custom",html:`<b>${esc(a.widgetValue||"Widget")}</b><span>${esc(a.widgetText||a.title)}</span>`}:null})()).filter(Boolean)];
+  box.innerHTML=`<div class="widget-head"><h2>${icon("widget",20)} Widgets</h2><span class="muted small">Deine Übersicht</span></div><div class="widget-grid">${all.map(w=>`<button class="os-widget ${w.cls}" data-action="open-widget-app" data-app="${esc(w.id)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span></button>`).join("")}</div>`;
+}
+function renderDock(){
+  const builtin=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin());
+  const ids=Array.isArray(state.profile?.dockApps)&&state.profile.dockApps.length?state.profile.dockApps:builtin.map(([id])=>id).slice(0,8);
+  const apps=ids.map(id=>{const a=APPS[id]||state.apps.find(x=>x.id===id);return a?{id,a}:null}).filter(Boolean);
+  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${id}" title="${esc(a.title)}">${a.icon?icon(a.icon,26):thumbHTML(a.iconUrl,"globe",26)}${editMode?'<span class="dock-remove">−</span>':''}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button><button class="dock-btn dock-edit-btn" data-action="edit-home" title="Bearbeiten">${icon("pencil",22)}</button>`;
+}
+function editTileAction(el){if(!editMode)return openApp(el.dataset.app);const id=el.dataset.id||el.dataset.app;if(!id)return;if(APPS[id]){removeHomeApp(id);toast("App vom Homescreen entfernt.","success");}else{removeHomeApp(id);toast("App entfernt.","success");}}
+function removeDockApp(id){const ids=[...document.querySelectorAll('#dock [data-action="dock-open"]')].map(x=>x.dataset.app).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});renderDock();toast("App aus dem Dock entfernt.","success");}
+function addDockDialog(){const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];const available=[...Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>({id,title:a.title,icon:a.icon})),...state.apps.filter(a=>!current.includes(a.id)).map(a=>({id:a.id,title:a.title,icon:"widget"}))].filter(a=>!current.includes(a.id));const r=$("#widgetPicker");r.hidden=false;r.innerHTML=`<h2>App ins Dock</h2><p class="muted">Wähle eine App für die untere Leiste.</p><div class="widget-picker-grid">${available.map(a=>`<button class="widget-choice" data-action="choose-dock" data-id="${esc(a.id)}"><span class="widget-icon">${a.icon?icon(a.icon,22):icon("widget",22)}</span><span><b>${esc(a.title)}</b><small class="muted">Ins Dock aufnehmen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;}
+async function chooseDock(id){const ids=Array.isArray(state.profile?.dockApps)&&state.profile.dockApps.length?[...state.profile.dockApps]:Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id).slice(0,8);if(!ids.includes(id))ids.push(id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});closeWidgetPicker();toast("App ins Dock gelegt.","success");}
+function enterEdit(){editMode=true;document.body.classList.add("editing");document.documentElement.classList.add("edit-mode");renderDesktop();renderDock();}
+function exitEdit(){editMode=false;document.body.classList.remove("editing");document.documentElement.classList.remove("edit-mode");closeWidgetPicker();saveHomeLayout();renderDesktop();renderDock();}
+function saveHomeLayout(){if(!state.user)return;const pages=normalizedHomePages();const dock=[...$("#dock").querySelectorAll('[data-action="dock-open"]')].map(x=>x.dataset.app);updateDoc(doc(db,"users",state.user.uid),{homePages:pages,dockApps:dock}).catch(console.debug)}
+function addHomePage(){const pages=normalizedHomePages();pages.push([]);updateDoc(doc(db,"users",state.user.uid),{homePages:pages});currentHomePage=pages.length-1;renderDesktop()}
+function goPage(i){const pages=normalizedHomePages();currentHomePage=Math.max(0,Math.min(i,pages.length-1));renderDesktop()}
+function bindHomeGestures(){const v=$("#homeViewport");if(!v||v.dataset.bound)return;v.dataset.bound="1";v.addEventListener("pointerdown",e=>{homeTouchStartX=e.clientX;});v.addEventListener("pointerup",e=>{const dx=e.clientX-homeTouchStartX;if(Math.abs(dx)>55&&!editMode)goPage(currentHomePage+(dx<0?1:-1));});}
+function addWidgetDialog(){
+  const p=state.profile||{}; const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(a=>a&&a.widgetEnabled);
+  const choices=[{id:"konto",title:"Konto",icon:"wallet"},{id:"shop",title:"Shop",icon:"bag"},{id:"appstore",title:"App Store",icon:"store"},{id:"designstore",title:"Design Store",icon:"palette"},{id:"chat",title:"Chat",icon:"message"},...installed.map(a=>({id:a.id,title:a.widgetTitle||a.title,icon:"widget"}))];
+  const root=$("#widgetPicker");root.hidden=false;root.innerHTML=`<h2>Widgets hinzufügen</h2><p class="muted">Wähle ein Widget für deinen Homescreen.</p><div class="widget-picker-grid">${choices.map(c=>`<button class="widget-choice" data-action="choose-widget" data-id="${esc(c.id)}"><span class="widget-icon">${icon(c.icon,22)}</span><span><b>${esc(c.title)}</b><small class="muted">Zum Homescreen hinzufügen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
+}
+function closeWidgetPicker(){const r=$("#widgetPicker");if(r){r.hidden=true;r.innerHTML=""}}
+async function chooseWidget(id){const p=state.profile||{};const layout=Array.isArray(p.widgetLayout)?[...p.widgetLayout]:[];if(!layout.includes(id))layout.push(id);await updateDoc(doc(db,"users",state.user.uid),{widgetLayout:layout});closeWidgetPicker();toast("Widget hinzugefügt.","success")}
+function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));const nextPages=pages.map((p,i)=>i===0?p: p);updateDoc(doc(db,"users",state.user.uid),{homePages:nextPages});renderDesktop()}
+function removeWidget(id){const layout=(state.profile?.widgetLayout||[]).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{widgetLayout:layout});renderWidgets()}
+
+function tickClock() {
+  $("#clock").textContent = new Date().toLocaleString("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+setInterval(tickClock, 20000);
+tickClock();
+
+/* ---------------- App-Fenster ---------------- */
+function openApp(id) {
+  const app = APPS[id];
+  if (!app || (app.adminOnly && !isAdmin())) return;
+  state.openApp = id;
+  logUsageEvent("App geöffnet", app.title, id);
+  const root = document.documentElement.style;
+  root.setProperty("--accent", app.c1);
+  root.setProperty("--accent-2", app.c2);
+  $("#winTitle").innerHTML = `${icon(app.icon, 24)}<span class="t">${app.title}</span>`;
+  const body = $("#winBody");
+  body.innerHTML = "";
+  body.scrollTop = 0;
+  app.mount(body);
+  app.update();
+  const w = $("#window");
+  w.classList.add("open");
+  w.setAttribute("aria-hidden", "false");
+  renderDock();
+}
+
+function closeApp() {
+  state.openApp = null;
+  const root = document.documentElement.style;
+  root.removeProperty("--accent");
+  root.removeProperty("--accent-2");
+  const w = $("#window");
+  w.classList.remove("open");
+  w.setAttribute("aria-hidden", "true");
+  renderDock();
+}
+
+/* =========================================================
+   KONTO-APP
+   ========================================================= */
+function mountKonto(el) {
+  el.innerHTML = `
+    <section class="balance">
+      <div>
+        <div class="lbl">Dein Kontostand</div>
+        <div class="big"><i class="coin"></i><span id="kBalance">0</span></div>
+      </div>
+      <div class="stats" id="kStats"></div>
+    </section>
+    <div class="two-col">
+      <section class="panel"><h3>Letzte Käufe</h3><div id="kOrders"></div></section>
+      <section class="panel"><h3>Transaktionen</h3><div id="kTx"></div></section>
+    </div>`;
+}
+
+function updateKonto() {
+  const bal = Number(state.profile?.balance) || 0;
+  const spent = state.txs.filter(t => t.amount < 0).reduce((s, t) => s - t.amount, 0);
+  const open = state.orders.filter(o => o.status !== "geliefert").length;
+  $("#kBalance").textContent = fmt(bal);
+  $("#kStats").innerHTML = `
+    <div class="stat"><b>${fmt(spent)}</b><span>Coins ausgegeben</span></div>
+    <div class="stat"><b>${fmt(state.orders.length)}</b><span>Bestellungen</span></div>
+    <div class="stat"><b>${fmt(open)}</b><span>noch unterwegs</span></div>`;
+
+  $("#kOrders").innerHTML = state.orders.length ? state.orders.slice(0, 12).map(o => `
+    <div class="row">
+      <div class="grow"><b>${esc(o.itemTitle)}</b><span class="muted small">${fmtDate(o.timestamp)}</span></div>
+      <span class="badge st-${esc(o.status)}">${esc(STATUS[o.status] || o.status)}</span>
+      <span class="price">${COIN}${fmt(o.price)}</span>
+    </div>`).join("") : `<div class="empty">${icon("bag", 34)}Du hast noch nichts gekauft. Schau im Shop vorbei!</div>`;
+
+  $("#kTx").innerHTML = state.txs.length ? state.txs.map(t => `
+    <div class="row">
+      <div class="grow"><b>${esc(t.description || "Transaktion")}</b><span class="muted small">${fmtDate(t.timestamp)}</span></div>
+      <span class="amt ${t.amount >= 0 ? "plus" : "minus"}">${t.amount >= 0 ? "+" : "−"}${fmt(Math.abs(t.amount))}</span>
+    </div>`).join("") : `<div class="empty">${icon("receipt", 34)}Noch keine Bewegungen auf deinem Konto.</div>`;
+}
+
+/* ---------- Coins ausgeben (Basis für Spiele) ---------- */
+async function spendCoins(amount, description, type) {
+  const uid = state.user.uid;
+  const userRef = doc(db, "users", uid);
+  const txRef = doc(collection(db, "users", uid, "transactions"));
+  await runTransaction(db, async tx => {
+    const u = await tx.get(userRef);
+    const bal = Number(u.data()?.balance) || 0;
+    if (bal < amount) throw new AppError("Nicht genügend Coins.");
+    tx.update(userRef, { balance: bal - amount });
+    tx.set(txRef, { amount: -amount, type, description, timestamp: serverTimestamp() });
+  });
+}
+
+/* =========================================================
+   SHOP-APP
+   ========================================================= */
+function mountShop(el) {
+  el.innerHTML = `
+    <div class="toolbar">
+      <input class="search" id="shopSearch" type="search" placeholder="Artikel suchen" style="max-width:320px" aria-label="Artikel suchen">
+      <div class="chips" id="shopChips"></div>
+    </div>
+    <div id="shopGrid"></div>`;
+  const s = $("#shopSearch");
+  s.value = state.shopSearch;
+  s.addEventListener("input", () => { state.shopSearch = s.value; updateShopGrid(); });
+}
+
+function updateShop() {
+  const cats = ["Alle", ...new Set(state.items.map(i => i.category).filter(Boolean))];
+  if (!cats.includes(state.shopCat)) state.shopCat = "Alle";
+  $("#shopChips").innerHTML = cats.map(c => `<button class="chip ${c === state.shopCat ? "active" : ""}" data-action="shop-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  updateShopGrid();
+}
+
+function updateShopGrid() {
+  const q = state.shopSearch.trim().toLowerCase();
+  const list = state.items.filter(i =>
+    (state.shopCat === "Alle" || i.category === state.shopCat) &&
+    (!q || String(i.title).toLowerCase().includes(q)));
+  const bal = Number(state.profile?.balance) || 0;
+  $("#shopGrid").innerHTML = list.length ? `<div class="grid-items">${list.map(i => {
+    const stock = Number(i.stock) || 0;
+    const stockTxt = stock <= 0 ? "Ausverkauft" : stock <= 3 ? `Nur noch ${stock}` : `${stock} auf Lager`;
+    const stockCls = stock <= 0 ? "out" : stock <= 3 ? "low" : "";
+    return `
+      <article class="item">
+        <div class="thumb">${thumbHTML(i.imageUrl, "package", 44)}</div>
+        <div class="item-body">
+          ${i.category ? `<span class="muted small">${esc(i.category)}</span>` : ""}
+          <h4>${esc(i.title)}</h4>
+          <div class="item-foot"><span class="price">${COIN}${fmt(i.price)}</span><span class="stock ${stockCls}">${stockTxt}</span></div>
+          <button class="btn primary block" data-action="buy" data-id="${i.id}" ${stock <= 0 ? "disabled" : ""}>${stock <= 0 ? "Ausverkauft" : (bal < i.price ? "Zu wenig Coins" : "Kaufen")}</button>
+        </div>
+      </article>`;
+  }).join("")}</div>` : `<div class="empty">${icon("package", 40)}${state.items.length ? "Kein Artikel passt zu deiner Suche." : "Der Shop ist noch leer."}</div>`;
+}
+
+async function buyFlow(itemId) {
+  const it = state.items.find(i => i.id === itemId);
+  if (!it) throw new AppError("Dieser Artikel existiert nicht mehr.");
+  const price = Number(it.price) || 0;
+  const bal = Number(state.profile?.balance) || 0;
+  if ((Number(it.stock) || 0) <= 0) throw new AppError("Ausverkauft.");
+  if (bal < price) throw new AppError(`Nicht genügend Coins. Dir fehlen noch ${fmt(price - bal)}.`);
+  const ok = await confirmDialog({
+    title: `${it.title} kaufen?`,
+    text: `Der Kauf kostet ${fmt(price)} Coins. Danach hast du noch ${fmt(bal - price)} Coins.`,
+    confirmLabel: "Jetzt kaufen"
+  });
+  if (!ok) return;
+  await buyItem(itemId);
+  toast(`${it.title} ist bestellt.`, "success");
+  logUsageEvent("Shop-Kauf", `${it.title} · ${fmt(price)} Coins`, "shop");
+}
+
+async function buyItem(itemId) {
+  const uid = state.user.uid;
+  const userRef = doc(db, "users", uid);
+  const itemRef = doc(db, "items", itemId);
+  const orderRef = doc(collection(db, "orders"));
+  const txRef = doc(collection(db, "users", uid, "transactions"));
+  await runTransaction(db, async tx => {
+    const [u, i] = await Promise.all([tx.get(userRef), tx.get(itemRef)]);
+    if (!i.exists()) throw new AppError("Dieser Artikel existiert nicht mehr.");
+    const item = i.data();
+    const stock = Number(item.stock) || 0;
+    const price = Number(item.price) || 0;
+    const bal = Number(u.data()?.balance) || 0;
+    if (stock <= 0) throw new AppError("Ausverkauft.");
+    if (bal < price) throw new AppError("Nicht genügend Coins.");
+    tx.update(userRef, { balance: bal - price });
+    tx.update(itemRef, { stock: stock - 1 });
+    tx.set(orderRef, { userId: uid, itemId, itemTitle: item.title, price, timestamp: serverTimestamp(), status: "bestellt" });
+    tx.set(txRef, { amount: -price, type: "purchase", description: `Kauf: ${item.title}`, timestamp: serverTimestamp() });
+  });
+}
+
+/* =========================================================
+   APP-STORE
+   ========================================================= */
+function mountAppStore(el) {
+  el.innerHTML = `<div class="toolbar"><input class="search" id="appSearch" type="search" placeholder="Apps suchen" style="max-width:320px"><div class="chips" id="appChips"></div></div><div id="appStoreGrid"></div>`;
+  const s = $("#appSearch"); s.value = state.appSearch;
+  s.addEventListener("input", () => { state.appSearch = s.value; updateAppStoreGrid(); });
+}
+function updateAppStore() {
+  const cats = ["Alle", ...new Set(state.apps.map(a => a.category).filter(Boolean))];
+  if (!cats.includes(state.appCat)) state.appCat = "Alle";
+  $("#appChips").innerHTML = cats.map(c => `<button class="chip ${c === state.appCat ? "active" : ""}" data-action="app-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  updateAppStoreGrid();
+}
+function updateAppStoreGrid() {
+  const q = state.appSearch.trim().toLowerCase();
+  const list = state.apps.filter(a => (state.appCat === "Alle" || a.category === state.appCat) && (!q || String(a.title).toLowerCase().includes(q)) && a.hidden !== true);
+  $("#appStoreGrid").innerHTML = list.length ? `<div class="grid-games">${list.map(a => {
+    const installed = installedEntry(a.id); const active = isAppActive(a); const price = appPrice(a); const billing = appBilling(a);
+    const action = installed && active ? "installed" : installed ? "renew-app" : "install-app";
+    const label = installed && active ? "Installiert" : installed ? "Abo verlängern" : price > 0 ? "Installieren" : "Kostenlos installieren";
+    return `<article class="game"><div class="thumb">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${price > 0 ? `${fmt(price)} Coins ${billingLabel(a)}` : "Kostenlos"}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
+  }).join("")}</div>` : `<div class="empty">${icon("store",40)}${state.apps.length ? "Keine App passt zu deiner Suche." : "Der App Store ist noch leer."}</div>`;
+}
+async function installApp(id) {
+  const a = state.apps.find(x => x.id === id); if (!a) throw new AppError("Diese App gibt es nicht mehr.");
+  const price = appPrice(a), billing = appBilling(a), uid = state.user.uid, userRef = doc(db,"users",uid), txRef = doc(collection(db,"users",uid,"transactions"));
+  const current = installedEntry(id);
+  if (current && isAppActive(a)) return toast("Diese App ist bereits installiert.");
+  const ok = await confirmDialog({title:`${a.title} installieren?`, text: price > 0 ? `Die Installation kostet ${fmt(price)} Coins ${billingLabel(a)}.` : "Die Installation ist kostenlos.", confirmLabel: price > 0 ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren"});
+  if (!ok) return;
+  await runTransaction(db, async tx => {
+    const u = await tx.get(userRef); if (!u.exists()) throw new AppError("Nutzer nicht gefunden.");
+    const data = u.data(); const bal = Number(data.balance)||0; if (bal < price) throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);
+    const list = Array.isArray(data.installedApps) ? data.installedApps.map(x => typeof x === "string" ? {appId:x}:x).filter(Boolean) : [];
+    const now = Date.now(); let expiresAt = null; if (billing === "daily") expiresAt = new Date(now + 86400000); if (billing === "weekly") expiresAt = new Date(now + 7*86400000);
+    const entry = {appId:id, installedAt:new Date(now), expiresAt}; const next = list.filter(x => x.appId !== id); next.push(entry);
+    tx.update(userRef,{balance:bal-price,installedApps:next});
+    if (price > 0) tx.set(txRef,{amount:-price,type:"app_install",description:`App ${billing === "once" ? "gekauft" : "Abo bezahlt"}: ${a.title}`,timestamp:serverTimestamp()});
+  });
+  toast(price > 0 ? `${a.title} wurde installiert.` : `${a.title} wurde kostenlos installiert.`,"success");
+  logUsageEvent("App installiert", `${a.title}${price > 0 ? ` · ${fmt(price)} Coins` : " · kostenlos"}`, "appstore");
+}
+async function uninstallApp(id) {
+  const a = state.apps.find(x => x.id === id); if (!a) return;
+  if (!await confirmDialog({title:`${a.title} deinstallieren?`,text:"Die App verschwindet von deinem Homescreen. Ein bereits bezahlter Zeitraum wird nicht erstattet.",confirmLabel:"Deinstallieren",danger:true})) return;
+  const ref=doc(db,"users",state.user.uid); const snap=await getDoc(ref); if(!snap.exists()) return;
+  const next=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x).filter(x=>x.appId!==id);
+  await updateDoc(ref,{installedApps:next}); toast("App deinstalliert.","success");
+  logUsageEvent("App deinstalliert", a.title, "appstore");
+}
+async function moveInstalledApp(id, direction) {
+  const ref=doc(db,"users",state.user.uid); const snap=await getDoc(ref); if(!snap.exists()) return;
+  const list=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean);
+  const i=list.findIndex(x=>x.appId===id); if(i<0) return; const j=i+direction; if(j<0||j>=list.length) return;
+  [list[i],list[j]]=[list[j],list[i]]; await updateDoc(ref,{installedApps:list});
+}
+
+function openInstalledApp(id) {
+  const a=state.apps.find(x=>x.id===id); if(!a) return;
+  if(!isAppActive(a)){ toast("Das Abo dieser App ist abgelaufen. Verlängere es im App Store.","error"); openApp("appstore"); return; }
+  const url=safeUrl(a.targetUrl); if(!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
+  const w=window.open(url,"_blank","noopener"); if(!w) toast("Der Browser hat den neuen Tab blockiert. Bitte Pop-ups erlauben.","error");
+  logUsageEvent("Externe App geöffnet", a.title, a.id);
+}
+
+/* =========================================================
+   CHAT
+   ========================================================= */
+function chatIdFor(a,b){ return [a,b].sort().join("__"); }
+function chatName(u){ return u?.name || u?.email?.split("@")[0] || "Nutzer"; }
+function startChatListener(){
+  if(state.chatUnsub) { try{state.chatUnsub();}catch{} state.chatUnsub=null; }
+  if(!state.user || !state.chatUserId) return;
+  const cid=state.chatUserId==="official"?"official":chatIdFor(state.user.uid,state.chatUserId);
+  state.chatUnsub=onSnapshot(query(collection(db,"chats",cid,"messages"),orderBy("timestamp","asc"),limit(80)),snap=>{state.chatMessages=docs(snap);updateChatMessages();},onErr);
+}
+function selectChat(id){ state.chatUserId=id; startChatListener(); updateChat(); }
+function mountChat(el){
+  el.innerHTML=`<div class="chat-layout"><aside class="chat-list" id="chatList"></aside><section class="chat-main"><header class="chat-head" id="chatHead"></header><div class="chat-messages" id="chatMessages"></div><div class="chat-compose"><button class="btn" data-action="chat-image" title="Bild">${icon("image",18)}</button><button class="btn" data-action="chat-coins" title="Coins">${COIN}</button><textarea id="chatInput" placeholder="Nachricht schreiben…"></textarea><button class="btn primary" data-action="chat-send" title="Senden">${icon("send",18)}</button></div></section></div>`;
+  startChatListener();
+}
+function chatTarget(){ if(state.chatUserId==="official")return {id:"official",name:"Offizieller CoinOS-Chat",official:true}; const u=state.allUsers.find(x=>x.id===state.chatUserId); return u?{id:u.id,name:chatName(u)}:{id:"official",name:"Offizieller CoinOS-Chat",official:true}; }
+function updateChat(){
+  if(!$("#chatList"))return; const target=chatTarget();
+  const contacts=[{id:"official",name:"Offizieller CoinOS-Chat",official:true},...state.allUsers.filter(u=>u.id!==state.user?.uid)];
+  $("#chatList").innerHTML=contacts.map(u=>`<button class="chat-contact ${state.chatUserId===u.id?"active":""}" data-action="chat-select" data-id="${esc(u.id)}"><span class="avatar">${u.official?icon("shield",18):esc(chatName(u).charAt(0).toUpperCase())}</span><span class="grow"><b>${esc(u.name)}</b><span class="muted small">${u.official?"Systemnachrichten":"Mitglied"}</span></span></button>`).join("");
+  $("#chatHead").innerHTML=`${icon(target.official?"shield":"message",20)}<b>${esc(target.name)}</b>${target.official?`<span class="badge blue">Offiziell</span>`:""}`;
+  updateChatMessages();
+}
+function updateChatMessages(){
+  const box=$("#chatMessages"); if(!box)return;
+  const visible=state.chatUserId==="official" ? state.chatMessages.filter(m=>!m.userId || m.userId===state.user?.uid || isAdmin()) : state.chatMessages;
+  box.innerHTML=visible.length?visible.map(m=>{const mine=m.senderId===state.user?.uid;return `<div class="chat-bubble ${mine?"mine":""} ${m.type==="system"?"chat-official":""}"><b>${esc(m.senderName||"CoinOS")}</b>${m.text?`<div>${esc(m.text).replace(/\n/g,"<br>")}</div>`:""}${m.imageData?`<img src="${esc(m.imageData)}" alt="Bild">`:""}${m.coinAmount?`<div class="pill">${COIN}${fmt(m.coinAmount)} Coins</div>`:""}<div class="chat-meta">${m.timestamp?fmtDate(m.timestamp):"gerade eben"}</div></div>`}).join(""):`<div class="empty">${icon("message",38)}Noch keine Nachrichten.</div>`;
+  box.scrollTop=box.scrollHeight;
+}
+async function sendChatMessage(){
+  const input=$("#chatInput"); const text=input?.value.trim(); if(!text)return; const target=chatTarget(); const cid=target.official?"official":chatIdFor(state.user.uid,target.id);
+  await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),text,type:target.official?"user":"text",timestamp:serverTimestamp()});
+  input.value=""; logUsageEvent("Chat-Nachricht gesendet",target.name,"chat");
+}
+async function compressChatImage(file){if(!file||!file.type.startsWith("image/"))throw new AppError("Bitte ein Bild auswählen.");if(file.size>5*1024*1024)throw new AppError("Das Bild darf höchstens 5 MB groß sein.");const u=URL.createObjectURL(file);try{const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>j(new AppError("Bild konnte nicht gelesen werden."));i.src=u});const max=900,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.max(1,img.naturalWidth*scale);c.height=Math.max(1,img.naturalHeight*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.68);if(data.length>450000)throw new AppError("Das Bild ist noch zu groß. Bitte ein kleineres Bild verwenden.");return data}finally{URL.revokeObjectURL(u)}}
+async function sendChatImage(){
+  const input=document.createElement("input"); input.type="file"; input.accept="image/*"; input.onchange=async()=>{try{const data=await compressChatImage(input.files?.[0]);const target=chatTarget();const cid=target.official?"official":chatIdFor(state.user.uid,target.id);await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),type:"image",imageData:data,timestamp:serverTimestamp()});logUsageEvent("Chat-Bild gesendet",target.name,"chat");}catch(e){toast(errMsg(e),"error")}};input.click();
+}
+async function chatCoinsDialog(){
+  if(state.chatUserId==="official")throw new AppError("Coins können nur an ein Mitglied gesendet werden."); const u=state.allUsers.find(x=>x.id===state.chatUserId); if(!u)return;
+  showModal({title:`Coins an ${chatName(u)} senden`,fields:[{name:"amount",label:"Betrag",type:"number",min:1,required:true,placeholder:"z. B. 25"}],submitLabel:"Coins senden",onSubmit:async v=>{const amount=Math.floor(v.amount||0);if(amount<1)throw new AppError("Bitte einen Betrag eingeben.");const from=doc(db,"users",state.user.uid),to=doc(db,"users",u.id),txFrom=doc(collection(db,"users",state.user.uid,"transactions")),txTo=doc(collection(db,"users",u.id,"transactions"));await runTransaction(db,async tx=>{const a=await tx.get(from),b=await tx.get(to);if(!a.exists()||!b.exists())throw new AppError("Konto nicht gefunden.");const bal=Number(a.data().balance)||0;if(bal<amount)throw new AppError("Nicht genügend Coins.");tx.update(from,{balance:bal-amount});tx.update(to,{balance:(Number(b.data().balance)||0)+amount});tx.set(txFrom,{amount:-amount,type:"transfer",description:`An ${chatName(u)} gesendet`,timestamp:serverTimestamp()});tx.set(txTo,{amount,type:"transfer",description:`Von ${chatName(state.profile)} erhalten`,timestamp:serverTimestamp()});});const cid=chatIdFor(state.user.uid,u.id);await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),type:"coin",text:`🪙 ${fmt(amount)} Coins gesendet`,coinAmount:amount,timestamp:serverTimestamp()});toast(`${fmt(amount)} Coins gesendet.` ,"success");logUsageEvent("Coins im Chat gesendet",`${fmt(amount)} an ${chatName(u)}`,"chat");}});
+}
+async function toggleChatInvisible(){const next=!state.profile?.chatInvisible;await updateDoc(doc(db,"users",state.user.uid),{chatInvisible:next});toast(next?"Du bist im Chat jetzt unsichtbar.":"Du bist im Chat wieder sichtbar.","success");}
+async function officialMessageDialog(){showModal({title:"Offizielle Nachricht",fields:[{name:"text",label:"Nachricht",required:true,placeholder:"Nachricht an alle CoinOS-Mitglieder…"}],submitLabel:"Senden",onSubmit:async v=>{await addDoc(collection(db,"chats","official","messages"),{senderId:state.user.uid,senderName:"CoinOS",type:"system",text:v.text,timestamp:serverTimestamp()});toast("Offizielle Nachricht gesendet.","success");}})}
+
+/* Home-Screen Bearbeitung: lange drücken wie bei iOS */
+document.addEventListener("pointerdown",e=>{if(!osShown||e.target.closest("button,input,textarea,select,a"))return;longPressTimer=setTimeout(()=>enterEdit(),650);});
+document.addEventListener("pointerup",()=>{clearTimeout(longPressTimer);longPressTimer=null;});
+document.addEventListener("dragstart",e=>{if(!editMode)return;const t=e.target.closest(".tile,.dock-btn");if(t)e.dataTransfer.setData("text/plain",t.dataset.id||t.dataset.app||"");});
+document.addEventListener("dragover",e=>{if(editMode&&e.target.closest(".tile,.dock-btn"))e.preventDefault();});
+document.addEventListener("drop",async e=>{if(!editMode)return;const target=e.target.closest(".tile,.dock-btn");if(!target)return;e.preventDefault();const dragged=e.dataTransfer.getData("text/plain");if(!dragged)return;const tile=target.closest(".tile");if(tile){const pages=normalizedHomePages();const page=pages.find(p=>p.includes(dragged));if(page){const from=page.indexOf(dragged),to=page.indexOf(target.dataset.id||target.dataset.app);if(to>=0){page.splice(from,1);page.splice(to,0,dragged);await updateDoc(doc(db,"users",state.user.uid),{homePages:pages});renderDesktop();}}}else if(target.classList.contains("dock-btn")&&target.dataset.app){const ids=[...document.querySelectorAll('#dock [data-action="dock-open"]')].map(x=>x.dataset.app);const from=ids.indexOf(dragged),to=ids.indexOf(target.dataset.app);if(from>=0&&to>=0){ids.splice(from,1);ids.splice(to,0,dragged);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});renderDock();}}});
+document.addEventListener("click",e=>{if(!editMode)return;const tile=e.target.closest(".tile"),dock=e.target.closest('.dock-btn[data-action="dock-open"]');if(tile){const id=tile.dataset.id||tile.dataset.app;if(id&&!APPS[id]){removeHomeApp(id);toast("App vom Homescreen entfernt.","success");}}else if(dock){const id=dock.dataset.app;const ids=[...document.querySelectorAll('#dock [data-action="dock-open"]')].map(x=>x.dataset.app).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});renderDock();toast("App aus dem Dock entfernt.","success");}});
+
+/* =========================================================
+   DESIGN-STORE
+   ========================================================= */
+const DESIGNS = [
+  {id:"candy",title:"Candy Glow",desc:"Rosa, lila und blau – passend zum CoinOS-Look.",bg:"radial-gradient(900px 620px at 8% 8%,#ffc9e2 0%,transparent 62%),radial-gradient(800px 600px at 95% 12%,#c9e8ff 0%,transparent 60%),radial-gradient(900px 700px at 70% 105%,#ffe7b8 0%,transparent 58%),#f3e4ff"},
+  {id:"ocean",title:"Ocean",desc:"Kühler blau-türkiser Hintergrund.",bg:"radial-gradient(800px 600px at 15% 15%,#b9f2ff 0%,transparent 60%),radial-gradient(900px 700px at 90% 90%,#b8c9ff 0%,transparent 60%),#dff8ff"},
+  {id:"sunset",title:"Sunset",desc:"Warmer Sonnenuntergang.",bg:"radial-gradient(900px 650px at 80% 10%,#ffd0a8 0%,transparent 62%),radial-gradient(800px 650px at 10% 90%,#ffb7cf 0%,transparent 60%),#fff0d5"},
+  {id:"lavender",title:"Lavender",desc:"Ruhiges Lila mit weichen Flächen.",bg:"radial-gradient(900px 700px at 20% 20%,#e5d4ff 0%,transparent 60%),radial-gradient(900px 700px at 85% 85%,#cfc8ff 0%,transparent 60%),#f5f0ff"},
+  {id:"mint",title:"Mint Fresh",desc:"Frisches Mintgrün mit hellen Akzenten.",bg:"radial-gradient(850px 650px at 15% 20%,#b8ffe1 0%,transparent 60%),radial-gradient(900px 700px at 90% 85%,#bde8ff 0%,transparent 60%),#eafff5"},
+  {id:"midnight",title:"Midnight",desc:"Dunkler, eleganter Nacht-Look.",bg:"radial-gradient(900px 650px at 20% 15%,#334d9c 0%,transparent 62%),radial-gradient(900px 700px at 90% 90%,#6b3b9c 0%,transparent 58%),#101426"},
+  {id:"aurora",title:"Aurora",desc:"Leuchtende Polarlicht-Farben.",bg:"radial-gradient(850px 650px at 15% 20%,#72f0d0 0%,transparent 58%),radial-gradient(900px 700px at 90% 25%,#8f8cff 0%,transparent 55%),radial-gradient(800px 650px at 55% 100%,#ff86c8 0%,transparent 58%),#16213d"},
+  {id:"lemon",title:"Lemon Pop",desc:"Helles Gelb mit frischem Blau.",bg:"radial-gradient(900px 650px at 80% 10%,#fff39b 0%,transparent 60%),radial-gradient(850px 650px at 10% 90%,#a9eaff 0%,transparent 58%),#fffce3"},
+  {id:"coral",title:"Coral",desc:"Warme Korallentöne mit sanften Übergängen.",bg:"radial-gradient(900px 650px at 10% 15%,#ffb5a7 0%,transparent 60%),radial-gradient(850px 650px at 90% 90%,#ffd39a 0%,transparent 60%),#fff0e9"},
+  {id:"forest",title:"Forest",desc:"Ruhiges Grün mit tiefen Waldtönen.",bg:"radial-gradient(900px 650px at 15% 10%,#8be3b1 0%,transparent 58%),radial-gradient(900px 700px at 90% 90%,#416b5d 0%,transparent 60%),#dff4e7"},
+  {id:"berry",title:"Berry",desc:"Beerige Pink- und Violett-Töne.",bg:"radial-gradient(850px 650px at 10% 20%,#ff9ccf 0%,transparent 58%),radial-gradient(900px 700px at 90% 85%,#b28cff 0%,transparent 60%),#f6e9ff"},
+  {id:"skyline",title:"Skyline",desc:"Klarer Himmel mit urbanem Abendgefühl.",bg:"linear-gradient(160deg,#c9f0ff 0%,#8dc8ff 42%,#6c78c9 72%,#222745 100%)"},
+  {id:"peach",title:"Peach Cream",desc:"Weiche Pfirsichfarben für einen warmen Look.",bg:"radial-gradient(900px 650px at 80% 15%,#ffd6b8 0%,transparent 60%),radial-gradient(850px 650px at 15% 90%,#ffc2dc 0%,transparent 60%),#fff4eb"},
+  {id:"neon",title:"Neon Grid",desc:"Kräftiger Cyber-Look für den Homescreen.",bg:"linear-gradient(135deg,#10132a 0%,#20206b 48%,#0d6f75 100%)"}
+];
+
+function allDesigns(){ return [...DESIGNS, ...state.designs.filter(d=>!DESIGNS.some(x=>x.id===d.id))]; }
+function designById(id){ return allDesigns().find(x=>x.id===id); }
+function designPrice(d){ return Math.max(0, Math.floor(Number(d?.price)||0)); }
+function designOwned(d){ return designPrice(d)===0 || Array.isArray(state.profile?.ownedDesigns) && state.profile.ownedDesigns.includes(d.id); }
+function designBackground(d){ return d?.imageData ? `url("${d.imageData}") center/cover no-repeat` : d?.bg || "#eef1f7"; }
+function mountDesignStore(el){el.innerHTML=`<div class="toolbar"><span class="muted">Kostenlose und gekaufte Hintergründe für deinen CoinOS-Homescreen.</span></div><div id="designGrid" class="grid-items"></div>`;}
+function updateDesignStore(){
+  const current=localStorage.getItem("coinos_current_design")||"candy";
+  const designs=allDesigns().filter(d=>d.hidden!==true || designOwned(d));
+  $("#designGrid").innerHTML=designs.map(d=>{
+    const price=designPrice(d), owned=designOwned(d), active=current===d.id;
+    const label=active?"Aktiv":owned?"Anwenden":price>0?`Für ${fmt(price)} Coins kaufen`:"Herunterladen";
+    const action=active?"":owned?"apply-design":"buy-design";
+    return `<article class="item"><div class="thumb design-preview" style="${d.imageData?"background:#eee":`background:${d.bg||"#eef1f7"}`}" >${d.imageData?`<img src="${esc(d.imageData)}" alt="${esc(d.title)}" loading="lazy">`:``}</div><div class="item-body"><span class="muted small">${price>0?`${fmt(price)} Coins`:"Kostenlos"}</span><h4>${esc(d.title)}</h4><span class="muted small">${esc(d.desc||"")}</span><div class="game-actions"><button class="btn small" data-action="wishlist-toggle" data-id="${d.id}" title="Wunschliste">♥</button><button class="btn primary small" data-action="${action}" data-id="${d.id}" ${active?"disabled":""}>${active?icon("check",16):price>0&&!owned?COIN+fmt(price):icon("download",16)}${label}</button></div></div></article>`;
+  }).join("");
+}
+async function buyDesign(id){
+  const d=designById(id); if(!d) throw new AppError("Dieses Design gibt es nicht mehr.");
+  const price=designPrice(d); if(price<=0) return applyDesign(id);
+  if(designOwned(d)) return applyDesign(id);
+  const bal=Number(state.profile?.balance)||0;
+  if(bal<price) throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);
+  const ok=await confirmDialog({title:`${d.title} kaufen?`,text:`Das Design kostet ${fmt(price)} Coins und bleibt danach dauerhaft in deinen Designs.`,confirmLabel:`Für ${fmt(price)} Coins kaufen`});
+  if(!ok)return;
+  const userRef=doc(db,"users",state.user.uid), txRef=doc(collection(db,"users",state.user.uid,"transactions"));
+  await runTransaction(db,async tx=>{
+    const u=await tx.get(userRef); if(!u.exists())throw new AppError("Nutzer nicht gefunden.");
+    const data=u.data(), currentBal=Number(data.balance)||0; if(currentBal<price)throw new AppError("Nicht genügend Coins.");
+    const owned=Array.isArray(data.ownedDesigns)?data.ownedDesigns:[]; if(owned.includes(id))return;
+    tx.update(userRef,{balance:currentBal-price,ownedDesigns:[...owned,id]});
+    tx.update(doc(db,"designs",id),{sales:increment(1)});
+    tx.set(txRef,{amount:-price,type:"design_purchase",description:`Design gekauft: ${d.title}`,timestamp:serverTimestamp()});
+  });
+  toast(`${d.title} gehört jetzt dir.` ,"success"); logUsageEvent("Design gekauft",`${d.title} · ${fmt(price)} Coins`,"designstore"); updateDesignStore();
+}
+function downloadDesign(id){ const d=designById(id); if(!d)return; if(designPrice(d)>0&&!designOwned(d))return buyDesign(id); applyDesign(id); }
+function applyDesign(id){const d=designById(id);if(!d)return;if(!designOwned(d))return buyDesign(id);localStorage.setItem("coinos_current_design",id);$(".wallpaper").style.background=designBackground(d);toast(`${d.title} wurde angewendet.` ,"success");logUsageEvent("Design angewendet",d.title,"designstore");updateDesignStore();}
+function restoreDesign(){const id=localStorage.getItem("coinos_current_design")||"candy";const d=designById(id)||DESIGNS[0];const w=$(".wallpaper");if(w)w.style.background=designBackground(d);}
+restoreDesign();
+
+/* =========================================================
+   SPIELE-APP
+   ========================================================= */
+function mountSpiele(el) {
+  el.innerHTML = `<div id="gamesList"></div>`;
+}
+
+function updateSpiele() {
+  const games = state.apps.filter(a => a.isGame);
+  $("#gamesList").innerHTML = games.length ? `<div class="grid-games">${games.map(g => {
+    const cost = Number(g.requiredCoins) || 0;
+    return `
+      <article class="game">
+        <div class="thumb">${thumbHTML(g.iconUrl, "gamepad", 32)}</div>
+        <div class="grow">
+          <h4>${esc(g.title)}</h4>
+          <span class="muted small">${cost > 0 ? `Kostet ${fmt(cost)} Coins pro Start` : "Gratis"}</span>
+          <div class="game-actions">
+            <button class="btn primary small" data-action="play" data-id="${g.id}">${cost > 0 ? COIN : ""}Spielen</button>
+            <button class="btn small" data-action="play-tab" data-id="${g.id}" data-icon-inline aria-label="In neuem Tab öffnen">${icon("external", 16)}Neuer Tab</button>
+          </div>
+        </div>
+      </article>`;
+  }).join("")}</div>` : `<div class="empty">${icon("gamepad", 40)}Noch keine Spiele. Der Admin kann welche hinzufügen.</div>`;
+}
+
+async function startGame(id, mode) {
+  const a=state.apps.find(x=>x.id===id); if(!a) throw new AppError("Diese App gibt es nicht mehr.");
+  const url=safeUrl(a.targetUrl); if(!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
+  const w=window.open(url,"_blank","noopener"); if(!w) toast("Der Browser hat den neuen Tab blockiert. Bitte Pop-ups erlauben.","error");
+}
+
+function openGameFrame(a, url) {
+  $("#gameTitle").innerHTML = `${icon("gamepad", 22)}<span class="t">${esc(a.title)}</span>`;
+  $("#gameExternal").href = url;
+  $("#gameFrame").src = url;
+  $("#gameView").hidden = false;
+}
+
+function closeGameFrame() {
+  const v = $("#gameView");
+  if (!v) return;
+  v.hidden = true;
+  $("#gameFrame").src = "about:blank";
+}
+
+/* =========================================================
+   ADMIN-APP
+   ========================================================= */
+function mountAdmin(el) {
+  el.innerHTML = `<div class="tabbar" id="adminTabs"></div><div id="adminContent"></div>`;
+}
+
+function updateAdmin() {
+  if (!isAdmin()) return;
+  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Apps", "store"], ["designs", "Designs", "palette"], ["orders", "Bestellungen", "list"], ["chat", "Chat", "message"]];
+  $("#adminTabs").innerHTML = tabs.map(([id, label, ic]) =>
+    `<button class="chip ${state.adminTab === id ? "active" : ""}" data-action="admin-tab" data-tab="${id}">${icon(ic, 16)}${label}</button>`).join("");
+  const views = { users: adminUsers, items: adminItems, apps: adminApps, designs: adminDesigns, orders: adminOrders, chat: adminChatSettings };
+  $("#adminContent").innerHTML = views[state.adminTab]();
+}
+
+function adminUsers() {
+  const day=usageDateKey();
+  const totalToday=state.allUsers.reduce((n,u)=>n+(u.usage?.date===day?Number(u.usage?.totalSeconds)||0:0),0);
+  return `
+    <div class="toolbar"><button class="btn primary" data-action="user-new">${icon("plus", 18)}Nutzer anlegen</button><button class="btn" data-action="toggle-invisible">${state.profile?.chatInvisible?icon("eyeoff",16)+"Chat unsichtbar: AN":"Chat sichtbar: AN"}</button><span class="muted">Heute zusammen: <b>${Math.round(totalToday/60)} Min.</b></span></div>
+    ${state.allUsers.length ? state.allUsers.map(u => {
+      const mins=u.usage?.date===day?Math.round((Number(u.usage?.totalSeconds)||0)/60):0;
+      return `<div class="row">
+        <span class="avatar">${esc((u.name || u.email || "?").charAt(0).toUpperCase())}</span>
+        <div class="grow"><b>${esc(u.name || "Ohne Namen")}</b><span class="muted small">${esc(u.email)} · heute ${mins} Min. aktiv</span></div>
+        <span class="badge ${u.role === "admin" ? "red" : "blue"}">${u.role === "admin" ? "Admin" : "Nutzer"}</span>
+        <span class="pill">${COIN}${fmt(u.balance)}</span>
+        <button class="btn small" data-action="user-details" data-id="${u.id}">Aktivität</button><button class="btn small" data-action="coins" data-id="${u.id}">Coins ändern</button>
+      </div>`;
+    }).join("") : `<div class="empty">${icon("user", 36)}Noch keine Nutzer.</div>`}`;
+}
+function adminChatSettings(){
+  const hidden=!!state.profile?.chatInvisible;
+  return `<section class="panel"><h3>${icon("message",18)} Offizieller CoinOS-Chat</h3><p class="muted">Nachrichten an alle Nutzer und automatische Paketmeldungen verwalten.</p><div class="toolbar"><button class="btn primary" data-action="official-message">${icon("send",16)} Nachricht an alle</button><button class="btn" data-action="toggle-invisible">${hidden?icon("eyeoff",16)+"Unsichtbar: AN":"Unsichtbar: AUS"}</button></div></section>`;
+}
+
+function adminItems() {
+  return `
+    <div class="toolbar">
+      <button class="btn primary" data-action="item-new">${icon("plus", 18)}Neuer Artikel</button>
+      ${state.items.length ? "" : `<button class="btn" data-action="seed">Beispiel-Süßigkeiten anlegen</button>`}
+    </div>
+    ${state.items.length ? state.items.map(i => `
+      <div class="row">
+        <div class="thumb">${thumbHTML(i.imageUrl, "package", 22)}</div>
+        <div class="grow"><b>${esc(i.title)}</b><span class="muted small">${esc(i.category || "Ohne Kategorie")}, Bestand ${fmt(i.stock)}</span></div>
+        <span class="price">${COIN}${fmt(i.price)}</span>
+        <button class="btn small" data-action="item-edit" data-id="${i.id}" aria-label="Bearbeiten">${icon("pencil", 16)}</button>
+        <button class="btn small" data-action="item-del" data-id="${i.id}" aria-label="Löschen">${icon("trash", 16)}</button>
+      </div>`).join("") : `<div class="empty">${icon("package", 36)}Noch keine Artikel im Shop.</div>`}`;
+}
+
+function adminApps() {
+  const installs = id => state.allUsers.reduce((n,u)=>n+(Array.isArray(u.installedApps)?u.installedApps.some(x=>(typeof x==="string"?x:x?.appId)===id):0),0);
+  return `
+    <div class="toolbar"><button class="btn primary" data-action="app-new">${icon("plus",18)}Neue App</button></div>
+    ${state.apps.length ? state.apps.map(a=>`<div class="row"><div class="thumb">${thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",22)}</div><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${esc(a.category||"Ohne Kategorie")} · ${appPrice(a)>0?`${fmt(appPrice(a))} Coins ${billingLabel(a)}`:"Kostenlos"} · ${fmt(installs(a.id))} Installationen</span></div><button class="btn small" data-action="app-edit" data-id="${a.id}" aria-label="Bearbeiten">${icon("pencil",16)}</button><button class="btn small" data-action="app-del" data-id="${a.id}" aria-label="Löschen">${icon("trash",16)}</button></div>`).join("") : `<div class="empty">${icon("store",36)}Noch keine Apps.</div>`}`;
+}
+
+function adminDesigns() {
+  return `<div class="toolbar"><button class="btn primary" data-action="design-new">${icon("plus",18)}Eigenen Hintergrund hochladen</button></div>
+    ${state.designs.length ? state.designs.map(d=>`<div class="row"><div class="thumb design-preview" style="${d.imageData?"background:#eee":`background:${d.bg||"#eef1f7"}`}" >${d.imageData?`<img src="${esc(d.imageData)}" alt="${esc(d.title)}" loading="lazy">`:``}</div><div class="grow"><b>${esc(d.title)}</b><span class="muted small">${designPrice(d)>0?`${fmt(designPrice(d))} Coins`:'Kostenlos'} · ${fmt(Number(d.sales)||0)} Verkäufe</span></div><button class="btn small" data-action="design-edit" data-id="${d.id}" aria-label="Bearbeiten">${icon("pencil",16)}</button><button class="btn small" data-action="design-del" data-id="${d.id}" aria-label="Löschen">${icon("trash",16)}</button></div>`).join("") : `<div class="empty">${icon("palette",36)}Noch keine eigenen Designs hochgeladen.</div>`}`;
+}
+
+async function compressDesignFile(file) {
+  if (!file || !file.type.startsWith("image/")) throw new AppError("Bitte eine Bilddatei auswählen.");
+  if (file.size > 8*1024*1024) throw new AppError("Das Bild darf vor der Komprimierung höchstens 8 MB groß sein.");
+  const url=URL.createObjectURL(file);
+  try {
+    const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new AppError("Das Bild konnte nicht gelesen werden."));i.src=url;});
+    const max=1600, scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement("canvas"); c.width=Math.max(1,Math.round(img.naturalWidth*scale)); c.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    const ctx=c.getContext("2d"); ctx.drawImage(img,0,0,c.width,c.height);
+    const data= c.toDataURL("image/jpeg",0.72);
+    if(data.length>900000) throw new AppError("Das Bild ist auch nach der Komprimierung noch zu groß. Bitte ein einfacheres Bild verwenden.");
+    return data;
+  } finally { URL.revokeObjectURL(url); }
+}
+function designDialog(id) {
+  const d=id?state.designs.find(x=>x.id===id):null;
+  showModal({title:d?"Design bearbeiten":"Eigenen Hintergrund hochladen",submitLabel:d?"Speichern":"Veröffentlichen",fields:[
+    {name:"title",label:"Name",required:true,value:d?.title,placeholder:"z. B. Space Neon"},
+    {name:"desc",label:"Beschreibung",value:d?.desc,placeholder:"Kurze Beschreibung"},
+    {name:"price",label:"Preis in Coins",type:"number",min:0,value:d?.price??0},
+    {name:"image",label:d?"Neues Bild (optional)":"Bilddatei",type:"file",required:!d},
+    {name:"hidden",label:"Im Design Store verstecken",type:"checkbox",value:d?!!d.hidden:false}
+  ],onSubmit:async v=>{
+    let imageData=d?.imageData||"";
+    if(v.image) imageData=await compressDesignFile(v.image);
+    if(!imageData) throw new AppError("Bitte ein Hintergrundbild auswählen.");
+    const data={title:v.title,desc:v.desc||"",price:Math.max(0,Math.floor(v.price)||0),imageData,hidden:!!v.hidden,updatedAt:serverTimestamp()};
+    if(d) await updateDoc(doc(db,"designs",id),data); else await addDoc(collection(db,"designs"),{...data,sales:0,createdAt:serverTimestamp()});
+    toast(d?"Design gespeichert.":"Design veröffentlicht.","success");
+  }});
+}
+async function designDelete(id){const d=state.designs.find(x=>x.id===id);if(!d)return;if(await confirmDialog({title:`${d.title} löschen?`,text:"Das Design wird aus dem Design Store entfernt. Bereits gekaufte Designs bleiben im Besitz der Nutzer.",confirmLabel:"Löschen",danger:true})){await deleteDoc(doc(db,"designs",id));toast("Design gelöscht.","success");}}
+
+function adminOrders() {
+  const f = state.orderFilter;
+  const list = state.allOrders.filter(o => f === "alle" || o.status === f);
+  const chips = [["alle", "Alle"], ...Object.entries(STATUS)].map(([k, v]) =>
+    `<button class="chip ${f === k ? "active" : ""}" data-action="order-filter" data-status="${k}">${v}</button>`).join("");
+  return `
+    <div class="toolbar"><div class="chips">${chips}</div></div>
+    ${list.length ? list.map(o => {
+      const u = state.allUsers.find(x => x.id === o.userId);
+      return `
+      <div class="row">
+        <div class="grow"><b>${esc(o.itemTitle)}</b><span class="muted small">${esc(u?.name || u?.email || o.userId)}, ${fmtDate(o.timestamp)}</span></div>
+        <span class="price">${COIN}${fmt(o.price)}</span>
+        <select data-change="order-status" data-id="${o.id}" aria-label="Status">
+          ${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${o.status === k ? "selected" : ""}>${v}</option>`).join("")}
+        </select>
+      </div>`;
+    }).join("") : `<div class="empty">${icon("list", 36)}Keine Bestellungen in dieser Ansicht.</div>`}`;
+}
+
+/* ---------- Admin-Aktionen ---------- */
+async function adjustCoins(uid, delta, reason) {
+  const ref = doc(db, "users", uid);
+  const txRef = doc(collection(db, "users", uid, "transactions"));
+  await runTransaction(db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists()) throw new AppError("Nutzer nicht gefunden.");
+    const bal = Number(s.data().balance) || 0;
+    if (bal + delta < 0) throw new AppError(`Das Guthaben kann nicht unter 0 fallen (aktuell ${fmt(bal)} Coins).`);
+    tx.update(ref, { balance: bal + delta });
+    tx.set(txRef, { amount: delta, type: "admin", description: reason || (delta > 0 ? "Gutschrift vom Admin" : "Abzug vom Admin"), timestamp: serverTimestamp() });
+  });
+}
+
+function coinsDialog(uid) {
+  const u = state.allUsers.find(x => x.id === uid);
+  if (!u) throw new AppError("Nutzer nicht gefunden.");
+  showModal({
+    title: `Coins ändern: ${u.name || u.email}`,
+    text: `Aktuell ${fmt(u.balance)} Coins.`,
+    submitLabel: "Speichern",
+    fields: [
+      { name: "mode", label: "Aktion", type: "select", value: "add", options: [{ value: "add", label: "Coins hinzufügen" }, { value: "sub", label: "Coins abziehen" }] },
+      { name: "amount", label: "Anzahl", type: "number", min: 1, value: 10, required: true },
+      { name: "reason", label: "Grund (optional)", placeholder: "z. B. Taschengeld" }
+    ],
+    onSubmit: async v => {
+      const n = Math.floor(v.amount);
+      if (!(n > 0)) throw new AppError("Bitte eine Anzahl größer als 0 eingeben.");
+      await adjustCoins(uid, v.mode === "sub" ? -n : n, v.reason);
+      toast(`${v.mode === "sub" ? "Abgezogen" : "Hinzugefügt"}: ${fmt(n)} Coins.`, "success");
+    }
+  });
+}
+
+let secondaryAuth = null;
+function userNewDialog() {
+  showModal({
+    title: "Nutzer anlegen",
+    text: "Das neue Konto startet mit " + START_BALANCE + " Coins. Du bleibst als Admin angemeldet.",
+    submitLabel: "Konto erstellen",
+    fields: [
+      { name: "name", label: "Name", required: true },
+      { name: "email", label: "E-Mail", type: "email", required: true },
+      { name: "password", label: "Passwort (mind. 6 Zeichen)", type: "text", required: true }
+    ],
+    onSubmit: async v => {
+      if (v.password.length < 6) throw new AppError("Das Passwort braucht mindestens 6 Zeichen.");
+      if (!secondaryAuth) secondaryAuth = getAuth(initializeApp(firebaseConfig, "secondary"));
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, v.email, v.password);
+      try {
+        await setDoc(doc(db, "users", cred.user.uid), { email: v.email, role: "user", name: v.name, balance: START_BALANCE });
+      } finally {
+        await signOut(secondaryAuth);
+      }
+      toast(`${v.name} wurde angelegt.`, "success");
+    }
+  });
+}
+
+function validateItem(v) {
+  if (!v.title) throw new AppError("Bitte einen Titel eingeben.");
+  const price = Math.floor(v.price), stock = Math.floor(v.stock);
+  if (!(price >= 0)) throw new AppError("Der Preis muss 0 oder größer sein.");
+  if (!(stock >= 0)) throw new AppError("Der Bestand muss 0 oder größer sein.");
+  if (v.imageUrl && !safeUrl(v.imageUrl)) throw new AppError("Bitte eine gültige Bild-URL mit https:// angeben.");
+  return { title: v.title, price, stock, category: v.category, imageUrl: v.imageUrl ? safeUrl(v.imageUrl) : "" };
+}
+
+function itemDialog(id) {
+  const it = id ? state.items.find(i => i.id === id) : null;
+  showModal({
+    title: it ? "Artikel bearbeiten" : "Neuer Artikel",
+    submitLabel: it ? "Änderungen speichern" : "Artikel anlegen",
+    fields: [
+      { name: "title", label: "Titel", required: true, value: it?.title },
+      { name: "price", label: "Preis in Coins", type: "number", min: 0, required: true, value: it?.price ?? 5 },
+      { name: "stock", label: "Bestand", type: "number", min: 0, required: true, value: it?.stock ?? 10 },
+      { name: "category", label: "Kategorie", value: it?.category ?? "Süßigkeiten" },
+      { name: "imageUrl", label: "Bild-URL", type: "url", value: it?.imageUrl, placeholder: "https://…" }
+    ],
+    onSubmit: async v => {
+      const data = validateItem(v);
+      if (it) await updateDoc(doc(db, "items", id), data);
+      else await addDoc(collection(db, "items"), data);
+      toast(it ? "Artikel gespeichert." : "Artikel angelegt.", "success");
+    }
+  });
+}
+
+async function itemDelete(id) {
+  const it = state.items.find(i => i.id === id);
+  if (!it) return;
+  if (await confirmDialog({ title: `${it.title} löschen?`, text: "Der Artikel verschwindet aus dem Shop. Bestehende Bestellungen bleiben erhalten.", confirmLabel: "Löschen", danger: true })) {
+    await deleteDoc(doc(db, "items", id));
+    toast("Artikel gelöscht.", "success");
+  }
+}
+
+async function seedItems() {
+  const demo = [["Gummibärchen", 8, 20], ["Schokoriegel", 10, 15], ["Lakritz", 6, 12], ["Brausestäbchen", 4, 30], ["Lolli", 3, 40], ["Kaugummi", 2, 50]];
+  const batch = writeBatch(db);
+  demo.forEach(([title, price, stock]) => batch.set(doc(collection(db, "items")), { title, price, stock, category: "Süßigkeiten", imageUrl: "" }));
+  await batch.commit();
+  toast("Beispiel-Artikel angelegt.", "success");
+}
+
+function appDialog(id) {
+  const a=id?state.apps.find(x=>x.id===id):null;
+  showModal({title:a?"App bearbeiten":"Neue App",submitLabel:a?"Änderungen speichern":"App anlegen",fields:[
+    {name:"title",label:"Titel",required:true,value:a?.title},
+    {name:"targetUrl",label:"Ziel-URL",type:"url",required:true,value:a?.targetUrl,placeholder:"https://…"},
+    {name:"iconUrl",label:"Icon-URL",type:"url",value:a?.iconUrl,placeholder:"https://…"},
+    {name:"category",label:"Kategorie",value:a?.category??"Spiele"},
+    {name:"price",label:"Preis in Coins",type:"number",min:0,value:a?.price??a?.requiredCoins??0},
+    {name:"billing",label:"Preisart",type:"select",value:a?.billing??"once",options:[{value:"once",label:"Einmalig beim Installieren"},{value:"daily",label:"Tägliches Abo – 24 Stunden"},{value:"weekly",label:"Wöchentliches Abo – 7 Tage"}]},
+    {name:"widgetEnabled",label:"Widget für diese App anbieten",type:"checkbox",value:a?!!a.widgetEnabled:false},
+    {name:"widgetTitle",label:"Widget-Titel",value:a?.widgetTitle??"",placeholder:"z. B. Schnellzugriff"},
+    {name:"widgetValue",label:"Widget-Hauptwert",value:a?.widgetValue??"",placeholder:"z. B. Neu!"},
+    {name:"widgetText",label:"Widget-Untertitel",value:a?.widgetText??"",placeholder:"Kurzer Text"},
+    {name:"isGame",label:"Ist ein Spiel",type:"checkbox",value:a?!!a.isGame:true},
+    {name:"hidden",label:"Im App Store verstecken",type:"checkbox",value:a?!!a.hidden:false}
+  ],onSubmit:async v=>{
+    if(!v.title)throw new AppError("Bitte einen Titel eingeben.");
+    if(!safeUrl(v.targetUrl))throw new AppError("Bitte eine gültige Ziel-URL mit https:// angeben.");
+    if(v.iconUrl&&!safeUrl(v.iconUrl))throw new AppError("Bitte eine gültige Icon-URL mit https:// angeben.");
+    const price=Math.max(0,Math.floor(v.price)||0);
+    const data={title:v.title,targetUrl:safeUrl(v.targetUrl),iconUrl:v.iconUrl?safeUrl(v.iconUrl):"",category:v.category||"Sonstiges",price,billing:v.billing||"once",requiredCoins:price,widgetEnabled:!!v.widgetEnabled,widgetTitle:v.widgetTitle||v.title,widgetValue:v.widgetValue||"Öffnen",widgetText:v.widgetText||"App-Widget",isGame:!!v.isGame,hidden:!!v.hidden};
+    if(a)await updateDoc(doc(db,"apps",id),data);else await addDoc(collection(db,"apps"),data);
+    toast(a?"App gespeichert.":"App angelegt.","success");
+  }});
+}
+
+async function appDelete(id) {
+  const a = state.apps.find(x => x.id === id);
+  if (!a) return;
+  if (await confirmDialog({ title: `${a.title} löschen?`, text: "Der Eintrag wird für alle entfernt.", confirmLabel: "Löschen", danger: true })) {
+    await deleteDoc(doc(db, "apps", id));
+    toast("Eintrag gelöscht.", "success");
+  }
+}
+
+/* =========================================================
+   Modal & Toast
+   ========================================================= */
+let modalCloseCb = null;
+
+function fieldHTML(f) {
+  if (f.type === "file") return `<label class="field"><span>${esc(f.label)}</span><input name="${f.name}" type="file" accept="image/*" ${f.required ? "required" : ""}></label>`;
+  if (f.type === "checkbox") return `<label class="check"><input type="checkbox" name="${f.name}" ${f.value ? "checked" : ""}><span>${esc(f.label)}</span></label>`;
+  if (f.type === "select") return `<label class="field"><span>${esc(f.label)}</span><select name="${f.name}">${f.options.map(o => `<option value="${esc(o.value)}" ${o.value === f.value ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>`;
+  const num = f.type === "number" ? `min="${f.min ?? 0}" step="${f.step ?? 1}"` : "";
+  return `<label class="field"><span>${esc(f.label)}</span><input name="${f.name}" type="${f.type || "text"}" value="${esc(f.value ?? "")}" placeholder="${esc(f.placeholder || "")}" ${num} ${f.required ? "required" : ""} autocomplete="off"></label>`;
+}
+
+function readForm(form, fields) {
+  const out = {};
+  for (const f of fields) {
+    const el = form.elements[f.name];
+    if (f.type === "checkbox") out[f.name] = el.checked;
+    else if (f.type === "number") out[f.name] = Number(el.value);
+    else if (f.type === "file") out[f.name] = el.files?.[0] || null;
+    else out[f.name] = el.value.trim();
+  }
+  return out;
+}
+
+function showModal({ title, text = "", fields = [], submitLabel = "Speichern", danger = false, onSubmit, onClose }) {
+  closeModal();
+  modalCloseCb = onClose || null;
+  $("#modalRoot").innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <h3>${esc(title)}</h3>
+        ${text ? `<p class="muted modal-text">${esc(text)}</p>` : ""}
+        <form id="modalForm">
+          ${fields.map(fieldHTML).join("")}
+          <p class="form-error" id="modalError" hidden></p>
+          <div class="modal-actions">
+            <button type="button" class="btn ghost" data-action="close-modal">Abbrechen</button>
+            <button type="submit" class="btn ${danger ? "danger" : "primary"}">${esc(submitLabel)}</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+  const form = $("#modalForm");
+  const first = form.querySelector("input,select");
+  (first || form.querySelector("button[type=submit]")).focus();
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true;
+    try {
+      await onSubmit(readForm(form, fields));
+      closeModal();
+    } catch (ex) {
+      console.error(ex);
+      const box = $("#modalError");
+      if (box) { box.textContent = errMsg(ex); box.hidden = false; }
+      btn.disabled = false;
+    }
+  });
+}
+
+function closeModal() {
+  const root = $("#modalRoot");
+  if (!root || !root.innerHTML) return;
+  root.innerHTML = "";
+  const cb = modalCloseCb;
+  modalCloseCb = null;
+  if (cb) cb();
+}
+
+function confirmDialog({ title, text, confirmLabel = "Bestätigen", danger = false }) {
+  return new Promise(resolve => {
+    let done = false;
+    showModal({
+      title, text, submitLabel: confirmLabel, danger,
+      onSubmit: async () => { done = true; resolve(true); },
+      onClose: () => { if (!done) resolve(false); }
+    });
+  });
+}
+
+function showNotifications(){
+  const notes=[];state.orders.slice(0,8).forEach(o=>notes.push({id:"order_"+o.id,t:`📦 ${o.itemTitle}`,d:STATUS[o.status]||o.status}));state.txs.slice(0,10).forEach(t=>notes.push({id:"tx_"+t.id,t:`${Number(t.amount)>=0?"🪙":"💸"} ${t.description||"Transaktion"}`,d:`${Number(t.amount)>=0?"+":""}${fmt(t.amount)} Coins`}));
+  const read=JSON.parse(localStorage.getItem("coinos_read_notifications")||"[]");
+  const panel=$("#notificationPanel");panel.hidden=false;panel.innerHTML=`<div class="widget-head"><h2>🔔 Benachrichtigungen</h2><button class="btn small" data-action="close-notifications">Schließen</button></div>${notes.length?notes.map(n=>`<div class="notification-item ${read.includes(n.id)?"read":""}"><b>${esc(n.t)}</b><div class="muted small">${esc(n.d)}</div></div>`).join(""):"<p class=\"muted\">Keine Benachrichtigungen.</p>"}<div class="modal-actions"><button class="btn small" data-action="read-notifications">Als gelesen markieren</button></div>`;
+}
+function closeNotifications(){const p=$("#notificationPanel");if(p)p.hidden=true}
+function readNotifications(){const ids=[];$("#notificationPanel")?.querySelectorAll(".notification-item").forEach((e,i)=>{});const notes=[];state.orders.slice(0,8).forEach(o=>notes.push("order_"+o.id));state.txs.slice(0,10).forEach(t=>notes.push("tx_"+t.id));localStorage.setItem("coinos_read_notifications",JSON.stringify(notes));showNotifications();}
+
+
+function toast(msg, type = "info") {
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  t.textContent = msg;
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.remove(), type === "error" ? 5500 : 3200);
+}
+
+/* =========================================================
+   Event-Delegation
+   ========================================================= */
+const actions = {
+  "auth-tab": el => setAuthMode(el.dataset.tab),
+  "reset-pw": resetPassword,
+  "toggle-profile": () => { const m = $("#profileMenu"); m.hidden = !m.hidden; },
+  "notifications": showNotifications, "close-notifications": closeNotifications, "read-notifications": readNotifications,
+  "edit-home": enterEdit, "add-dock": addDockDialog, "choose-dock": el=>chooseDock(el.dataset.id), "exit-edit": exitEdit, "add-widget": addWidgetDialog, "close-widget-picker": closeWidgetPicker, "choose-widget": el=>chooseWidget(el.dataset.id), "add-home-page": addHomePage, "page": el=>goPage(Number(el.dataset.page)), "dock-open": el=>editMode ? (removeDockApp(el.dataset.app)) : openApp(el.dataset.app), "open-widget-app": el=>openApp(el.dataset.app),
+  "theme": el => applyTheme(el.dataset.theme),
+  "wishlist-toggle": el => toggleWishlist(el.dataset.id),
+  "new-folder": newFolderDialog,
+  "open-folder": el => openFolder(el.dataset.id),
+  "logout": () => signOut(auth),
+  "open-app": el => editMode ? editTileAction(el) : openApp(el.dataset.app),
+  "home": closeApp,
+  "open-link": el => openInstalledApp(el.dataset.id),
+  "open-installed": el => editMode ? editTileAction(el) : openInstalledApp(el.dataset.id),
+  "install-app": el => installApp(el.dataset.id),
+  "renew-app": el => installApp(el.dataset.id),
+  "uninstall-app": el => uninstallApp(el.dataset.id),
+  "move-app-up": el => moveInstalledApp(el.dataset.id, -1),
+  "move-app-down": el => moveInstalledApp(el.dataset.id, 1),
+  "app-cat": el => { state.appCat = el.dataset.cat; updateAppStore(); },
+  "download-design": el => downloadDesign(el.dataset.id),
+  "apply-design": el => applyDesign(el.dataset.id),
+  "buy-design": el => buyDesign(el.dataset.id),
+  "play": el => startGame(el.dataset.id, "tab"),
+  "play-tab": el => startGame(el.dataset.id, "tab"),
+  "close-frame": closeGameFrame,
+  "frame-home": () => { closeGameFrame(); closeApp(); },
+  "close-modal": closeModal,
+  "buy": el => buyFlow(el.dataset.id),
+  "shop-cat": el => { state.shopCat = el.dataset.cat; updateShop(); },
+  "admin-tab": el => { state.adminTab = el.dataset.tab; updateAdmin(); },
+  "coins": el => coinsDialog(el.dataset.id),
+  "user-details": el => adminUserDetails(el.dataset.id),
+  "user-new": userNewDialog,
+  "item-new": () => itemDialog(),
+  "item-edit": el => itemDialog(el.dataset.id),
+  "item-del": el => itemDelete(el.dataset.id),
+  "seed": seedItems,
+  "app-new": () => appDialog(),
+  "app-edit": el => appDialog(el.dataset.id),
+  "app-del": el => appDelete(el.dataset.id),
+  "design-new": () => designDialog(),
+  "design-edit": el => designDialog(el.dataset.id),
+  "design-del": el => designDelete(el.dataset.id),
+  "order-filter": el => { state.orderFilter = el.dataset.status; updateAdmin(); },
+  "toggle-invisible": toggleChatInvisible,
+  "official-message": officialMessageDialog,
+  "chat-select": el => { selectChat(el.dataset.id); },
+  "chat-send": sendChatMessage,
+  "chat-image": sendChatImage,
+  "chat-coins": chatCoinsDialog,
+  "chat-open": el => { state.chatUserId=el.dataset.id; openApp("chat"); }
+};
+
+document.addEventListener("click", async e => {
+  const menu = $("#profileMenu");
+  if (menu && !menu.hidden && !e.target.closest("#profileWrap")) menu.hidden = true;
+  if (e.target.classList?.contains("modal-backdrop")) return closeModal();
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const fn = actions[el.dataset.action];
+  if (!fn) return;
+  try { await fn(el); }
+  catch (err) { console.error(err); toast(errMsg(err), "error"); }
+});
+
+document.addEventListener("change", async e => {
+  const el = e.target.closest("[data-change]");
+  if (!el || el.dataset.change !== "order-status") return;
+  try {
+    const order=state.allOrders.find(o=>o.id===el.dataset.id);
+    await updateDoc(doc(db, "orders", el.dataset.id), { status: el.value });
+    if(el.value==="geliefert" && order && order.status!=="geliefert"){ await addDoc(collection(db,"chats","official","messages"),{senderId:"system",senderName:"CoinOS",type:"system",text:`📦 Deine Bestellung „${order.itemTitle||"Bestellung"}“ ist angekommen!`,userId:order.userId,orderId:order.id,timestamp:serverTimestamp()}); }
+    toast("Status aktualisiert.", "success");
+  } catch (err) {
+    console.error(err);
+    toast(errMsg(err), "error");
+  }
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if ($("#modalRoot").innerHTML) closeModal();
+  else if (!$("#gameView").hidden) closeGameFrame();
+  else if (state.openApp) closeApp();
+});
+
+/* ---------------- Start ---------------- */
+$$("[data-icon]").forEach(el => el.insertAdjacentHTML("afterbegin", icon(el.dataset.icon, 18)));
+if (!ALLOW_REGISTRATION) $("#registerTab").hidden = true;
+setAuthMode("login");
+stopUsageTracking=startUsageTracking();
+</script>
+</body>
+</html>
