@@ -125,12 +125,12 @@ a{color:inherit;text-decoration:none}
 #dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0));transform:translateX(-50%);z-index:36;display:flex;gap:10px;padding:10px 14px;border-radius:30px;background:rgba(255,255,255,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--shadow)}
 .dock-btn{position:relative;width:52px;height:52px;border-radius:18px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1),var(--c2));transition:transform .15s}
 .dock-btn:hover{transform:translateY(-5px) scale(1.06)}
-.dock-btn img{width:34px!important;height:34px!important;max-width:34px!important;max-height:34px!important;object-fit:cover;border-radius:11px;display:block}.dock-btn{overflow:visible}.dock-btn .dock-app-image{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border-radius:11px}.dock-btn .dock-app-image img{width:34px!important;height:34px!important;object-fit:cover}
+.dock-btn img{width:34px!important;height:34px!important;max-width:34px!important;max-height:34px!important;object-fit:cover;border-radius:11px;display:block}.dock-btn .dock-app-image{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border-radius:11px}.dock-btn .dock-app-image img{width:34px!important;height:34px!important;object-fit:cover}.dock-btn{overflow:visible}.dock-btn .dock-app-image{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border-radius:11px}.dock-btn .dock-app-image img{width:34px!important;height:34px!important;object-fit:cover}
 #homeEditButton{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.78);border:1px solid rgba(43,27,74,.10);font-weight:700;color:var(--ink);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 #homeEditButton:hover{background:#fff}
 #homeEditButton.done{background:linear-gradient(135deg,#7b5cff,#4b33d6);color:#fff}
 .edit-mode #homeEditButton{display:inline-flex}
-.home-content-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(120px,1fr));gap:18px 18px;align-items:center;justify-items:center;max-width:980px;margin:0 auto;height:min(360px,48vh)}
+.home-content-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(120px,1fr));grid-auto-flow:dense;gap:18px 18px;align-items:center;justify-items:center;max-width:980px;margin:0 auto;height:min(360px,48vh);overflow:hidden}
 .home-content-grid .app-page-grid{display:contents}
 #widgetArea{display:contents}
 #widgetArea .widget-head{display:none}
@@ -502,6 +502,7 @@ function mountSettings(el){
       <div class="setting-row"><span>Kontrast erhöhen</span><button class="switch" data-action="toggle-setting" data-key="highContrast"></button></div>
       <div class="setting-row"><span>Bewegungen reduzieren</span><button class="switch" data-action="toggle-setting" data-key="reduceMotion"></button></div>
     </section>
+    <section class="settings-card"><h3>💳 Abos</h3><div id="subscriptionList"></div></section>
     <section class="settings-card"><h3>🧹 Daten & Zurücksetzen</h3>
       <div class="setting-row"><span>Homescreen zurücksetzen</span><button class="btn small" data-action="reset-home">Zurücksetzen</button></div>
       <div class="setting-row"><span>Lokale Benachrichtigungen löschen</span><button class="btn small" data-action="clear-local-notes">Löschen</button></div>
@@ -513,6 +514,8 @@ function getSettings(){return {...(state.profile?.settings||{})};}
 function updateSettings(){
   if(!$("#setTheme"))return; const st=getSettings(); $("#setTheme").value=st.theme||state.profile?.theme||"standard";
   ["showDots","showDock","notifications","orderNotifications","chatNotifications","enterSends","largeIcons","highContrast","reduceMotion"].forEach(k=>{const b=document.querySelector(`[data-key="${k}"]`);if(b)b.classList.toggle("on",st[k]!==false);});
+  const box=$("#subscriptionList");
+  if(box){const subs=getInstalledApps().map(e=>({e,a:state.apps.find(x=>x.id===e.appId)})).filter(x=>x.a&&appBilling(x.a)!=="once");box.innerHTML=subs.length?subs.map(({e,a})=>{const exp=subscriptionExpiry(a);const active=exp&&exp>Date.now()&&!e.subscriptionCancelled;return `<div class="row"><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${active?`aktiv bis ${new Date(exp).toLocaleString("de-DE")}`:"nicht aktiv"}${e.subscriptionCancelled?" · gekündigt":""}</span></div>${active?`<button class="btn small danger" data-action="cancel-subscription" data-id="${esc(a.id)}">Abo kündigen</button>`:`<button class="btn small primary" data-action="subscribe-app" data-id="${esc(a.id)}">Abo starten</button>`}</div>`}).join(""):`<p class="muted">Du hast aktuell keine App-Abos.</p>`;}
 }
 async function toggleSetting(key){const st=getSettings();st[key]=st[key]===false;await updateDoc(doc(db,"users",state.user.uid),{settings:st});if(key==="showDots")$("#pageDots").style.display=st[key]===false?"none":"flex";if(key==="showDock")$("#dock").style.display=st[key]===false?"none":"flex";if(key==="largeIcons")document.documentElement.classList.toggle("large-icons",!!st[key]);if(key==="highContrast")document.documentElement.classList.toggle("high-contrast",!!st[key]);if(key==="reduceMotion")document.documentElement.classList.toggle("reduce-motion",!!st[key]);updateSettings();}
 async function resetHome(){await updateDoc(doc(db,"users",state.user.uid),{homePages:[{items:Object.keys(APPS).filter(id=>!APPS[id].adminOnly||isAdmin())}],dockApps:Object.keys(APPS).filter(id=>!APPS[id].adminOnly||isAdmin()).slice(0,5),widgetLayout:[]});currentHomePage=0;toast("Homescreen zurückgesetzt.","success");}
@@ -809,8 +812,34 @@ function updateProfile(){if(!$("#profileLevel"))return;const l=levelInfo();$("#p
 function mountWishlist(el){el.innerHTML=`<div class="toolbar"><span class="muted">Deine gemerkten Apps, Shopartikel und Designs.</span></div><div id="wishlistGrid" class="grid-items"></div>`;}
 function updateWishlist(){const ids=Array.isArray(state.profile?.wishlist)?state.profile.wishlist:[];const rows=ids.map(id=>{const item=state.items.find(x=>x.id===id);const app=state.apps.find(x=>x.id===id);const d=designById(id);if(item)return {id,title:item.title,desc:`Shop · ${fmt(item.price)} Coins`,action:`open-app:shop`};if(app)return {id,title:app.title,desc:`App · ${appPrice(app)} Coins`,action:`open-app:appstore`};if(d)return {id,title:d.title,desc:`Design · ${designPrice(d)} Coins`,action:`open-app:designstore`};return null}).filter(Boolean);$("#wishlistGrid").innerHTML=rows.length?rows.map(r=>`<article class="item"><div class="item-body"><h4>${esc(r.title)}</h4><span class="muted small">${esc(r.desc)}</span><div class="game-actions"><button class="btn primary small" data-action="open-app" data-app="${r.action.split(":")[1]}">Öffnen</button><button class="btn small" data-action="wishlist-toggle" data-id="${esc(r.id)}">♥ Entfernen</button></div></div></article>`).join(""):`<div class="empty">${icon("gift",40)}Noch nichts gemerkt.</div>`;}
 async function toggleWishlist(id){const ref=doc(db,"users",state.user.uid);const snap=await getDoc(ref);if(!snap.exists())return;const list=Array.isArray(snap.data().wishlist)?snap.data().wishlist:[];const next=list.includes(id)?list.filter(x=>x!==id):[...list,id];await updateDoc(ref,{wishlist:next});toast(list.includes(id)?"Von der Wunschliste entfernt.":"Zur Wunschliste hinzugefügt.","success");}
-async function newFolderDialog(){showModal({title:"Neuen App-Ordner",fields:[{name:"title",label:"Ordnername",required:true,placeholder:"z. B. Spiele"},{name:"apps",label:"Apps (durch Komma getrennt)",placeholder:"App-ID oder App-Name"}],submitLabel:"Ordner erstellen",onSubmit:async v=>{const names=(v.apps||"").split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);const ids=state.apps.filter(a=>names.includes(a.id.toLowerCase())||names.includes(String(a.title).toLowerCase())).map(a=>a.id);const folders=Array.isArray(state.profile?.folders)?state.profile.folders:[];folders.push({id:"f"+Date.now(),title:v.title,apps:ids});await updateDoc(doc(db,"users",state.user.uid),{folders});toast("Ordner erstellt.","success");}})}
-function openFolder(id){const f=(state.profile?.folders||[]).find(x=>x.id===id);if(!f)return;showModal({title:f.title,text:f.apps.map(a=>state.apps.find(x=>x.id===a)?.title||a).join(" · ")||"Noch keine Apps im Ordner.",submitLabel:"Schließen",fields:[],onSubmit:async()=>{}});}
+async function newFolderDialog(){showModal({title:"Neuen App-Ordner",fields:[{name:"title",label:"Ordnername",required:true,placeholder:"z. B. Spiele"},{name:"apps",label:"Apps (durch Komma getrennt)",placeholder:"App-ID oder App-Name"}],submitLabel:"Ordner erstellen",onSubmit:async v=>{const names=(v.apps||"").split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);const ids=[...Object.entries(APPS).map(([id,a])=>({id,title:a.title})),...state.apps.map(a=>({id:a.id,title:a.title}))].filter(a=>names.includes(a.id.toLowerCase())||names.includes(String(a.title).toLowerCase())).map(a=>a.id);if(ids.length<1)throw new AppError("Bitte mindestens eine App angeben.");const folders=Array.isArray(state.profile?.folders)?state.profile.folders:[];const f={id:"f"+Date.now(),title:v.title,apps:[...new Set(ids)]};folders.push(f);const pages=normalizedHomePages();for(const id of f.apps){for(const p of pages){const i=p.indexOf(id);if(i>=0)p.splice(i,1)}}const folderItem=`f:${f.id}`;let page=currentHomePage;if(pages[page].reduce((n,x)=>n+itemWeight(x),0)+1>HOME_CAPACITY){pages.push([]);page=pages.length-1}pages[page].push(folderItem);await updateDoc(doc(db,"users",state.user.uid),{folders,homePageItems:firestoreHomeMap(pages)});state.profile.folders=folders;state.profile.homePageItems=firestoreHomeMap(pages);renderDesktop();toast("Ordner erstellt.","success");}})}
+function openFolder(id){const f=(state.profile?.folders||[]).find(x=>x.id===folderItemId(id)||x.id===id);if(!f)return;const apps=f.apps.map(x=>APPS[x]||state.apps.find(a=>a.id===x)).filter(Boolean);const root=$("#modalRoot");root.innerHTML=`<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true"><h3>📁 ${esc(f.title)}</h3><div class="app-action-grid">${apps.map(a=>`<button class="btn" data-action="open-group-app" data-id="${esc(a.id)}">${a.icon?icon(a.icon,20):thumbHTML(a.iconUrl,"globe",24)} ${esc(a.title)}</button>`).join("")}</div><div class="modal-actions"><button class="btn primary" data-action="close-modal">Schließen</button></div></div></div>`}
+function appMenu(id, fromDock=false, item=null){
+  if(isFolderItem(id)) return folderMenu(folderItemId(id));
+  const a=APPS[id]||state.apps.find(x=>x.id===id); if(!a)return;
+  const pages=normalizedHomePages(); const opts=[];
+  if(!fromDock) pages.forEach((_,i)=>opts.push({value:String(i),label:`Auf Seite ${i+1}`}));
+  const widgetAvailable=!!(APPS[id] ? widgetDefinition(id) : a.widgetEnabled);
+  const isWidget=isWidgetItem(item);
+  const fields=[];
+  if(!fromDock&&!isWidget) fields.push({name:"action",label:"Aktion",type:"select",value:"page",options:[{value:"page",label:"App auf eine Seite verschieben"},{value:"remove",label:"Vom Home-Bildschirm entfernen"},...(widgetAvailable?[{value:"widget",label:"In Widget umwandeln"}]:[]),{value:"group",label:"Zur Gruppe hinzufügen"}]});
+  else if(!fromDock&&isWidget) fields.push({name:"action",label:"Aktion",type:"select",value:"widget",options:[{value:"widget",label:"Widget-Größe ändern"},{value:"remove",label:"Widget entfernen"}]});
+  else fields.push({name:"action",label:"Aktion",type:"select",value:"dock-remove",options:[{value:"dock-remove",label:"Aus dem Dock entfernen"}]});
+  if(!fromDock&&!isWidget) fields.push({name:"page",label:"Zielseite",type:"select",value:String(currentHomePage),options:opts.length?opts:[{value:"0",label:"Seite 1"}]});
+  if(widgetAvailable) fields.push({name:"size",label:"Widget-Größe",type:"select",value:isWidget?widgetItemSize(item):"medium",options:[{value:"small",label:"Klein"},{value:"medium",label:"Mittel"},{value:"large",label:"Groß"}]});
+  showModal({title:a.title,text:fromDock?"Dock-App verwalten":"App verwalten",fields,submitLabel:"Ausführen",onSubmit:async v=>{
+    const action=v.action;
+    if(action==="remove") { if(isWidget) await removeWidget(item); else await removeHomeApp(id); }
+    else if(action==="dock-remove") await removeDockApp(id);
+    else if(action==="widget") await convertToWidget(id,item,v.size||"medium");
+    else if(action==="page") await moveHomeItemToPage(id,Number(v.page));
+    else if(action==="group") setTimeout(()=>addToGroupDialog(id),0);
+  }});
+}
+async function convertToWidget(id,item,size){const pages=normalizedHomePages();const key=item||id;const page=pages.findIndex(p=>p.includes(key));if(page<0)return;pages[page]=pages[page].filter(x=>x!==key);const wi=`w:${id}:${size}`;if(pages[page].reduce((n,x)=>n+itemWeight(x),0)+itemWeight(wi)>HOME_CAPACITY){pages.splice(page+1,0,[]);pages[page+1].push(wi);currentHomePage=page+1}else pages[page].push(wi);await savePagesOnly(pages);renderDesktop();toast("Widget aktualisiert.","success")}
+async function moveHomeItemToPage(id,target){const pages=normalizedHomePages();const from=pages.findIndex(p=>p.includes(id));if(from<0||target===from)return;const idx=pages[from].indexOf(id);pages[from].splice(idx,1);if(!pages[target])pages[target]=[];if(pages[target].reduce((n,x)=>n+itemWeight(x),0)+itemWeight(id)>HOME_CAPACITY){pages.push([]);target=pages.length-1}pages[target].push(id);currentHomePage=target;await savePagesOnly(pages);renderDesktop()}
+async function addToGroupDialog(id){const all=[...Object.entries(APPS).map(([x,a])=>({id:x,title:a.title,icon:a.icon})),...getInstalledApps().map(e=>{const a=state.apps.find(x=>x.id===e.appId);return a?{id:a.id,title:a.title,icon:null,iconUrl:a.iconUrl}:null}).filter(Boolean)].filter(a=>a.id!==id);showModal({title:"Zur Gruppe hinzufügen",text:"Wähle eine zweite App. Beide Apps werden in einen Ordner verschoben.",fields:[{name:"other",label:"Andere App",type:"select",required:true,options:all.map(a=>({value:a.id,label:a.title}))},{name:"title",label:"Gruppenname",value:"Apps",placeholder:"z. B. Medien"}],submitLabel:"Gruppe erstellen",onSubmit:async v=>{const folders=Array.isArray(state.profile?.folders)?state.profile.folders:[];const f={id:"f"+Date.now(),title:v.title||"Apps",apps:[id,v.other]};folders.push(f);const pages=normalizedHomePages();for(const x of f.apps){for(const p of pages){const i=p.indexOf(x);if(i>=0)p.splice(i,1)}}const fi=`f:${f.id}`;if(pages[currentHomePage].reduce((n,x)=>n+itemWeight(x),0)+1>HOME_CAPACITY){pages.push([]);currentHomePage=pages.length-1}pages[currentHomePage].push(fi);await updateDoc(doc(db,"users",state.user.uid),{folders,homePageItems:firestoreHomeMap(pages)});state.profile.folders=folders;state.profile.homePageItems=firestoreHomeMap(pages);renderDesktop();toast("App-Gruppe erstellt.","success");}})}
+function folderMenu(id){showModal({title:"Ordner",text:"Diesen Ordner kannst du über den Homescreen öffnen.",fields:[],submitLabel:"Schließen",onSubmit:async()=>{}})}
 
 function renderStatus() {
   const p = state.profile;
@@ -839,9 +868,13 @@ function entryExpiry(entry) {
 function isAppActive(a) {
   const e = installedEntry(a.id);
   if (!e) return false;
-  const exp = entryExpiry(e);
-  return !exp || exp > Date.now();
+  const billing=appBilling(a);
+  if(billing==="once") return true;
+  const sub=e.subscriptionUntil||e.expiresAt;
+  const exp=sub?.toMillis?sub.toMillis():new Date(sub||0).getTime();
+  return !!exp && exp>Date.now();
 }
+function subscriptionExpiry(a){const e=installedEntry(a.id);if(!e)return null;const sub=e.subscriptionUntil||e.expiresAt;if(!sub)return null;return sub?.toMillis?sub.toMillis():new Date(sub).getTime();}
 
 let currentHomePage=0, editMode=false, homeTouchStartX=0, homeTouchStartY=0, homeDrag=null, dockDrag=null;
 const HOME_COLS=5, HOME_ROWS=2, HOME_CAPACITY=HOME_COLS*HOME_ROWS;
@@ -849,7 +882,12 @@ function builtinHomeIds(){return Object.entries(APPS).filter(([,a])=>!a.adminOnl
 function installedHomeIds(){return getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id))}
 function widgetIds(){return ["konto","shop","appstore","designstore","chat",...getInstalledApps().map(e=>e.appId).filter(id=>{const a=state.apps.find(x=>x.id===id);return a&&a.widgetEnabled})]}
 function isWidgetItem(id){return typeof id==="string"&&id.startsWith("w:")}
-function widgetItemId(id){return isWidgetItem(id)?id.slice(2):id}
+function widgetItemId(id){if(!isWidgetItem(id))return id;return id.slice(2).split(":")[0]}
+function widgetItemSize(id){if(!isWidgetItem(id))return "medium";const s=id.split(":")[2];return ["small","medium","large"].includes(s)?s:"medium"}
+function widgetItemKey(id){return isWidgetItem(id)?`w:${widgetItemId(id)}`:id}
+function isFolderItem(id){return typeof id==="string"&&id.startsWith("f:")}
+function folderItemId(id){return isFolderItem(id)?id.slice(2):id}
+function itemWeight(item){return isWidgetItem(item)?({small:1,medium:2,large:4}[widgetItemSize(item)]||2):1}
 function currentHomeItemMap(){
   const raw=state.profile?.homePageItems;
   if(raw && typeof raw==="object" && !Array.isArray(raw)){
@@ -860,29 +898,26 @@ function currentHomeItemMap(){
 }
 function normalizedHomePages(){
   const apps=[...builtinHomeIds(),...installedHomeIds()];
+  const folders=Array.isArray(state.profile?.folders)?state.profile.folders:[];
   let pages=currentHomeItemMap();
   if(!pages.length) pages=[[]];
-  const allowed=new Set(apps);
-  // Keep existing app/widget order and remove invalid/duplicates.
+  const allowed=new Set([...apps,...folders.map(f=>`f:${f.id}`)]);
+  const validWidgets=new Set(widgetIds());
   const seen=new Set(), clean=[];
   for(const page of pages){
     const out=[];
-    for(const item of page){
-      const valid=isWidgetItem(item)?widgetIds().includes(widgetItemId(item)):allowed.has(item);
-      if(valid && !seen.has(item)){seen.add(item);out.push(item)}
+    for(const raw of page){
+      const item=isWidgetItem(raw)?`w:${widgetItemId(raw)}:${widgetItemSize(raw)}`:raw;
+      const valid=isWidgetItem(item)?validWidgets.has(widgetItemId(item)):(isFolderItem(item)?allowed.has(item):allowed.has(item));
+      if(valid && !seen.has(isWidgetItem(item)?widgetItemKey(item):item)){seen.add(isWidgetItem(item)?widgetItemKey(item):item);out.push(item);}
     }
     clean.push(out);
   }
-  // Add newly installed/builtin apps only once. Never refill the dock.
-  for(const id of apps) if(!seen.has(id)){let target=clean.findIndex(x=>x.length<HOME_CAPACITY);if(target<0){clean.push([]);target=clean.length-1}clean[target].push(id);seen.add(id)}
-  // Enforce exactly two rows worth of items per page. Overflow moves forward.
+  for(const id of apps) if(!seen.has(id)){let target=clean.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)+1<=HOME_CAPACITY);if(target<0){clean.push([]);target=clean.length-1}clean[target].push(id);seen.add(id)}
+  for(const f of folders){const id=`f:${f.id}`;if(!seen.has(id)){let target=clean.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)+1<=HOME_CAPACITY);if(target<0){clean.push([]);target=clean.length-1}clean[target].push(id);seen.add(id)}}
   const packed=[];
-  for(const page of clean){
-    let arr=[...page];
-    while(arr.length>HOME_CAPACITY){packed.push(arr.splice(0,HOME_CAPACITY))}
-    packed.push(arr);
-  }
-  while(packed.length>1 && packed.at(-1).length===0) packed.pop();
+  for(const page of clean){let arr=[];let used=0;for(const item of page){const w=itemWeight(item);if(used+w>HOME_CAPACITY){packed.push(arr);arr=[];used=0}arr.push(item);used+=w}if(arr.length||!packed.length)packed.push(arr)}
+  while(packed.length>1&&packed.at(-1).length===0)packed.pop();
   return packed.length?packed:[[]];
 }
 function firestoreHomeMap(pages){const out={};pages.forEach((items,i)=>{out[String(i)]=items.filter(x=>typeof x==="string")});return out;}
@@ -914,10 +949,16 @@ function renderDesktop(){
     <div class="home-content-grid">${items.map(item=>{
       if(isWidgetItem(item)){
         const w=widgetDefinition(widgetItemId(item)); if(!w)return "";
-        return `<button class="os-widget ${w.cls}" data-action="open-widget-app" data-app="${esc(w.id)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span>${editMode?`<span class="tile-remove" data-action="widget-remove" data-id="${esc(item)}">−</span>`:""}</button>`;
+        const size=widgetItemSize(item);
+        return `<button class="os-widget ${w.cls} widget-${size}" data-action="${editMode?"app-menu":"open-widget-app"}" data-app="${esc(w.id)}" data-item="${esc(item)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span>${editMode?`<span class="tile-remove" data-action="widget-remove" data-id="${esc(item)}">−</span>`:""}</button>`;
+      }
+      if(isFolderItem(item)){
+        const f=(state.profile?.folders||[]).find(x=>x.id===folderItemId(item)); if(!f)return "";
+        const fapps=f.apps.map(id=>APPS[id]||state.apps.find(a=>a.id===id)).filter(Boolean).slice(0,4);
+        return `<button class="tile folder-tile" data-action="${editMode?"app-menu":"open-folder"}" data-id="${esc(item)}" title="${esc(f.title)}"><span class="tile-icon">${fapps.map(a=>`<span class="folder-mini">${a.icon?icon(a.icon,22):thumbHTML(a.iconUrl,"globe",22)}</span>`).join("")}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(item)}">−</span>`:""}<span class="tile-label">${esc(f.title)}</span></button>`;
       }
       const a=itemApp(item); if(!a)return ""; const custom=!APPS[item];
-      return `<button draggable="${editMode}" class="tile" data-action="${custom?"open-installed":"open-app"}" data-id="${custom?item:""}" data-app="${custom?"":item}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(item)}">−</span>`:""}<span class="tile-label">${esc(a.title)}</span></button>`;
+      return `<button draggable="${editMode}" class="tile" data-action="${editMode?"app-menu":(custom?"open-installed":"open-app")}" data-id="${custom?item:item}" data-app="${custom?"":item}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(item)}">−</span>`:""}<span class="tile-label">${esc(a.title)}</span></button>`;
     }).join("")}</div>
   </div></section>`).join("");
   $("#homePages").innerHTML=pageHTML; $("#homePages").style.transform=`translateX(-${currentHomePage*100}%)`;
@@ -930,7 +971,7 @@ function renderDock(){
   const ids=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
   const apps=ids.map(id=>{const a=APPS[id]||state.apps.find(x=>x.id===id);return a?{id,a}:null}).filter(Boolean);
   const st=getSettings(); $("#dock").style.display=st.showDock===false?"none":"flex";
-  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${esc(id)}" title="${esc(a.title)}">${a.icon?icon(a.icon,26):`<span class="dock-app-image">${thumbHTML(a.iconUrl,"globe",34)}</span>`}${editMode?`<span class="dock-remove" data-action="dock-remove" data-id="${esc(id)}">−</span>`:""}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button>`;
+  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${esc(id)}" title="${esc(a.title)}"><span class="dock-app-image">${a.icon?icon(a.icon,28):thumbHTML(a.iconUrl,"globe",34)}</span>${editMode?`<span class="dock-remove" data-action="dock-remove" data-id="${esc(id)}">−</span>`:""}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button>`;
 }
 function addDockDialog(){
   const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
@@ -946,34 +987,55 @@ function goPage(i){const pages=normalizedHomePages();currentHomePage=Math.max(0,
 function bindHomeGestures(){const v=$("#homeViewport");if(!v||v.dataset.bound)return;v.dataset.bound="1";v.addEventListener("pointerdown",e=>{if(editMode)return;homeTouchStartX=e.clientX;homeTouchStartY=e.clientY});v.addEventListener("pointerup",e=>{if(editMode)return;const dx=e.clientX-homeTouchStartX,dy=e.clientY-homeTouchStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.2)goPage(currentHomePage+(dx<0?1:-1))})}
 function applyHomeSettings(){const st=getSettings();document.documentElement.classList.toggle("large-icons",!!st.largeIcons);document.documentElement.classList.toggle("high-contrast",!!st.highContrast);document.documentElement.classList.toggle("reduce-motion",!!st.reduceMotion)}
 async function autoArrange(){const pages=normalizedHomePages();const flat=pages.flat();const packed=[];for(let i=0;i<flat.length;i+=HOME_CAPACITY)packed.push(flat.slice(i,i+HOME_CAPACITY));await savePagesOnly(packed);currentHomePage=Math.min(currentHomePage,packed.length-1);toast("Apps und Widgets wurden sauber angeordnet.","success");renderDesktop()}
-function startTileDrag(el,e){if(!editMode)return;const id=el.dataset.id||el.dataset.app;if(!id)return;homeDrag={id,page:currentHomePage,startX:e.clientX,startY:e.clientY,moved:false};el.setPointerCapture?.(e.pointerId)}
-async function moveTileDrag(e){if(!editMode||!homeDrag)return;const dx=e.clientX-homeDrag.startX,dy=e.clientY-homeDrag.startY;if(Math.abs(dx)+Math.abs(dy)>10)homeDrag.moved=true;if(!homeDrag.moved)return;const right=e.clientX>window.innerWidth-60,left=e.clientX<60;if(right||left){const pages=normalizedHomePages();const target=currentHomePage+(right?1:-1);if(target>=0){if(target>=pages.length)pages.push([]);const from=pages[currentHomePage];const idx=from.indexOf(homeDrag.id);if(idx>=0){from.splice(idx,1);if(pages[target].length>=HOME_CAPACITY){pages.push([])}pages[target].push(homeDrag.id);await savePagesOnly(pages);currentHomePage=target;homeDrag.startX=e.clientX;renderDesktop();}}}}
-async function endTileDrag(e){
-  if(!homeDrag)return;
-  const drag=homeDrag; homeDrag=null;
-  $("#edgeHintLeft")?.classList.remove("show"); $("#edgeHintRight")?.classList.remove("show");
-  if(!drag.moved)return;
-  // Reorder on the current page when the item was released on another tile/widget.
-  if(e){
-    const target=e.target.closest?.(".tile,.os-widget");
-    if(target){
-      const targetId=target.dataset.id||target.dataset.app;
-      const targetItem=target.classList.contains("os-widget")?"w:"+target.dataset.app:targetId;
-      if(targetItem && targetItem!==drag.id){
-        const pages=normalizedHomePages();
-        const from=pages.findIndex(p=>p.includes(drag.id));
-        let to=pages.findIndex(p=>p.includes(targetItem));
-        if(from>=0&&to>=0){
-          pages[from]=pages[from].filter(x=>x!==drag.id);
-          const insert=Math.max(0,pages[to].indexOf(targetItem));
-          if(from===to) pages[to].splice(insert,0,drag.id);
-          else { if(pages[to].length>=HOME_CAPACITY){pages.push([]);to=pages.length-1} pages[to].splice(insert,0,drag.id); }
-          await savePagesOnly(pages); renderDesktop(); return;
+function startTileDrag(el,e){if(!editMode)return;const id=el.dataset.id||el.dataset.app;if(!id)return;homeDrag={id,page:currentHomePage,startX:e.clientX,startY:e.clientY,moved:false,lastEdge:0};el.setPointerCapture?.(e.pointerId)}
+function showEdgeHints(e){const l=$("#edgeHintLeft"),r=$("#edgeHintRight");if(!l||!r)return;const left=e.clientX<70,right=e.clientX>window.innerWidth-70;l.classList.toggle("show",left&&currentHomePage>0);r.classList.toggle("show",right);}
+async function moveTileDrag(e){
+  if(!editMode||!homeDrag)return;
+  showEdgeHints(e);
+  const dx=e.clientX-homeDrag.startX,dy=e.clientY-homeDrag.startY;
+  if(Math.abs(dx)+Math.abs(dy)>10)homeDrag.moved=true;
+  if(!homeDrag.moved)return;
+  const right=e.clientX>window.innerWidth-70,left=e.clientX<70;
+  if((right||left)&&Date.now()-homeDrag.lastEdge>450){
+    const pages=normalizedHomePages();
+    const target=currentHomePage+(right?1:-1);
+    if(target>=0){
+      const from=pages[currentHomePage];
+      const idx=from.indexOf(homeDrag.id);
+      if(idx>=0){
+        from.splice(idx,1);
+        if(!pages[target])pages[target]=[];
+        if(pages[target].reduce((n,x)=>n+itemWeight(x),0)+itemWeight(homeDrag.id)>HOME_CAPACITY){
+          pages.splice(target+1,0,[]);
+          currentHomePage=target+1;
+          pages[currentHomePage].push(homeDrag.id);
+        }else{
+          pages[target].push(homeDrag.id);
+          currentHomePage=target;
         }
+        homeDrag.page=currentHomePage;
+        homeDrag.lastEdge=Date.now();
+        state.profile.homePageItems=firestoreHomeMap(pages);
+        renderDesktop();
       }
     }
   }
-  renderDesktop();
+}
+async function endTileDrag(e){
+  if(!homeDrag)return;
+  const drag=homeDrag;homeDrag=null;$("#edgeHintLeft")?.classList.remove("show");$("#edgeHintRight")?.classList.remove("show");
+  if(!drag.moved)return;
+  if(e){
+    const target=e.target.closest?.(".tile,.os-widget");
+    if(target){
+      const targetItem=target.classList.contains("os-widget")?target.dataset.item:(target.dataset.id||target.dataset.app);
+      if(targetItem&&targetItem!==drag.id){
+        const pages=normalizedHomePages();const from=pages.findIndex(p=>p.includes(drag.id));const to=pages.findIndex(p=>p.includes(targetItem));
+        if(from>=0&&to>=0){pages[from]=pages[from].filter(x=>x!==drag.id);if(from===to){const insert=pages[to].indexOf(targetItem);pages[to].splice(Math.max(0,insert),0,drag.id)}else if(pages[to].reduce((n,x)=>n+itemWeight(x),0)+itemWeight(drag.id)<=HOME_CAPACITY){pages[to].splice(pages[to].indexOf(targetItem),0,drag.id);currentHomePage=to}state.profile.homePageItems=firestoreHomeMap(pages);await savePagesOnly(pages);renderDesktop();return}
+      }
+    }
+  }
+  await saveHomeLayout();renderDesktop();
 }
 async function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
 async function removeWidget(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
@@ -983,7 +1045,7 @@ function addWidgetDialog(){
   const root=$("#widgetPicker");root.hidden=false;root.innerHTML=`<h2>Widgets hinzufügen</h2><p class="muted">Das Widget wird auf der aktuellen Seite in das normale App-Raster eingesetzt.</p><div class="widget-picker-grid">${choices.map(c=>`<button class="widget-choice" data-action="choose-widget" data-id="${esc(c.id)}"><span class="widget-icon">${icon(c.icon,22)}</span><span><b>${esc(c.title)}</b><small class="muted">Zum Homescreen hinzufügen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
 }
 function closeWidgetPicker(){const r=$("#widgetPicker");if(r){r.hidden=true;r.innerHTML=""}}
-async function chooseWidget(id){const pages=normalizedHomePages();const item="w:"+id;if(pages.some(p=>p.includes(item))){closeWidgetPicker();toast("Dieses Widget ist bereits auf dem Homescreen.","info");return}if(pages[currentHomePage].length>=HOME_CAPACITY){pages.splice(currentHomePage+1,0,[]);currentHomePage++;}pages[currentHomePage].push(item);await savePagesOnly(pages);closeWidgetPicker();renderDesktop();toast("Widget hinzugefügt.","success")}
+async function chooseWidget(id){const pages=normalizedHomePages();const item="w:"+id+":medium";if(pages.some(p=>p.some(x=>isWidgetItem(x)&&widgetItemKey(x)===item.slice(0,-7)))){closeWidgetPicker();toast("Dieses Widget ist bereits auf dem Homescreen.","info");return}if(pages[currentHomePage].reduce((n,x)=>n+itemWeight(x),0)+2>HOME_CAPACITY){pages.splice(currentHomePage+1,0,[]);currentHomePage++;}pages[currentHomePage].push(item);await savePagesOnly(pages);closeWidgetPicker();renderDesktop();toast("Widget hinzugefügt.","success")}
 
 function tickClock() {
   $("#clock").textContent = new Date().toLocaleString("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -1183,29 +1245,55 @@ function updateAppStoreGrid() {
   const list = state.apps.filter(a => (state.appCat === "Alle" || a.category === state.appCat) && (!q || String(a.title).toLowerCase().includes(q)) && a.hidden !== true);
   $("#appStoreGrid").innerHTML = list.length ? `<div class="grid-games">${list.map(a => {
     const installed = installedEntry(a.id); const active = isAppActive(a); const price = appPrice(a); const billing = appBilling(a);
-    const action = installed && active ? "installed" : installed ? "renew-app" : "install-app";
-    const label = installed && active ? "Installiert" : installed ? "Abo verlängern" : price > 0 ? "Installieren" : "Kostenlos installieren";
+    const action = installed && active ? "installed" : installed && billing !== "once" ? "subscribe-app" : installed ? "installed" : "install-app";
+    const label = installed && active ? "Installiert" : installed && billing !== "once" ? `Abo starten · ${fmt(price)} Coins` : price > 0 && billing === "once" ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren";
     return `<article class="game"><div class="thumb">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${price > 0 ? `${fmt(price)} Coins ${billingLabel(a)}` : "Kostenlos"}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
   }).join("")}</div>` : `<div class="empty">${icon("store",40)}${state.apps.length ? "Keine App passt zu deiner Suche." : "Der App Store ist noch leer."}</div>`;
 }
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+async function showInstallProgress(a){
+  closeModal();
+  const root=$("#modalRoot");
+  root.innerHTML=`<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true"><h3>📥 ${esc(a.title)}</h3><p class="muted">CoinOS installiert die App…</p><div class="install-progress"><div class="install-progress-bar"><div class="install-progress-fill" id="installFill"></div></div><div class="install-progress-text" id="installPct">0 %</div></div></div></div>`;
+  const fill=$("#installFill"),pct=$("#installPct");
+  for(let i=0;i<=100;i+=2){fill.style.width=i+"%";pct.textContent=i+" %";await wait(100);}
+  closeModal();
+}
 async function installApp(id) {
   const a = state.apps.find(x => x.id === id); if (!a) throw new AppError("Diese App gibt es nicht mehr.");
-  const price = appPrice(a), billing = appBilling(a), uid = state.user.uid, userRef = doc(db,"users",uid), txRef = doc(collection(db,"users",uid,"transactions"));
-  const current = installedEntry(id);
-  if (current && isAppActive(a)) return toast("Diese App ist bereits installiert.");
-  const ok = await confirmDialog({title:`${a.title} installieren?`, text: price > 0 ? `Die Installation kostet ${fmt(price)} Coins ${billingLabel(a)}.` : "Die Installation ist kostenlos.", confirmLabel: price > 0 ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren"});
-  if (!ok) return;
-  await runTransaction(db, async tx => {
-    const u = await tx.get(userRef); if (!u.exists()) throw new AppError("Nutzer nicht gefunden.");
-    const data = u.data(); const bal = Number(data.balance)||0; if (bal < price) throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);
-    const list = Array.isArray(data.installedApps) ? data.installedApps.map(x => typeof x === "string" ? {appId:x}:x).filter(Boolean) : [];
-    const now = Date.now(); let expiresAt = null; if (billing === "daily") expiresAt = new Date(now + 86400000); if (billing === "weekly") expiresAt = new Date(now + 7*86400000);
-    const entry = {appId:id, installedAt:new Date(now), expiresAt}; const next = list.filter(x => x.appId !== id); next.push(entry);
-    tx.update(userRef,{balance:bal-price,installedApps:next});
-    if (price > 0) tx.set(txRef,{amount:-price,type:"app_install",description:`App ${billing === "once" ? "gekauft" : "Abo bezahlt"}: ${a.title}`,timestamp:serverTimestamp()});
-  });
-  toast(price > 0 ? `${a.title} wurde installiert.` : `${a.title} wurde kostenlos installiert.`,"success");
-  logUsageEvent("App installiert", `${a.title}${price > 0 ? ` · ${fmt(price)} Coins` : " · kostenlos"}`, "appstore");
+  const price=appPrice(a),billing=appBilling(a),uid=state.user.uid,userRef=doc(db,"users",uid);
+  const current=installedEntry(id);
+  if(current && billing!=="once" && isAppActive(a)) return toast("Dieses Abo ist bereits aktiv.");
+  if(current && billing==="once") return toast("Diese App ist bereits installiert.");
+  if(billing!=="once"){
+    const ok=await confirmDialog({title:`${a.title} installieren?`,text:"Die App wird kostenlos installiert. Zum Öffnen brauchst du ein aktives Abo.",confirmLabel:"Kostenlos installieren"});
+    if(!ok)return;
+    await showInstallProgress(a);
+    await updateDoc(userRef,{installedApps:[...getInstalledApps().filter(x=>x.appId!==id),{appId:id,installedAt:new Date(),subscriptionUntil:null,subscriptionCancelled:false}]});
+    toast(`${a.title} wurde installiert. Beim ersten Öffnen kannst du das Abo abschließen.` ,"success");
+    logUsageEvent("App installiert",`${a.title} · kostenlos, Abo erforderlich` ,"appstore");
+    return;
+  }
+  const ok=await confirmDialog({title:`${a.title} installieren?`,text:price>0?`Die Installation kostet ${fmt(price)} Coins.`:"Die Installation ist kostenlos.",confirmLabel:price>0?`Für ${fmt(price)} Coins installieren`:"Kostenlos installieren"});
+  if(!ok)return;
+  await showInstallProgress(a);
+  const txRef=doc(collection(db,"users",uid,"transactions"));
+  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data();const bal=Number(data.balance)||0;if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];const next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date()});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
+  toast(price>0?`${a.title} wurde installiert.`:`${a.title} wurde kostenlos installiert.`,"success");logUsageEvent("App installiert",`${a.title}${price>0?` · ${fmt(price)} Coins`:" · kostenlos"}`,"appstore");
+}
+async function subscribeToApp(id){
+  const a=state.apps.find(x=>x.id===id);if(!a)throw new AppError("App nicht gefunden.");
+  if(appBilling(a)==="once")return openInstalledApp(id);
+  const price=appPrice(a),period=appBilling(a),label=billingLabel(a);
+  const ok=await confirmDialog({title:`Abo für ${a.title}`,text:`Achtung: Dies ist ein Abo. ${fmt(price)} Coins werden jetzt für ${label} berechnet. Du kannst das Abo später in Einstellungen → Abos kündigen.`,confirmLabel:`Abo für ${fmt(price)} Coins starten`,danger:true});
+  if(!ok)return false;
+  const uid=state.user.uid,userRef=doc(db,"users",uid),txRef=doc(collection(db,"users",uid,"transactions"));
+  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data(),bal=Number(data.balance)||0;if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x):[];const idx=list.findIndex(x=>x.appId===id);if(idx<0)throw new AppError("Installiere die App zuerst.");const now=Date.now(),base=subscriptionExpiry(a)>now?subscriptionExpiry(a):now;const until=new Date(base+(period==="daily"?86400000:7*86400000));list[idx]={...list[idx],subscriptionUntil:until,subscriptionCancelled:false};tx.update(userRef,{balance:bal-price,installedApps:list});tx.set(txRef,{amount:-price,type:"app_subscription",description:`App-Abo bezahlt: ${a.title}`,timestamp:serverTimestamp()});});
+  toast(`Abo für ${a.title} ist aktiv.` ,"success");logUsageEvent("App-Abo bezahlt",`${a.title} · ${label}` ,"appstore");return true;
+}
+function showSubscriptionPaywall(a){
+  const exp=subscriptionExpiry(a);
+  showModal({title:`🔒 ${a.title}`,text:`Diese App hat ein Abo. ${exp&&exp>Date.now()?`Dein Abo ist bis ${new Date(exp).toLocaleString("de-DE")} aktiv.`:`Zum Öffnen brauchst du ein aktives ${billingLabel(a)}-Abo.`}`,submitLabel:exp&&exp>Date.now()?"Schließen":`Abo für ${fmt(appPrice(a))} Coins starten`,danger:!(exp&&exp>Date.now()),fields:[],onSubmit:async()=>{if(exp&&exp>Date.now())return;const ok=await subscribeToApp(a.id);if(ok){closeModal();openInstalledApp(a.id);}}});
 }
 async function uninstallApp(id) {
   const a = state.apps.find(x => x.id === id); if (!a) return;
@@ -1224,11 +1312,14 @@ async function moveInstalledApp(id, direction) {
 
 function openInstalledApp(id) {
   const a=state.apps.find(x=>x.id===id); if(!a) return;
-  if(!isAppActive(a)){ toast("Das Abo dieser App ist abgelaufen. Verlängere es im App Store.","error"); openApp("appstore"); return; }
+  if(!isAppActive(a)){ showSubscriptionPaywall(a); return; }
   const url=safeUrl(a.targetUrl); if(!url) throw new AppError("Für diese App ist keine gültige Adresse hinterlegt.");
   const w=window.open(url,"_blank","noopener"); if(!w) toast("Der Browser hat den neuen Tab blockiert. Bitte Pop-ups erlauben.","error");
   logUsageEvent("Externe App geöffnet", a.title, a.id);
 }
+
+async function openWidgetApp(id){if(editMode){return appMenu(id,false,"w:"+id+":medium")}if(APPS[id])return openApp(id);return openInstalledApp(id)}
+async function cancelSubscription(id){const a=state.apps.find(x=>x.id===id);if(!a)return;const ref=doc(db,"users",state.user.uid);const snap=await getDoc(ref);if(!snap.exists())return;const list=Array.isArray(snap.data().installedApps)?snap.data().installedApps.map(x=>typeof x==="string"?{appId:x}:x):[];const i=list.findIndex(x=>x.appId===id);if(i<0)return;list[i]={...list[i],subscriptionCancelled:true};await updateDoc(ref,{installedApps:list});toast(`Abo für ${a.title} gekündigt. Der bereits bezahlte Zeitraum bleibt bis zum Ablauf aktiv.` ,"success");}
 
 /* =========================================================
    CHAT
@@ -1772,7 +1863,7 @@ const actions = {
   "reset-pw": resetPassword,
   "toggle-profile": () => { const m = $("#profileMenu"); m.hidden = !m.hidden; },
   "notifications": showNotifications, "close-notifications": closeNotifications, "read-notifications": readNotifications,
-  "edit-home": enterEdit, "add-dock": addDockDialog, "choose-dock": el=>chooseDock(el.dataset.id), "exit-edit": exitEdit, "add-widget": addWidgetDialog, "close-widget-picker": closeWidgetPicker, "choose-widget": el=>chooseWidget(el.dataset.id), "add-home-page": addHomePage, "auto-arrange": autoArrange, "toggle-setting": el=>toggleSetting(el.dataset.key), "reset-home": resetHome, "clear-local-notes": clearLocalNotes, "page": el=>goPage(Number(el.dataset.page)), "dock-open": el=>openApp(el.dataset.app), "dock-remove": el=>removeDockApp(el.dataset.id), "tile-remove": el=>removeHomeApp(el.dataset.id), "widget-remove": el=>removeWidget(el.dataset.id), "open-widget-app": el=>openApp(el.dataset.app),
+  "edit-home": enterEdit, "add-dock": addDockDialog, "choose-dock": el=>chooseDock(el.dataset.id), "exit-edit": exitEdit, "add-widget": addWidgetDialog, "close-widget-picker": closeWidgetPicker, "choose-widget": el=>chooseWidget(el.dataset.id), "add-home-page": addHomePage, "auto-arrange": autoArrange, "toggle-setting": el=>toggleSetting(el.dataset.key), "reset-home": resetHome, "clear-local-notes": clearLocalNotes, "page": el=>goPage(Number(el.dataset.page)), "dock-open": el=>editMode?appMenu(el.dataset.app,true,null):openApp(el.dataset.app), "dock-remove": el=>removeDockApp(el.dataset.id), "tile-remove": el=>removeHomeApp(el.dataset.id), "widget-remove": el=>removeWidget(el.dataset.id), "open-widget-app": el=>openWidgetApp(el.dataset.app), "app-menu": el=>appMenu(el.dataset.id||el.dataset.app,false,el.dataset.item||null), "open-group-app": el=>{closeModal(); if(APPS[el.dataset.id]) openApp(el.dataset.id); else openInstalledApp(el.dataset.id);},
   "theme": el => applyTheme(el.dataset.theme),
   "wishlist-toggle": el => toggleWishlist(el.dataset.id),
   "new-folder": newFolderDialog,
@@ -1783,7 +1874,8 @@ const actions = {
   "open-link": el => openInstalledApp(el.dataset.id),
   "open-installed": el => editMode ? undefined : openInstalledApp(el.dataset.id),
   "install-app": el => installApp(el.dataset.id),
-  "renew-app": el => installApp(el.dataset.id),
+  "subscribe-app": el => subscribeToApp(el.dataset.id), "cancel-subscription": el => cancelSubscription(el.dataset.id),
+  "renew-app": el => subscribeToApp(el.dataset.id),
   "uninstall-app": el => uninstallApp(el.dataset.id),
   "move-app-up": el => moveInstalledApp(el.dataset.id, -1),
   "move-app-down": el => moveInstalledApp(el.dataset.id, 1),
