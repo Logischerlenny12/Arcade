@@ -111,7 +111,7 @@ a{color:inherit;text-decoration:none}
 .pm-name{font-family:var(--font-head);font-weight:700;font-size:1.1rem}
 #pmRole{justify-self:start;margin-bottom:6px}
 
-#desktop{flex:1;overflow:auto;padding:34px 22px 130px;max-width:980px;width:100%;margin:0 auto}
+#desktop{flex:1;overflow:hidden;padding:0;max-width:none;width:100%;margin:0 auto;position:relative}
 #desktop h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800}
 #dateLine{margin:4px 0 30px;font-weight:600;text-transform:none}
 #appGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:26px 14px}
@@ -125,18 +125,18 @@ a{color:inherit;text-decoration:none}
 #dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0));transform:translateX(-50%);z-index:36;display:flex;gap:10px;padding:10px 14px;border-radius:30px;background:rgba(255,255,255,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--shadow)}
 .dock-btn{position:relative;width:52px;height:52px;border-radius:18px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1),var(--c2));transition:transform .15s}
 .dock-btn:hover{transform:translateY(-5px) scale(1.06)}
-.dock-btn img{width:34px!important;height:34px!important;object-fit:cover;border-radius:11px;display:block}
+.dock-btn img{width:34px!important;height:34px!important;max-width:34px!important;max-height:34px!important;object-fit:cover;border-radius:11px;display:block}.dock-btn{overflow:visible}.dock-btn .dock-app-image{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border-radius:11px}.dock-btn .dock-app-image img{width:34px!important;height:34px!important;object-fit:cover}
 #homeEditButton{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.78);border:1px solid rgba(43,27,74,.10);font-weight:700;color:var(--ink);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 #homeEditButton:hover{background:#fff}
 #homeEditButton.done{background:linear-gradient(135deg,#7b5cff,#4b33d6);color:#fff}
 .edit-mode #homeEditButton{display:inline-flex}
-.home-content-grid{display:grid;grid-template-columns:repeat(5,minmax(80px,1fr));gap:22px 16px;align-items:start}
+.home-content-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(120px,1fr));gap:18px 18px;align-items:center;justify-items:center;max-width:980px;margin:0 auto;height:min(360px,48vh)}
 .home-content-grid .app-page-grid{display:contents}
 #widgetArea{display:contents}
-#widgetArea .widget-head{grid-column:1/-1;margin:0}
+#widgetArea .widget-head{display:none}
 #widgetArea .widget-grid{display:contents}
 #widgetArea .widget-grid .os-widget{min-width:0}
-#widgetArea .os-widget{min-height:92px}
+#widgetArea .os-widget{min-height:92px;width:100%;height:100%;max-height:150px}
 #widgetArea .os-widget.wide{grid-column:span 2}
 .edge-hint{position:fixed;top:50%;z-index:60;width:38px;height:110px;border-radius:20px;background:rgba(123,92,255,.22);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transform:translateY(-50%);transition:opacity .15s}
 .edge-hint.left{left:8px}.edge-hint.right{right:8px}.edge-hint.show{opacity:1}
@@ -214,12 +214,12 @@ a{color:inherit;text-decoration:none}
 .theme-neon{--accent:#00e5ff;--accent-2:#ff00c8}.theme-neon .tile-icon,.theme-neon .dock-btn{filter:saturate(1.35) drop-shadow(0 0 10px rgba(0,229,255,.25))}
 /* iOS-style Home Screen */
 #desktop{position:relative;overflow:hidden;padding-bottom:120px;touch-action:pan-y}
-#homeViewport{position:absolute;inset:0 0 90px;overflow:hidden}
+#homeViewport{position:absolute;inset:0 0 86px;overflow:hidden;touch-action:pan-x;user-select:none}
 #homePages{display:flex;width:100%;height:100%;transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
-.home-page{flex:0 0 100%;width:100%;height:100%;overflow-y:auto;padding:34px 22px 120px;max-width:100%;}
+.home-page{flex:0 0 100%;width:100%;height:100%;overflow:hidden;padding:26px 22px 18px;max-width:100%;}
 .home-page-inner{max-width:980px;margin:0 auto}
 #appGrid{grid-template-columns:repeat(5,minmax(80px,1fr));gap:26px 16px}
-.app-page-grid{display:grid;grid-template-columns:repeat(5,minmax(80px,1fr));gap:26px 16px}
+.app-page-grid{display:contents}
 .home-page .toolbar.home-tools{margin-bottom:10px}
 .edit-mode #appGrid .tile,.edit-mode .os-widget,.edit-mode #dock .dock-btn{animation:wiggle .16s alternate infinite}
 .edit-mode .tile,.edit-mode .os-widget,.edit-mode #dock .dock-btn{cursor:grab}
@@ -236,11 +236,11 @@ a{color:inherit;text-decoration:none}
 .notification-item{padding:13px;border-radius:17px;background:rgba(255,255,255,.55);margin-top:8px;border:1px solid var(--line)}
 .notification-item.read{opacity:.58}
 .dock-edit-btn{background:linear-gradient(145deg,#777,#333)!important}.dock-add-btn{background:linear-gradient(145deg,#20c997,#087f5b)!important}.dock-remove{position:absolute;right:-3px;top:-5px;width:22px;height:22px;border-radius:50%;background:#ff3b30;color:#fff;font-weight:900}
-@media(max-width:800px){#appGrid,.app-page-grid{grid-template-columns:repeat(4,minmax(70px,1fr))}.widget-picker-grid{grid-template-columns:1fr}.home-page{padding-left:16px;padding-right:16px}}
-@media(max-width:560px){#appGrid,.app-page-grid{grid-template-columns:repeat(4,1fr);gap:20px 8px}.tile-icon{width:68px;height:68px;border-radius:22px}.tile-label{font-size:.8rem}.home-page{padding-top:28px}}
+@media(max-width:800px){.home-content-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(105px,1fr));gap:14px 8px;height:min(300px,46vh)}.widget-picker-grid{grid-template-columns:1fr}.home-page{padding-left:12px;padding-right:12px}}
+@media(max-width:560px){.home-content-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(92px,1fr));gap:10px 6px;height:250px}.tile-icon{width:68px;height:68px;border-radius:22px}.tile-label{font-size:.78rem}.home-page{padding-top:18px}}
 
 /* Widgets & Chat */
-#widgetArea{margin-top:34px}.widget-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.widget-head h2{display:flex;align-items:center;gap:8px;font-size:1.15rem}.widget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.os-widget{display:flex;gap:12px;text-align:left;padding:16px;border-radius:22px;background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 14px 30px -20px rgba(43,27,74,.45)}.widget-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1,#7b5cff),var(--c2,#4b33d6));flex:none}.widget-content b{display:block;font-family:var(--font-head);font-size:1.15rem}.widget-content span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}.w-green{--c1:#20c997;--c2:#0a7d5c}.w-orange{--c1:#ff9f43;--c2:#e5541b}.w-purple{--c1:#8f74ff;--c2:#4b33d6}.w-pink{--c1:#ff6fae;--c2:#a93ee8}.w-blue{--c1:#18a0fb;--c2:#3567ff}.w-custom{--c1:#667eea;--c2:#764ba2}.chat-layout{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:520px}.chat-list{background:var(--solid);border:1.5px solid var(--line);border-radius:22px;padding:10px;overflow:auto}.chat-contact{display:flex;gap:10px;align-items:center;padding:11px;border-radius:15px;width:100%;text-align:left}.chat-contact.active{background:var(--soft)}.chat-contact .avatar{width:38px;height:38px}.chat-main{display:flex;flex-direction:column;background:var(--solid);border:1.5px solid var(--line);border-radius:22px;overflow:hidden}.chat-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.chat-messages{flex:1;overflow:auto;padding:16px;display:grid;align-content:start;gap:9px;min-height:350px}.chat-bubble{max-width:78%;padding:10px 13px;border-radius:18px;background:var(--soft);justify-self:start}.chat-bubble.mine{justify-self:end;background:linear-gradient(135deg,#e9ddff,#fbd7e8)}.chat-bubble img{max-width:240px;max-height:240px;border-radius:14px;display:block;margin-top:6px}.chat-meta{font-size:.7rem;color:var(--muted);margin-top:4px}.chat-compose{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:end}.chat-compose textarea{min-height:42px;max-height:120px;resize:vertical;flex:1}.chat-actions{display:flex;gap:6px}.chat-official{background:linear-gradient(135deg,#f0e8ff,#fff1f7)}
+#widgetArea{margin-top:34px}.widget-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.widget-head h2{display:flex;align-items:center;gap:8px;font-size:1.15rem}.widget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.os-widget{display:flex;gap:12px;text-align:left;padding:16px;border-radius:22px;background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 14px 30px -20px rgba(43,27,74,.45)}.widget-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--c1,#7b5cff),var(--c2,#4b33d6));flex:none;overflow:hidden}.widget-icon img{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover;border-radius:inherit;display:block}.widget-content b{display:block;font-family:var(--font-head);font-size:1.15rem}.widget-content span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}.w-green{--c1:#20c997;--c2:#0a7d5c}.w-orange{--c1:#ff9f43;--c2:#e5541b}.w-purple{--c1:#8f74ff;--c2:#4b33d6}.w-pink{--c1:#ff6fae;--c2:#a93ee8}.w-blue{--c1:#18a0fb;--c2:#3567ff}.w-custom{--c1:#667eea;--c2:#764ba2}.chat-layout{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:520px}.chat-list{background:var(--solid);border:1.5px solid var(--line);border-radius:22px;padding:10px;overflow:auto}.chat-contact{display:flex;gap:10px;align-items:center;padding:11px;border-radius:15px;width:100%;text-align:left}.chat-contact.active{background:var(--soft)}.chat-contact .avatar{width:38px;height:38px}.chat-main{display:flex;flex-direction:column;background:var(--solid);border:1.5px solid var(--line);border-radius:22px;overflow:hidden}.chat-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.chat-messages{flex:1;overflow:auto;padding:16px;display:grid;align-content:start;gap:9px;min-height:350px}.chat-bubble{max-width:78%;padding:10px 13px;border-radius:18px;background:var(--soft);justify-self:start}.chat-bubble.mine{justify-self:end;background:linear-gradient(135deg,#e9ddff,#fbd7e8)}.chat-bubble img{max-width:240px;max-height:240px;border-radius:14px;display:block;margin-top:6px}.chat-meta{font-size:.7rem;color:var(--muted);margin-top:4px}.chat-compose{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:end}.chat-compose textarea{min-height:42px;max-height:120px;resize:vertical;flex:1}.chat-actions{display:flex;gap:6px}.chat-official{background:linear-gradient(135deg,#f0e8ff,#fff1f7)}
 @media(max-width:760px){.chat-layout{grid-template-columns:1fr}.chat-list{max-height:180px}.chat-messages{min-height:300px}}
 /* Admin */
 .tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -843,74 +843,147 @@ function isAppActive(a) {
   return !exp || exp > Date.now();
 }
 
-let currentHomePage=0, editMode=false, homeTouchStartX=0, homeDrag=null;
-function normalizedHomePages(){
-  const builtin=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id);
-  const installed=getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id));
-  const all=[...builtin,...installed];
-  const raw=Array.isArray(state.profile?.homePages)?state.profile.homePages:[];
-  let pages=raw.map(p=>Array.isArray(p)?p:(Array.isArray(p?.items)?p.items:[])).map(p=>p.filter(id=>all.includes(id)));
-  if(!pages.length)pages=[[]];
-  const used=new Set(pages.flat());
-  all.forEach(id=>{if(!used.has(id)){pages[0].push(id);used.add(id)}});
-  return pages;
+let currentHomePage=0, editMode=false, homeTouchStartX=0, homeTouchStartY=0, homeDrag=null, dockDrag=null;
+const HOME_COLS=5, HOME_ROWS=2, HOME_CAPACITY=HOME_COLS*HOME_ROWS;
+function builtinHomeIds(){return Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id)}
+function installedHomeIds(){return getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id))}
+function widgetIds(){return ["konto","shop","appstore","designstore","chat",...getInstalledApps().map(e=>e.appId).filter(id=>{const a=state.apps.find(x=>x.id===id);return a&&a.widgetEnabled})]}
+function isWidgetItem(id){return typeof id==="string"&&id.startsWith("w:")}
+function widgetItemId(id){return isWidgetItem(id)?id.slice(2):id}
+function currentHomeItemMap(){
+  const raw=state.profile?.homePageItems;
+  if(raw && typeof raw==="object" && !Array.isArray(raw)){
+    return Object.keys(raw).sort((a,b)=>Number(a)-Number(b)).map(k=>Array.isArray(raw[k])?raw[k].filter(x=>typeof x==="string"):[]);
+  }
+  const old=Array.isArray(state.profile?.homePages)?state.profile.homePages:[];
+  return old.map(p=>Array.isArray(p)?p:(Array.isArray(p?.items)?p.items:[])).map(a=>a.filter(x=>typeof x==="string"));
 }
-function firestoreHomePages(pages){return pages.map(items=>({items:[...items]}));}
-function savePagesOnly(pages){return updateDoc(doc(db,"users",state.user.uid),{homePages:firestoreHomePages(pages)});}
+function normalizedHomePages(){
+  const apps=[...builtinHomeIds(),...installedHomeIds()];
+  let pages=currentHomeItemMap();
+  if(!pages.length) pages=[[]];
+  const allowed=new Set(apps);
+  // Keep existing app/widget order and remove invalid/duplicates.
+  const seen=new Set(), clean=[];
+  for(const page of pages){
+    const out=[];
+    for(const item of page){
+      const valid=isWidgetItem(item)?widgetIds().includes(widgetItemId(item)):allowed.has(item);
+      if(valid && !seen.has(item)){seen.add(item);out.push(item)}
+    }
+    clean.push(out);
+  }
+  // Add newly installed/builtin apps only once. Never refill the dock.
+  for(const id of apps) if(!seen.has(id)){let target=clean.findIndex(x=>x.length<HOME_CAPACITY);if(target<0){clean.push([]);target=clean.length-1}clean[target].push(id);seen.add(id)}
+  // Enforce exactly two rows worth of items per page. Overflow moves forward.
+  const packed=[];
+  for(const page of clean){
+    let arr=[...page];
+    while(arr.length>HOME_CAPACITY){packed.push(arr.splice(0,HOME_CAPACITY))}
+    packed.push(arr);
+  }
+  while(packed.length>1 && packed.at(-1).length===0) packed.pop();
+  return packed.length?packed:[[]];
+}
+function firestoreHomeMap(pages){const out={};pages.forEach((items,i)=>{out[String(i)]=items.filter(x=>typeof x==="string")});return out;}
+async function savePagesOnly(pages){
+  const clean=pages.map(p=>p.filter(x=>typeof x==="string"));
+  await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(clean)});
+  state.profile.homePageItems=firestoreHomeMap(clean);
+}
+function itemApp(item){return APPS[item]||state.apps.find(a=>a.id===item)}
+function widgetDefinition(id){
+  const p=state.profile||{}; const a=state.apps.find(x=>x.id===id);
+  const defs={
+    konto:{title:"Konto",icon:"wallet",cls:"w-green",html:`<b>${COIN}${fmt(p.balance)}</b><span>aktuelles Guthaben</span>`},
+    shop:{title:"Shop",icon:"bag",cls:"w-orange",html:`<b>${fmt(state.orders.filter(o=>o.status!=="geliefert").length)}</b><span>Bestellungen unterwegs</span>`},
+    appstore:{title:"App Store",icon:"store",cls:"w-purple",html:`<b>${fmt(getInstalledApps().length)}</b><span>Apps installiert</span>`},
+    designstore:{title:"Design Store",icon:"palette",cls:"w-pink",html:`<b>${esc((designById(localStorage.getItem("coinos_current_design"))||DESIGNS[0]).title)}</b><span>aktuelles Design</span>`},
+    chat:{title:"Chat",icon:"message",cls:"w-blue",html:`<b>💬</b><span>Nachrichten öffnen</span>`}
+  };
+  if(defs[id]) return {id,...defs[id]};
+  if(a&&a.widgetEnabled) return {id,title:a.widgetTitle||a.title,icon:"widget",cls:"w-custom",html:`<b>${esc(a.widgetValue||"Widget")}</b><span>${esc(a.widgetText||a.title)}</span>`};
+  return null;
+}
 function renderDesktop(){
   const pages=normalizedHomePages(); if(currentHomePage>=pages.length)currentHomePage=pages.length-1;
-  const p=state.profile||{}; const builtins=Object.fromEntries(Object.entries(APPS));
-  const pageHTML=pages.map((ids,pi)=>`<section class="home-page" data-page="${pi}"><div class="home-page-inner">
+  const p=state.profile||{};
+  const pageHTML=pages.map((items,pi)=>`<section class="home-page" data-page="${pi}"><div class="home-page-inner">
     ${pi===0?`<h1 id="greeting">Hallo, ${esc(p.name||"du")}!</h1><p id="dateLine" class="muted">${new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</p>`:`<h2 class="page-title">Seite ${pi+1}</h2>`}
     ${pi===0?`<div class="toolbar home-tools"><button class="btn small" data-action="new-folder">＋ Ordner</button><button class="btn small" data-action="open-app" data-app="wishlist">🎁 Wunschliste</button></div>`:""}
-    <div class="home-content-grid"><section id="widgetArea" class="widget-slot"></section><div class="app-page-grid" id="appGrid-${pi}">${ids.map(id=>{const a=builtins[id]||state.apps.find(x=>x.id===id);if(!a)return "";const custom=!builtins[id];return `<button draggable="${editMode}" class="tile" data-action="${custom?"open-installed":"open-app"}" data-id="${custom?id:""}" data-app="${custom?"":id}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(id)}">−</span>`:""}<span class="tile-label">${esc(a.title)}</span></button>`}).join("")}</div></div>
+    <div class="home-content-grid">${items.map(item=>{
+      if(isWidgetItem(item)){
+        const w=widgetDefinition(widgetItemId(item)); if(!w)return "";
+        return `<button class="os-widget ${w.cls}" data-action="open-widget-app" data-app="${esc(w.id)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span>${editMode?`<span class="tile-remove" data-action="widget-remove" data-id="${esc(item)}">−</span>`:""}</button>`;
+      }
+      const a=itemApp(item); if(!a)return ""; const custom=!APPS[item];
+      return `<button draggable="${editMode}" class="tile" data-action="${custom?"open-installed":"open-app"}" data-id="${custom?item:""}" data-app="${custom?"":item}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(item)}">−</span>`:""}<span class="tile-label">${esc(a.title)}</span></button>`;
+    }).join("")}</div>
   </div></section>`).join("");
   $("#homePages").innerHTML=pageHTML; $("#homePages").style.transform=`translateX(-${currentHomePage*100}%)`;
   $("#pageDots").innerHTML=pages.map((_,i)=>`<button class="page-dot ${i===currentHomePage?"active":""}" data-action="page" data-page="${i}" aria-label="Seite ${i+1}"></button>`).join("");
   const st=getSettings();$("#pageDots").style.display=st.showDots===false?"none":"flex";
-  renderWidgets(); bindHomeGestures(); applyHomeSettings();
+  applyHomeSettings(); bindHomeGestures(); renderDock();
 }
-function renderWidgets(){
-  const box=$("#widgetArea"); if(!box)return; const p=state.profile||{}; const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(Boolean);
-  const layout=Array.isArray(p.widgetLayout)?p.widgetLayout:[];
-  const builtins={konto:{title:"Konto",icon:"wallet",cls:"w-green",html:`<b>${COIN}${fmt(p.balance)}</b><span>aktuelles Guthaben</span>`},shop:{title:"Shop",icon:"bag",cls:"w-orange",html:`<b>${fmt(state.orders.filter(o=>o.status!=="geliefert").length)}</b><span>Bestellungen unterwegs</span>`},appstore:{title:"App Store",icon:"store",cls:"w-purple",html:`<b>${fmt(getInstalledApps().length)}</b><span>Apps installiert</span>`},designstore:{title:"Design Store",icon:"palette",cls:"w-pink",html:`<b>${esc((designById(localStorage.getItem("coinos_current_design"))||DESIGNS[0]).title)}</b><span>aktuelles Design</span>`},chat:{title:"Chat",icon:"message",cls:"w-blue",html:`<b>💬</b><span>Nachrichten öffnen</span>`}};
-  const all=layout.map(id=>builtins[id]?{id,...builtins[id]}:(()=>{const a=installed.find(x=>x.id===id);return a&&a.widgetEnabled?{id:a.id,title:a.widgetTitle||a.title,icon:"widget",cls:"w-custom",html:`<b>${esc(a.widgetValue||"Widget")}</b><span>${esc(a.widgetText||a.title)}</span>`}:null})()).filter(Boolean);
-  box.innerHTML=all.length?`<div class="widget-head"><h2>${icon("widget",20)} Widgets</h2><span class="muted small">Deine Übersicht</span></div><div class="widget-grid">${all.map(w=>`<button class="os-widget ${w.cls}" data-action="open-widget-app" data-app="${esc(w.id)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span></button>`).join("")}</div>`:"";
-}
+function renderWidgets(){renderDesktop()}
 function renderDock(){
-  const builtin=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin());
-  const hasDock=Array.isArray(state.profile?.dockApps);
-  const ids=hasDock?state.profile.dockApps:[];
+  const ids=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
   const apps=ids.map(id=>{const a=APPS[id]||state.apps.find(x=>x.id===id);return a?{id,a}:null}).filter(Boolean);
   const st=getSettings(); $("#dock").style.display=st.showDock===false?"none":"flex";
-  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${id}" title="${esc(a.title)}">${a.icon?icon(a.icon,26):thumbHTML(a.iconUrl,"globe",26)}${editMode?`<span class="dock-remove" data-action="dock-remove" data-id="${esc(id)}">−</span>`:""}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button>`;
+  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${esc(id)}" title="${esc(a.title)}">${a.icon?icon(a.icon,26):`<span class="dock-app-image">${thumbHTML(a.iconUrl,"globe",34)}</span>`}${editMode?`<span class="dock-remove" data-action="dock-remove" data-id="${esc(id)}">−</span>`:""}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button>`;
 }
-function editTileAction(el){if(!editMode)return openApp(el.dataset.app);const id=el.dataset.id||el.dataset.app;if(!id)return;removeHomeApp(id);toast("App vom Homescreen entfernt.","success");}
-async function removeDockApp(id){const ids=(Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[]).filter(x=>x!==id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});state.profile.dockApps=ids;renderDock();}
-function addDockDialog(){const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];const available=[...Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>({id,title:a.title,icon:a.icon})),...state.apps.filter(a=>!current.includes(a.id)).map(a=>({id:a.id,title:a.title,icon:null,iconUrl:a.iconUrl}))].filter(a=>!current.includes(a.id));const r=$("#widgetPicker");r.hidden=false;r.innerHTML=`<h2>App ins Dock</h2><p class="muted">Wähle eine App für die untere Leiste.</p><div class="widget-picker-grid">${available.map(a=>`<button class="widget-choice" data-action="choose-dock" data-id="${esc(a.id)}"><span class="widget-icon">${a.icon?icon(a.icon,22):thumbHTML(a.iconUrl,"globe",22)}</span><span><b>${esc(a.title)}</b><small class="muted">Ins Dock aufnehmen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;}
-async function chooseDock(id){const ids=Array.isArray(state.profile?.dockApps)?[...state.profile.dockApps]:[];if(!ids.includes(id))ids.push(id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});state.profile.dockApps=ids;closeWidgetPicker();renderDock();toast("App ins Dock gelegt.","success");}
-function enterEdit(){editMode=true;document.body.classList.add("editing");document.documentElement.classList.add("edit-mode");const b=$("#homeEditButton");if(b){b.dataset.action="exit-edit";b.classList.add("done");b.innerHTML=`${icon("check",16)}<span>Fertig</span>`;}renderDesktop();renderDock();}
-function exitEdit(){editMode=false;document.body.classList.remove("editing");document.documentElement.classList.remove("edit-mode");closeWidgetPicker();saveHomeLayout();const b=$("#homeEditButton");if(b){b.dataset.action="edit-home";b.classList.remove("done");b.innerHTML=`${icon("pencil",16)}<span>Bearbeiten</span>`;}renderDesktop();renderDock();}
-function saveHomeLayout(){if(!state.user)return;const pages=normalizedHomePages();const dock=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];savePagesOnly(pages).then(()=>updateDoc(doc(db,"users",state.user.uid),{dockApps:dock})).catch(console.debug)}
-async function addHomePage(){const pages=normalizedHomePages();pages.push([]);await savePagesOnly(pages);currentHomePage=pages.length-1;renderDesktop();}
-function goPage(i){const pages=normalizedHomePages();currentHomePage=Math.max(0,Math.min(i,pages.length-1));renderDesktop();}
-function bindHomeGestures(){const v=$("#homeViewport");if(!v||v.dataset.bound)return;v.dataset.bound="1";v.addEventListener("pointerdown",e=>{homeTouchStartX=e.clientX;});v.addEventListener("pointerup",e=>{const dx=e.clientX-homeTouchStartX;if(Math.abs(dx)>55&&!editMode)goPage(currentHomePage+(dx<0?1:-1));});}
-function applyHomeSettings(){const st=getSettings();document.documentElement.classList.toggle("large-icons",!!st.largeIcons);document.documentElement.classList.toggle("high-contrast",!!st.highContrast);document.documentElement.classList.toggle("reduce-motion",!!st.reduceMotion);}
-function autoArrange(){const pages=normalizedHomePages();for(const page of pages)page.sort((a,b)=>a.localeCompare(b));savePagesOnly(pages).then(()=>{toast("Apps wurden automatisch angeordnet.","success");renderDesktop();});}
-function startTileDrag(el,e){if(!editMode)return;homeDrag={id:el.dataset.id||el.dataset.app,page:currentHomePage,startX:e.clientX,startY:e.clientY,moved:false};el.setPointerCapture?.(e.pointerId);}
-function moveTileDrag(e){if(!editMode||!homeDrag)return;const v=$("#homeViewport");const dx=e.clientX-homeDrag.startX,dy=e.clientY-homeDrag.startY;if(Math.abs(dx)+Math.abs(dy)>8)homeDrag.moved=true;if(!homeDrag.moved)return;const left=$("#edgeHintLeft"),right=$("#edgeHintRight");left?.classList.toggle("show",e.clientX<55);right?.classList.toggle("show",e.clientX>window.innerWidth-55);if(e.clientX>window.innerWidth-55){const pages=normalizedHomePages();if(currentHomePage<pages.length-1){moveAppToPage(homeDrag.id,currentHomePage+1).then(()=>{currentHomePage++;renderDesktop();homeDrag.startX=e.clientX;});}else{const target=pages.length;pages.push([]);moveAppToPageWithPages(homeDrag.id,target,pages).then(()=>{currentHomePage=target;renderDesktop();homeDrag.startX=e.clientX;});}}else if(e.clientX<55&&currentHomePage>0){moveAppToPage(homeDrag.id,currentHomePage-1).then(()=>{currentHomePage--;renderDesktop();homeDrag.startX=e.clientX;});}}
-async function endTileDrag(){if(homeDrag){$("#edgeHintLeft")?.classList.remove("show");$("#edgeHintRight")?.classList.remove("show");homeDrag=null;}}
-async function moveAppToPage(id,targetPage){const pages=normalizedHomePages();let from=pages.findIndex(p=>p.includes(id));if(from<0||targetPage<0)return;if(from===targetPage)return;pages[from]=pages[from].filter(x=>x!==id);if(!pages[targetPage])pages[targetPage]=[];pages[targetPage].push(id);await savePagesOnly(pages);}
-async function moveAppToPageWithPages(id,targetPage,pages){const from=pages.findIndex(p=>p.includes(id));if(from<0||targetPage<0)return;pages[from]=pages[from].filter(x=>x!==id);if(!pages[targetPage])pages[targetPage]=[];pages[targetPage].push(id);await savePagesOnly(pages);}
-function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));savePagesOnly(pages);renderDesktop();}
+function addDockDialog(){
+  const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
+  const available=[...Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>({id,title:a.title,icon:a.icon})),...state.apps.filter(a=>!current.includes(a.id)).map(a=>({id:a.id,title:a.title,icon:null,iconUrl:a.iconUrl}))].filter(a=>!current.includes(a.id));
+  const r=$("#widgetPicker");r.hidden=false;r.innerHTML=`<h2>App ins Dock</h2><p class="muted">Wähle eine App für die untere Leiste.</p><div class="widget-picker-grid">${available.map(a=>`<button class="widget-choice" data-action="choose-dock" data-id="${esc(a.id)}"><span class="widget-icon">${a.icon?icon(a.icon,22):`<span class="dock-app-image">${thumbHTML(a.iconUrl,"globe",22)}</span>`}</span><span><b>${esc(a.title)}</b><small class="muted">Ins Dock aufnehmen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
+}
+async function chooseDock(id){const ids=Array.isArray(state.profile?.dockApps)?[...state.profile.dockApps]:[];if(!ids.includes(id))ids.push(id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});state.profile.dockApps=ids;closeWidgetPicker();renderDock();toast("App ins Dock gelegt.","success")}
+function enterEdit(){editMode=true;document.body.classList.add("editing");document.documentElement.classList.add("edit-mode");const b=$("#homeEditButton");if(b){b.dataset.action="exit-edit";b.classList.add("done");b.innerHTML=`${icon("check",16)}<span>Fertig</span>`}renderDesktop()}
+function exitEdit(){editMode=false;document.body.classList.remove("editing");document.documentElement.classList.remove("edit-mode");closeWidgetPicker();saveHomeLayout();const b=$("#homeEditButton");if(b){b.dataset.action="edit-home";b.classList.remove("done");b.innerHTML=`${icon("pencil",16)}<span>Bearbeiten</span>`}renderDesktop()}
+async function saveHomeLayout(){if(!state.user)return;const pages=normalizedHomePages();await savePagesOnly(pages).catch(console.debug)}
+async function addHomePage(){const pages=normalizedHomePages();pages.push([]);await savePagesOnly(pages);currentHomePage=pages.length-1;renderDesktop()}
+function goPage(i){const pages=normalizedHomePages();currentHomePage=Math.max(0,Math.min(i,pages.length-1));renderDesktop()}
+function bindHomeGestures(){const v=$("#homeViewport");if(!v||v.dataset.bound)return;v.dataset.bound="1";v.addEventListener("pointerdown",e=>{if(editMode)return;homeTouchStartX=e.clientX;homeTouchStartY=e.clientY});v.addEventListener("pointerup",e=>{if(editMode)return;const dx=e.clientX-homeTouchStartX,dy=e.clientY-homeTouchStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.2)goPage(currentHomePage+(dx<0?1:-1))})}
+function applyHomeSettings(){const st=getSettings();document.documentElement.classList.toggle("large-icons",!!st.largeIcons);document.documentElement.classList.toggle("high-contrast",!!st.highContrast);document.documentElement.classList.toggle("reduce-motion",!!st.reduceMotion)}
+async function autoArrange(){const pages=normalizedHomePages();const flat=pages.flat();const packed=[];for(let i=0;i<flat.length;i+=HOME_CAPACITY)packed.push(flat.slice(i,i+HOME_CAPACITY));await savePagesOnly(packed);currentHomePage=Math.min(currentHomePage,packed.length-1);toast("Apps und Widgets wurden sauber angeordnet.","success");renderDesktop()}
+function startTileDrag(el,e){if(!editMode)return;const id=el.dataset.id||el.dataset.app;if(!id)return;homeDrag={id,page:currentHomePage,startX:e.clientX,startY:e.clientY,moved:false};el.setPointerCapture?.(e.pointerId)}
+async function moveTileDrag(e){if(!editMode||!homeDrag)return;const dx=e.clientX-homeDrag.startX,dy=e.clientY-homeDrag.startY;if(Math.abs(dx)+Math.abs(dy)>10)homeDrag.moved=true;if(!homeDrag.moved)return;const right=e.clientX>window.innerWidth-60,left=e.clientX<60;if(right||left){const pages=normalizedHomePages();const target=currentHomePage+(right?1:-1);if(target>=0){if(target>=pages.length)pages.push([]);const from=pages[currentHomePage];const idx=from.indexOf(homeDrag.id);if(idx>=0){from.splice(idx,1);if(pages[target].length>=HOME_CAPACITY){pages.push([])}pages[target].push(homeDrag.id);await savePagesOnly(pages);currentHomePage=target;homeDrag.startX=e.clientX;renderDesktop();}}}}
+async function endTileDrag(e){
+  if(!homeDrag)return;
+  const drag=homeDrag; homeDrag=null;
+  $("#edgeHintLeft")?.classList.remove("show"); $("#edgeHintRight")?.classList.remove("show");
+  if(!drag.moved)return;
+  // Reorder on the current page when the item was released on another tile/widget.
+  if(e){
+    const target=e.target.closest?.(".tile,.os-widget");
+    if(target){
+      const targetId=target.dataset.id||target.dataset.app;
+      const targetItem=target.classList.contains("os-widget")?"w:"+target.dataset.app:targetId;
+      if(targetItem && targetItem!==drag.id){
+        const pages=normalizedHomePages();
+        const from=pages.findIndex(p=>p.includes(drag.id));
+        let to=pages.findIndex(p=>p.includes(targetItem));
+        if(from>=0&&to>=0){
+          pages[from]=pages[from].filter(x=>x!==drag.id);
+          const insert=Math.max(0,pages[to].indexOf(targetItem));
+          if(from===to) pages[to].splice(insert,0,drag.id);
+          else { if(pages[to].length>=HOME_CAPACITY){pages.push([]);to=pages.length-1} pages[to].splice(insert,0,drag.id); }
+          await savePagesOnly(pages); renderDesktop(); return;
+        }
+      }
+    }
+  }
+  renderDesktop();
+}
+async function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
+async function removeWidget(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
 function addWidgetDialog(){
-  const p=state.profile||{}; const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(a=>a&&a.widgetEnabled);
+  const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(a=>a&&a.widgetEnabled);
   const choices=[{id:"konto",title:"Konto",icon:"wallet"},{id:"shop",title:"Shop",icon:"bag"},{id:"appstore",title:"App Store",icon:"store"},{id:"designstore",title:"Design Store",icon:"palette"},{id:"chat",title:"Chat",icon:"message"},...installed.map(a=>({id:a.id,title:a.widgetTitle||a.title,icon:"widget"}))];
-  const root=$("#widgetPicker");root.hidden=false;root.innerHTML=`<h2>Widgets hinzufügen</h2><p class="muted">Wähle ein Widget für deinen Homescreen.</p><div class="widget-picker-grid">${choices.map(c=>`<button class="widget-choice" data-action="choose-widget" data-id="${esc(c.id)}"><span class="widget-icon">${icon(c.icon,22)}</span><span><b>${esc(c.title)}</b><small class="muted">Zum Homescreen hinzufügen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
+  const root=$("#widgetPicker");root.hidden=false;root.innerHTML=`<h2>Widgets hinzufügen</h2><p class="muted">Das Widget wird auf der aktuellen Seite in das normale App-Raster eingesetzt.</p><div class="widget-picker-grid">${choices.map(c=>`<button class="widget-choice" data-action="choose-widget" data-id="${esc(c.id)}"><span class="widget-icon">${icon(c.icon,22)}</span><span><b>${esc(c.title)}</b><small class="muted">Zum Homescreen hinzufügen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
 }
 function closeWidgetPicker(){const r=$("#widgetPicker");if(r){r.hidden=true;r.innerHTML=""}}
-async function chooseWidget(id){const p=state.profile||{};const layout=Array.isArray(p.widgetLayout)?[...p.widgetLayout]:[];if(!layout.includes(id))layout.push(id);await updateDoc(doc(db,"users",state.user.uid),{widgetLayout:layout});closeWidgetPicker();toast("Widget hinzugefügt.","success")}
-function removeWidget(id){const layout=(state.profile?.widgetLayout||[]).filter(x=>x!==id);updateDoc(doc(db,"users",state.user.uid),{widgetLayout:layout});renderWidgets()}
+async function chooseWidget(id){const pages=normalizedHomePages();const item="w:"+id;if(pages.some(p=>p.includes(item))){closeWidgetPicker();toast("Dieses Widget ist bereits auf dem Homescreen.","info");return}if(pages[currentHomePage].length>=HOME_CAPACITY){pages.splice(currentHomePage+1,0,[]);currentHomePage++;}pages[currentHomePage].push(item);await savePagesOnly(pages);closeWidgetPicker();renderDesktop();toast("Widget hinzugefügt.","success")}
 
 function tickClock() {
   $("#clock").textContent = new Date().toLocaleString("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -1204,12 +1277,26 @@ async function toggleChatInvisible(){const next=!state.profile?.chatInvisible;aw
 async function officialMessageDialog(){showModal({title:"Offizielle Nachricht",fields:[{name:"text",label:"Nachricht",required:true,placeholder:"Nachricht an alle CoinOS-Mitglieder…"}],submitLabel:"Senden",onSubmit:async v=>{await addDoc(collection(db,"chats","official","messages"),{senderId:state.user.uid,senderName:"CoinOS",type:"system",text:v.text,timestamp:serverTimestamp()});toast("Offizielle Nachricht gesendet.","success");}})}
 
 /* Homescreen-Bearbeitung: ausschließlich über den Button oben rechts */
-document.addEventListener("pointerdown",e=>{if(!editMode)return;const tile=e.target.closest(".tile");if(tile)startTileDrag(tile,e);});
-document.addEventListener("pointermove",e=>moveTileDrag(e));
-document.addEventListener("pointerup",()=>endTileDrag());
-document.addEventListener("dragstart",e=>{if(!editMode)return;const t=e.target.closest(".tile,.dock-btn");if(t)e.dataTransfer.setData("text/plain",t.dataset.id||t.dataset.app||"");});
-document.addEventListener("dragover",e=>{if(editMode&&e.target.closest(".tile,.dock-btn"))e.preventDefault();});
-document.addEventListener("drop",async e=>{if(!editMode)return;const target=e.target.closest(".tile,.dock-btn");if(!target)return;e.preventDefault();const dragged=e.dataTransfer.getData("text/plain");if(!dragged)return;const tile=target.closest(".tile");if(tile){const pages=normalizedHomePages();const from=pages.find(p=>p.includes(dragged));const toPage=pages.find(p=>p.includes(target.dataset.id||target.dataset.app));if(from&&toPage){from.splice(from.indexOf(dragged),1);const to=toPage.indexOf(target.dataset.id||target.dataset.app);toPage.splice(to<0?toPage.length:to,0,dragged);await savePagesOnly(pages);renderDesktop();}}else if(target.classList.contains("dock-btn")&&target.dataset.app){const ids=Array.isArray(state.profile?.dockApps)?[...state.profile.dockApps]:[];const from=ids.indexOf(dragged),to=ids.indexOf(target.dataset.app);if(from>=0&&to>=0){ids.splice(from,1);ids.splice(to,0,dragged);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});state.profile.dockApps=ids;renderDock();}}});
+document.addEventListener("pointerdown",e=>{
+  if(!editMode)return;
+  const tile=e.target.closest(".tile,.os-widget");
+  if(tile&&!e.target.closest(".tile-remove")){startTileDrag(tile,e);return;}
+  const dock=e.target.closest(".dock-btn[data-app]");
+  if(dock&&!e.target.closest(".dock-remove")){dockDrag={id:dock.dataset.app,moved:false};dock.setPointerCapture?.(e.pointerId)}
+});
+document.addEventListener("pointermove",e=>{
+  moveTileDrag(e);
+  if(editMode&&dockDrag){
+    if(Math.abs(e.movementX||0)+Math.abs(e.movementY||0)>3)dockDrag.moved=true;
+    const target=e.target.closest?.(".dock-btn[data-app]");
+    if(dockDrag.moved&&target&&target.dataset.app!==dockDrag.id){
+      const ids=Array.isArray(state.profile?.dockApps)?[...state.profile.dockApps]:[];
+      const from=ids.indexOf(dockDrag.id),to=ids.indexOf(target.dataset.app);
+      if(from>=0&&to>=0){ids.splice(from,1);ids.splice(to,0,dockDrag.id);state.profile.dockApps=ids;renderDock();updateDoc(doc(db,"users",state.user.uid),{dockApps:ids}).catch(console.debug);}
+    }
+  }
+});
+document.addEventListener("pointerup",e=>{endTileDrag(e);dockDrag=null;});
 
 /* =========================================================
    DESIGN-STORE
@@ -1685,7 +1772,7 @@ const actions = {
   "reset-pw": resetPassword,
   "toggle-profile": () => { const m = $("#profileMenu"); m.hidden = !m.hidden; },
   "notifications": showNotifications, "close-notifications": closeNotifications, "read-notifications": readNotifications,
-  "edit-home": enterEdit, "add-dock": addDockDialog, "choose-dock": el=>chooseDock(el.dataset.id), "exit-edit": exitEdit, "add-widget": addWidgetDialog, "close-widget-picker": closeWidgetPicker, "choose-widget": el=>chooseWidget(el.dataset.id), "add-home-page": addHomePage, "auto-arrange": autoArrange, "toggle-setting": el=>toggleSetting(el.dataset.key), "reset-home": resetHome, "clear-local-notes": clearLocalNotes, "page": el=>goPage(Number(el.dataset.page)), "dock-open": el=>editMode ? undefined : openApp(el.dataset.app), "dock-remove": el=>removeDockApp(el.dataset.id), "tile-remove": el=>removeHomeApp(el.dataset.id), "open-widget-app": el=>openApp(el.dataset.app),
+  "edit-home": enterEdit, "add-dock": addDockDialog, "choose-dock": el=>chooseDock(el.dataset.id), "exit-edit": exitEdit, "add-widget": addWidgetDialog, "close-widget-picker": closeWidgetPicker, "choose-widget": el=>chooseWidget(el.dataset.id), "add-home-page": addHomePage, "auto-arrange": autoArrange, "toggle-setting": el=>toggleSetting(el.dataset.key), "reset-home": resetHome, "clear-local-notes": clearLocalNotes, "page": el=>goPage(Number(el.dataset.page)), "dock-open": el=>openApp(el.dataset.app), "dock-remove": el=>removeDockApp(el.dataset.id), "tile-remove": el=>removeHomeApp(el.dataset.id), "widget-remove": el=>removeWidget(el.dataset.id), "open-widget-app": el=>openApp(el.dataset.app),
   "theme": el => applyTheme(el.dataset.theme),
   "wishlist-toggle": el => toggleWishlist(el.dataset.id),
   "new-folder": newFolderDialog,
