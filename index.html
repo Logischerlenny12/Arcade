@@ -498,7 +498,7 @@ const thumbHTML = (url, fb = "image", size = 30) => {
   const u = safeUrl(url);
   return u ? `<img class="thumb-img" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling?.removeAttribute('hidden')"><span class="thumb-fallback" hidden>${icon(fb, size)}</span>` : icon(fb, size);
 };
-function imageDataHTML(url,size=34){const u=String(url||"");return /^data:image\\//i.test(u)?`<img src="${esc(u)}" alt="" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:12px">`:"";}
+function imageDataHTML(url,size=34){const u=String(url||"");return /^data:image\//i.test(u)?`<img src="${esc(u)}" alt="" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:12px">`:"";}
 function appIconHTML(a,size=38){if(a?.iconUrl)return thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",size);const data=imageDataHTML(a?.iconData,size);if(data)return data;return icon(a?.icon||"appstore",size);}
 
 
