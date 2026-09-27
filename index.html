@@ -407,6 +407,11 @@ const ADMIN_EMAIL = "DEINE-ADMIN-MAIL@example.com";
 // Neue Nutzer kann der Admin dann trotzdem in der Admin-App anlegen.
 const ALLOW_REGISTRATION = true;
 const START_BALANCE = 100;
+const DEFAULT_STORAGE_CONFIG={freeGb:20,plans:[
+  {id:"storage10",title:"+10 GB Speicher",gb:10,price:50,billing:"once"},
+  {id:"storage50",title:"+50 GB Speicher",gb:50,price:150,billing:"once"},
+  {id:"storage100",title:"+100 GB Speicher",gb:100,price:250,billing:"once"}
+]};
 
 const firebaseConfig = {
   apiKey: "AIzaSyB1cAF8dfjxu_l0oz58gR7x0q6CCV55e08",
@@ -499,6 +504,9 @@ const thumbHTML = (url, fb = "image", size = 30) => {
 };
 
 
+function imageDataHTML(url,size=34){const u=String(url||"");return /^data:image\//i.test(u)?`<img src="${esc(u)}" alt="" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:12px">`:"";}
+function appIconHTML(a,size=38){if(a?.iconData){const x=imageDataHTML(a.iconData,size);if(x)return x;}if(a?.iconUrl)return thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",size);return icon(a?.icon||"appstore",size);}
+async function compressAppIconFile(file){if(!file||!file.type.startsWith("image/"))throw new AppError("Bitte eine Bilddatei auswählen.");if(file.size>4*1024*1024)throw new AppError("Das Icon darf höchstens 4 MB groß sein.");const url=URL.createObjectURL(file);try{const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new AppError("Das Icon konnte nicht gelesen werden."));i.src=url;});const max=512,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.78);if(data.length>450000)throw new AppError("Das Icon ist noch zu groß. Bitte ein kleineres Bild verwenden.");return data;}finally{URL.revokeObjectURL(url);}}
 /* ---------------- Geräte-PIN ---------------- */
 const pinStorageKey=()=>`coinos_device_pin_${state.user?.uid||"guest"}`;
 async function hashDevicePin(pin){const data=new TextEncoder().encode(pin);const hash=await crypto.subtle.digest("SHA-256",data);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,"0")).join("");}
@@ -617,7 +625,7 @@ const APPS = {
 const state = {
   user: null, profile: null,
   items: [], apps: [], orders: [], txs: [], designs: [],
-  allUsers: [], allOrders: [], systemApps: {},
+  allUsers: [], allOrders: [], systemApps: {}, storageConfig:{...DEFAULT_STORAGE_CONFIG,plans:DEFAULT_STORAGE_CONFIG.plans.map(x=>({...x}))},
   openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle",
   adminTab: "users", orderFilter: "alle", chatUserId: "official", chatSearch: "", chatMessages: [], chatUnsub: null
 };
@@ -676,6 +684,8 @@ async function ensureProfile(user) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
   if (snap.exists()) return;
+  const cfgSnap=await getDoc(doc(db,"system","config"));
+  const freeStorageGb=Math.max(1,Number(cfgSnap.data()?.storage?.freeGb)||DEFAULT_STORAGE_CONFIG.freeGb);
   const admin = (user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
   await setDoc(ref, {
     email: user.email,
@@ -685,7 +695,7 @@ async function ensureProfile(user) {
     installedApps: [],
     ownedDesigns: [],
     usage: { date: usageDateKey(), totalSeconds: 0, appSeconds: {}, events: [] },
-    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard", settings: {theme:"standard",showDots:true,showDock:true,notifications:true,orderNotifications:true,chatNotifications:true,enterSends:true,largeIcons:false,highContrast:false,reduceMotion:false,autoAddToHome:true}, homePages: [{items:[]}], dockApps: [], hiddenBuiltinApps: [], storageLimitGb:20, messageStorageMb:0, devicePinVersion: 1
+    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard", settings: {theme:"standard",showDots:true,showDock:true,notifications:true,orderNotifications:true,chatNotifications:true,enterSends:true,largeIcons:false,highContrast:false,reduceMotion:false,autoAddToHome:true}, homePages: [{items:[]}], dockApps: [], hiddenBuiltinApps: [], storageLimitGb:freeStorageGb,storageBaseGb:freeStorageGb,storagePermanentGb:0,storageSubscriptions:[],messageStorageMb:0,devicePinVersion:1
   });
 }
 
@@ -763,7 +773,7 @@ function startListeners(user) {
     scheduleRender();
   }, onErr));
 
-  unsubs.push(onSnapshot(doc(db,"system","config"), snap => { state.systemApps = snap.exists() ? (snap.data().apps||{}) : {}; applySystemApps(); scheduleRender(); }, onErr));
+  unsubs.push(onSnapshot(doc(db,"system","config"), snap => {const cfg=snap.exists()?snap.data():{};state.systemApps=cfg.apps||{};state.storageConfig={freeGb:Math.max(1,Number(cfg.storage?.freeGb)||DEFAULT_STORAGE_CONFIG.freeGb),plans:Array.isArray(cfg.storage?.plans)?cfg.storage.plans.filter(p=>p&&Number(p.gb)>0&&Number(p.price)>=0):DEFAULT_STORAGE_CONFIG.plans.map(x=>({...x}))};applySystemApps();scheduleRender();}, onErr));
 
   unsubs.push(onSnapshot(collection(db, "designs"), snap => {
     state.designs = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
@@ -954,7 +964,10 @@ function appPrice(a) { return Math.max(0, Math.floor(Number(a.price ?? a.require
 function appBilling(a) { return ["once","daily","weekly"].includes(a.billing) ? a.billing : "once"; }
 function billingLabel(a) { return appBilling(a) === "daily" ? "pro Tag" : appBilling(a) === "weekly" ? "pro Woche" : "einmalig"; }
 function appStorageMb(a){const n=Number(a?.storageMb);if(Number.isFinite(n)&&n>0)return Math.round(n);return a?.isGame?1500:500}
-function storageLimitMb(){return Math.max(1,Number(state.profile?.storageLimitGb)||20)*1024}
+function storageBaseGb(){return Math.max(1,Number(state.profile?.storageBaseGb)||Number(state.storageConfig?.freeGb)||20)}
+function storagePermanentGb(){const p=state.profile||{};if(p.storagePermanentGb!=null)return Math.max(0,Number(p.storagePermanentGb)||0);return Math.max(0,(Number(p.storageLimitGb)||storageBaseGb())-20)}
+function activeStorageSubscriptions(){const now=Date.now();return (Array.isArray(state.profile?.storageSubscriptions)?state.profile.storageSubscriptions:[]).filter(x=>{const until=x?.until?.toMillis?x.until.toMillis():new Date(x?.until||0).getTime();return until>now&&!x.cancelled})}
+function storageLimitMb(){const sub=activeStorageSubscriptions().reduce((n,x)=>n+Math.max(0,Number(x.gb)||0),0);return Math.max(1,storageBaseGb()+storagePermanentGb()+sub)*1024}
 function currentStorageRows(){const rows=[];for(const [id,a] of Object.entries(APPS)){if((!a.adminOnly||isAdmin())&&!state.systemApps?.[id]?.deleted)rows.push({id,title:a.title,mb:Number((state.systemApps?.[id]?.storageMb)||a.storageMb)||500,type:"System-App"})}for(const e of getInstalledApps()){const a=state.apps.find(x=>x.id===e.appId);if(a)rows.push({id:a.id,title:a.title,mb:Number(e.storageMb)||appStorageMb(a),type:a.isGame?"Spiel":"App"})}const msg=Number(state.profile?.messageStorageMb)||0;if(msg)rows.push({id:"messages",title:"Nachrichten",mb:msg,type:"Nachrichten"});return rows}
 function storageUsedMb(){return currentStorageRows().reduce((n,r)=>n+r.mb,0)}
 
@@ -1069,7 +1082,7 @@ function renderDock(){
   const ids=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
   const apps=ids.map(id=>{const a=APPS[id]||state.apps.find(x=>x.id===id);return a?{id,a}:null}).filter(Boolean);
   const st=getSettings(); $("#dock").style.display=st.showDock===false?"none":"flex";
-  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${esc(id)}" title="${esc(a.title)}"><span class="dock-app-image">${a.icon?icon(a.icon,28):thumbHTML(a.iconUrl,"globe",34)}</span>${editMode?`<span class="dock-remove" data-action="dock-remove" data-id="${esc(id)}" aria-label="Aus Dock entfernen">−</span>`:""}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button>`;
+  $("#dock").innerHTML=`<button class="dock-btn home ${state.openApp?"":"active"}" data-action="home" title="Home">${icon("home",26)}</button>`+apps.map(({id,a})=>`<button draggable="${editMode}" class="dock-btn ${state.openApp===id?"active":""}" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}" data-action="dock-open" data-app="${esc(id)}" title="${esc(a.title)}"><span class="dock-app-image">${appIconHTML(a,28)}</span>${editMode?`<span class="dock-remove" data-action="dock-remove" data-id="${esc(id)}" aria-label="Aus Dock entfernen">−</span>`:""}</button>`).join("")+`<button class="dock-btn dock-add-btn" data-action="add-dock" title="App ins Dock">＋</button>`;
 }
 function addDockDialog(){
   const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
@@ -1348,7 +1361,7 @@ function updateAppStoreGrid() {
     const action = a.isBuiltin ? (installed ? "installed" : "install-builtin") : (installed && active ? "installed" : installed && billing !== "once" ? "subscribe-app" : installed ? "installed" : "install-app");
     const label = a.isBuiltin ? (installed ? "Auf Homescreen" : "Installieren") : (installed && active ? "Installiert" : installed && billing !== "once" ? `Abo starten · ${fmt(price)} Coins` : price > 0 && billing === "once" ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren");
     const storageLabel = a.isBuiltin ? `System-App · ${fmt(Number(a.storageMb)||500)} MB` : `${appStorageMb(a)>=1024 ? fmt(appStorageMb(a)/1024)+" GB" : fmt(appStorageMb(a))+" MB"} · ${price>0 ? `${fmt(price)} Coins ${billingLabel(a)}` : "Kostenlos"}`;
-    return `<article class="game"><div class="thumb">${a.isBuiltin?icon(a.icon||"settings",32):thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${storageLabel}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed && !a.isBuiltin ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
+    return `<article class="game"><div class="thumb">${appIconHTML(a,32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${storageLabel}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed && !a.isBuiltin ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
   }).join("")}</div>` : `<div class="empty">${icon("store",40)}${state.apps.length ? "Keine App passt zu deiner Suche." : "Der App Store ist noch leer."}</div>`;
 }
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}function autoAddInstalledAppToHome(id){if(getSettings().autoAddToHome===false)return;const pages=normalizedHomePages();if(pages.some(p=>p.includes(id)))return;let p=pages.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)<HOME_CAPACITY);if(p<0){pages.push([]);p=pages.length-1}pages[p].push(id);savePagesOnly(pages).catch(console.debug)}
@@ -1361,28 +1374,25 @@ async function showInstallProgress(a){
   for(let i=0;i<=100;i+=2){fill.style.width=i+"%";pct.textContent=i+" %";await wait(100);}
   closeModal();
 }
-async function installApp(id) {
-  if(!(await requireDevicePin("App herunterladen"))) return;
-  const a = state.apps.find(x => x.id === id); if (!a) throw new AppError("Diese App gibt es nicht mehr.");
-  const price=appPrice(a),billing=appBilling(a),uid=state.user.uid,userRef=doc(db,"users",uid);
-  const current=installedEntry(id);
-  if(current && billing!=="once" && isAppActive(a)) return toast("Dieses Abo ist bereits aktiv.");
-  if(current && billing==="once") return toast("Diese App ist bereits installiert.");
+async function installApp(id){
+  if(!(await requireDevicePin("App herunterladen")))return;
+  const a=state.apps.find(x=>x.id===id);if(!a)throw new AppError("Diese App gibt es nicht mehr.");
+  const need=appStorageMb(a),limit=storageLimitMb(),used=storageUsedMb();
+  if(used+need>limit)throw new AppError(`Nicht genügend Speicher. „${a.title}“ benötigt ${need>=1024?fmt(need/1024)+" GB":fmt(need)+" MB"}, aber nur ${Math.max(0,limit-used)>=1024?fmt((limit-used)/1024)+" GB":fmt(Math.max(0,limit-used))+" MB"} sind frei. Bitte deinstalliere eine App oder erweitere deinen Speicher.`);
+  const price=appPrice(a),billing=appBilling(a),uid=state.user.uid,userRef=doc(db,"users",uid),current=installedEntry(id);
+  if(current&&billing!=="once"&&isAppActive(a))return toast("Dieses Abo ist bereits aktiv.");
+  if(current&&billing==="once")return toast("Diese App ist bereits installiert.");
   if(billing!=="once"){
-    const ok=await confirmDialog({title:`${a.title} installieren?`,text:"Die App wird kostenlos installiert. Zum Öffnen brauchst du ein aktives Abo.",confirmLabel:"Kostenlos installieren"});
-    if(!ok)return;
+    const ok=await confirmDialog({title:`${a.title} installieren?`,text:"Die App wird kostenlos installiert. Zum Öffnen brauchst du ein aktives Abo.",confirmLabel:"Kostenlos installieren"});if(!ok)return;
     await showInstallProgress(a);
-    await updateDoc(userRef,{installedApps:[...getInstalledApps().filter(x=>x.appId!==id),{appId:id,installedAt:new Date(),subscriptionUntil:null,subscriptionCancelled:false,storageMb:appStorageMb(a)}]});
-    autoAddInstalledAppToHome(id); toast(`${a.title} wurde installiert. Beim ersten Öffnen kannst du das Abo abschließen.` ,"success");
-    logUsageEvent("App installiert",`${a.title} · kostenlos, Abo erforderlich` ,"appstore");
-    return;
+    await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const currentUsed=storageUsedMb();if(currentUsed+need>storageLimitMb())throw new AppError("Nicht genügend Speicher. Der Speicher ist inzwischen voll.");const list=Array.isArray(u.data().installedApps)?u.data().installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];list.push({appId:id,installedAt:new Date(),subscriptionUntil:null,subscriptionCancelled:false,storageMb:need});tx.update(userRef,{installedApps:list});});
+    autoAddInstalledAppToHome(id);toast(`${a.title} wurde installiert. Beim ersten Öffnen kannst du das Abo abschließen.`,"success");logUsageEvent("App installiert",`${a.title} · kostenlos, Abo erforderlich`,"appstore");return;
   }
-  const ok=await confirmDialog({title:`${a.title} installieren?`,text:price>0?`Die Installation kostet ${fmt(price)} Coins.`:"Die Installation ist kostenlos.",confirmLabel:price>0?`Für ${fmt(price)} Coins installieren`:"Kostenlos installieren"});
-  if(!ok)return;
+  const ok=await confirmDialog({title:`${a.title} installieren?`,text:price>0?`Die Installation kostet ${fmt(price)} Coins.`:"Die Installation ist kostenlos.",confirmLabel:price>0?`Für ${fmt(price)} Coins installieren`:"Kostenlos installieren"});if(!ok)return;
   await showInstallProgress(a);
   const txRef=doc(collection(db,"users",uid,"transactions"));
-  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data();const bal=Number(data.balance)||0;if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];const next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date(),storageMb:appStorageMb(a)});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
-  autoAddInstalledAppToHome(id); toast(price>0?`${a.title} wurde installiert.`:`${a.title} wurde kostenlos installiert.`,"success");logUsageEvent("App installiert",`${a.title}${price>0?` · ${fmt(price)} Coins`:" · kostenlos"}`,"appstore");
+  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const d=u.data(),bal=Number(d.balance)||0;const currentUsed=storageUsedMb();if(currentUsed+need>storageLimitMb())throw new AppError("Nicht genügend Speicher. Der Speicher ist inzwischen voll.");if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(d.installedApps)?d.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[],next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date(),storageMb:need});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
+  autoAddInstalledAppToHome(id);toast(price>0?`${a.title} wurde installiert.`:`${a.title} wurde kostenlos installiert.`,"success");logUsageEvent("App installiert",`${a.title}${price>0?` · ${fmt(price)} Coins`:" · kostenlos"}`,"appstore");
 }
 async function subscribeToApp(id){
   if(!(await requireDevicePin("Abo starten"))) return false;
