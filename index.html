@@ -588,7 +588,7 @@ function mountSettings(el){
       <div class="setting-row"><span>PIN auf diesem Gerät entfernen</span><button class="btn small danger" data-action="remove-device-pin">Entfernen</button></div>
     </section>
     <section class="settings-card"><h3>💾 Speicher</h3><div id="storageSettings"></div></section>
-    <section class="settings-card"><h3>📱 Geräteübersicht</h3><div class="row"><div class="grow"><b>CoinOS-Gerät</b><span class="muted small">Virtueller Speicher</span></div><span class="pill">20 GB Basis</span></div><div class="row"><div class="grow"><b>Installierte Apps</b></div><span class="pill">${fmt(getInstalledApps().length)}</span></div><div class="row"><div class="grow"><b>Nachrichten</b></div><span class="pill">${fmt(Number(state.profile?.messageStorageMb||0)/100)} Speicher-Einheiten</span></div></div></section>
+    <section class="settings-card"><h3>📱 Geräteübersicht</h3><div class="row"><div class="grow"><b>CoinOS-Gerät</b><span class="muted small">Virtueller Speicher</span></div><span class="pill">${fmt(storageLimitMb()/1024)} GB verfügbar</span></div><div class="row"><div class="grow"><b>Installierte Apps</b></div><span class="pill">${fmt(getInstalledApps().length)}</span></div><div class="row"><div class="grow"><b>Nachrichten</b></div><span class="pill">${fmt(Number(state.profile?.messageStorageMb||0)/100)} Speicher-Einheiten</span></div></div></section>
     <section class="settings-card"><h3>🧹 Daten & Zurücksetzen</h3>
       <div class="setting-row"><span>Homescreen zurücksetzen</span><button class="btn small" data-action="reset-home">Zurücksetzen</button></div>
       <div class="setting-row"><span>Lokale Benachrichtigungen löschen</span><button class="btn small" data-action="clear-local-notes">Löschen</button></div>
@@ -605,7 +605,16 @@ function updateSettings(){
   if(box){const subs=getInstalledApps().map(e=>({e,a:state.apps.find(x=>x.id===e.appId)})).filter(x=>x.a&&appBilling(x.a)!=="once");box.innerHTML=subs.length?subs.map(({e,a})=>{const exp=subscriptionExpiry(a);const active=exp&&exp>Date.now()&&!e.subscriptionCancelled;return `<div class="row"><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${active?`aktiv bis ${new Date(exp).toLocaleString("de-DE")}`:"nicht aktiv"}${e.subscriptionCancelled?" · gekündigt":""}</span></div>${active?`<button class="btn small danger" data-action="cancel-subscription" data-id="${esc(a.id)}">Abo kündigen</button>`:`<button class="btn small primary" data-action="subscribe-app" data-id="${esc(a.id)}">Abo starten</button>`}</div>`}).join(""):`<p class="muted">Du hast aktuell keine App-Abos.</p>`;}
 }
 async function toggleSetting(key){const st=getSettings();st[key]=st[key]===false;await updateDoc(doc(db,"users",state.user.uid),{settings:st});if(key==="showDots")$("#pageDots").style.display=st[key]===false?"none":"flex";if(key==="showDock")$("#dock").style.display=st[key]===false?"none":"flex";if(key==="largeIcons")document.documentElement.classList.toggle("large-icons",!!st[key]);if(key==="highContrast")document.documentElement.classList.toggle("high-contrast",!!st[key]);if(key==="reduceMotion")document.documentElement.classList.toggle("reduce-motion",!!st[key]);updateSettings();}
-async function storageUpgradeDialog(){showModal({title:"💾 Speicher erweitern",text:"Dein virtueller CoinOS-Speicher beträgt standardmäßig 20 GB. Erweiterungen werden mit Coins gekauft.",fields:[{name:"gb",label:"Zusätzlicher Speicher",type:"select",value:"10",options:[{value:"10",label:"+10 GB – 50 Coins"},{value:"50",label:"+50 GB – 150 Coins"},{value:"100",label:"+100 GB – 250 Coins"}]}],submitLabel:"Kaufen",onSubmit:async v=>{const gb=Number(v.gb),price=gb===10?50:gb===50?150:250;if(!(await requireDevicePin("Speicher kaufen")))return;const ref=doc(db,"users",state.user.uid),txRef=doc(collection(db,"users",state.user.uid,"transactions"));await runTransaction(db,async tx=>{const s=await tx.get(ref);const d=s.data(),bal=Number(d.balance)||0;if(bal<price)throw new AppError("Nicht genügend Coins.");tx.update(ref,{balance:bal-price,storageLimitGb:(Number(d.storageLimitGb)||20)+gb});tx.set(txRef,{amount:-price,type:"storage_upgrade",description:`Speicherupgrade +${gb} GB`,timestamp:serverTimestamp()})});toast(`+${gb} GB Speicher gekauft.` ,"success")}})}
+async function storageUpgradeDialog(){
+  const cfg=state.storageConfig||DEFAULT_STORAGE_CONFIG,plans=(cfg.plans||[]).filter(p=>Number(p.gb)>0&&Number(p.price)>=0);if(!plans.length)throw new AppError("Der Admin hat aktuell keine Speicherverträge freigeschaltet.");
+  showModal({title:"💾 Speicher erweitern",text:`Kostenloser Grundspeicher: ${fmt(storageBaseGb())} GB. Wähle einen Zusatzvertrag.`,fields:[{name:"plan",label:"Speichervertrag",type:"select",value:plans[0].id,options:plans.map(p=>({value:p.id,label:`+${fmt(p.gb)} GB – ${fmt(p.price)} Coins · ${storageBillingLabel(p.billing)}`}))}],submitLabel:"Weiter",onSubmit:async v=>{
+    const p=plans.find(x=>x.id===v.plan);if(!p)throw new AppError("Speichervertrag nicht gefunden.");if(!(await requireDevicePin("Speicher zu erweitern")))return;
+    const ok=await confirmDialog({title:p.title||(`+${p.gb} GB Speicher`),text:`Du erhältst +${fmt(p.gb)} GB für ${fmt(p.price)} Coins. Zahlungsart: ${storageBillingLabel(p.billing)}.`,confirmLabel:`Für ${fmt(p.price)} Coins kaufen`});if(!ok)return;
+    const ref=doc(db,"users",state.user.uid),txRef=doc(collection(db,"users",state.user.uid,"transactions"));
+    await runTransaction(db,async tx=>{const u=await tx.get(ref);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const d=u.data(),bal=Number(d.balance)||0;if(bal<p.price)throw new AppError("Nicht genügend Coins.");const base=Math.max(1,Number(d.storageBaseGb)||Number(cfg.freeGb)||20),permanent=d.storagePermanentGb!=null?Math.max(0,Number(d.storagePermanentGb)||0):Math.max(0,(Number(d.storageLimitGb)||base)-20);if(p.billing==="once"){const next=permanent+Number(p.gb);tx.update(ref,{balance:bal-p.price,storageBaseGb:base,storagePermanentGb:next,storageLimitGb:base+next});}else{const list=Array.isArray(d.storageSubscriptions)?d.storageSubscriptions.filter(x=>x&&x.planId):[],now=Date.now(),existing=list.find(x=>x.planId===p.id&&!x.cancelled&&((x.until?.toMillis?x.until.toMillis():new Date(x.until||0).getTime())>now)),oldUntil=existing?(existing.until?.toMillis?existing.until.toMillis():new Date(existing.until).getTime()):now,duration=p.billing==="daily"?86400000:604800000,until=new Date(oldUntil+duration),next=existing?list.map(x=>x===existing?{...x,gb:Number(p.gb),until,cancelled:false}:x):[...list,{planId:p.id,gb:Number(p.gb),until,cancelled:false}];tx.update(ref,{balance:bal-p.price,storageBaseGb:base,storagePermanentGb:permanent,storageLimitGb:base+permanent,storageSubscriptions:next});}tx.set(txRef,{amount:-p.price,type:"storage_upgrade",description:`Speichervertrag: +${p.gb} GB · ${storageBillingLabel(p.billing)}`,timestamp:serverTimestamp()});});
+    toast(`+${fmt(p.gb)} GB Speicher wurden hinzugefügt.`,"success");
+  }});
+}
 async function resetHome(){await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap([builtinHomeIds()]),dockApps:[],widgetLayout:[],hiddenBuiltinApps:[]});currentHomePage=0;toast("Homescreen zurückgesetzt.","success");}
 function clearLocalNotes(){localStorage.removeItem("coinos_read_notifications");toast("Lokale Benachrichtigungen zurückgesetzt.","success");}
 /* ---------------- App-Registry ---------------- */
@@ -1526,12 +1535,12 @@ const DESIGNS = [
   {id:"neon",title:"Neon Grid",desc:"Kräftiger Cyber-Look für den Homescreen.",bg:"linear-gradient(135deg,#10132a 0%,#20206b 48%,#0d6f75 100%)"}
 ];
 
-function allDesigns(){ return [...DESIGNS, ...state.designs.filter(d=>!DESIGNS.some(x=>x.id===d.id))]; }
+function allDesigns(){ return [...DESIGNS, ...state.designs.filter(d=>!DESIGNS.some(x=>x.id===d.id)&&(!d.personal||d.ownerId===state.user?.uid))]; }
 function designById(id){ return allDesigns().find(x=>x.id===id); }
 function designPrice(d){ return Math.max(0, Math.floor(Number(d?.price)||0)); }
 function designOwned(d){ return designPrice(d)===0 || Array.isArray(state.profile?.ownedDesigns) && state.profile.ownedDesigns.includes(d.id); }
 function designBackground(d){ return d?.imageData ? `url("${d.imageData}") center/cover no-repeat` : d?.bg || "#eef1f7"; }
-function mountDesignStore(el){el.innerHTML=`<div class="toolbar"><span class="muted">Kostenlose und gekaufte Hintergründe für deinen CoinOS-Homescreen.</span></div><div id="designGrid" class="grid-items"></div>`;}
+function mountDesignStore(el){el.innerHTML=`<div class="toolbar"><div class="grow"><span class="muted">Kostenlose und gekaufte Hintergründe für deinen CoinOS-Homescreen.</span></div><button class="btn primary" data-action="design-upload">Eigenen Hintergrund · 20 Coins</button></div><div id="designGrid" class="grid-items"></div>`;}
 function updateDesignStore(){
   const current=localStorage.getItem("coinos_current_design")||"candy";
   const designs=allDesigns().filter(d=>d.hidden!==true || designOwned(d));
@@ -1541,6 +1550,21 @@ function updateDesignStore(){
     const action=active?"":owned?"apply-design":"buy-design";
     return `<article class="item"><div class="thumb design-preview" style="${d.imageData?"background:#eee":`background:${d.bg||"#eef1f7"}`}" >${d.imageData?`<img src="${esc(d.imageData)}" alt="${esc(d.title)}" loading="lazy">`:``}</div><div class="item-body"><span class="muted small">${price>0?`${fmt(price)} Coins`:"Kostenlos"}</span><h4>${esc(d.title)}</h4><span class="muted small">${esc(d.desc||"")}</span><div class="game-actions"><button class="btn small" data-action="wishlist-toggle" data-id="${d.id}" title="Wunschliste">♥</button><button class="btn primary small" data-action="${action}" data-id="${d.id}" ${active?"disabled":""}>${active?icon("check",16):price>0&&!owned?COIN+fmt(price):icon("download",16)}${label}</button></div></div></article>`;
   }).join("");
+}
+async function designUploadDialog(){
+  showModal({title:"Eigenen Hintergrund hochladen",text:"Dein eigener Hintergrund kostet einmalig 20 Coins und gehört danach dauerhaft dir.",submitLabel:"Für 20 Coins hochladen",fields:[{name:"title",label:"Name",required:true,value:"Mein Hintergrund"},{name:"image",label:"Bilddatei",type:"file",required:true}],onSubmit:async v=>{
+    if(!(await requireDevicePin("den eigenen Hintergrund hochzuladen")))return;
+    const data=await compressPersonalDesignFile(v.image),ref=doc(db,"users",state.user.uid),txRef=doc(collection(db,"users",state.user.uid,"transactions"));
+    await runTransaction(db,async tx=>{const u=await tx.get(ref);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const d=u.data(),bal=Number(d.balance)||0;if(bal<20)throw new AppError("Nicht genügend Coins. Du brauchst 20 Coins.");const owned=Array.isArray(d.ownedDesigns)?d.ownedDesigns:[],designRef=doc(collection(db,"designs"));tx.update(ref,{balance:bal-20,ownedDesigns:[...owned,designRef.id]});tx.set(designRef,{title:v.title,desc:"Eigener Hintergrund",price:0,imageData:data,hidden:false,personal:true,ownerId:state.user.uid,sales:0,createdAt:serverTimestamp()});tx.set(txRef,{amount:-20,type:"design_upload",description:`Eigener Hintergrund hochgeladen: ${v.title}`,timestamp:serverTimestamp()});});
+    toast("Dein Hintergrund wurde für 20 Coins gespeichert.","success");
+  }});
+}
+async function compressPersonalDesignFile(file){
+  if(!file||!file.type.startsWith("image/"))throw new AppError("Bitte eine Bilddatei auswählen.");
+  if(file.size>5*1024*1024)throw new AppError("Das Bild darf höchstens 5 MB groß sein.");
+  const url=URL.createObjectURL(file);
+  try{const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new AppError("Das Bild konnte nicht gelesen werden."));i.src=url;});const max=1200,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.66);if(data.length>500000)throw new AppError("Das Bild ist nach der Komprimierung noch zu groß. Bitte ein kleineres Bild verwenden.");return data;}
+  finally{URL.revokeObjectURL(url);}
 }
 async function buyDesign(id){
   if(!(await requireDevicePin("Design herunterladen"))) return false;
@@ -1622,10 +1646,10 @@ function mountAdmin(el) {
 
 function updateAdmin() {
   if (!isAdmin()) return;
-  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Apps", "store"], ["systemapps", "Standard-Apps", "settings"], ["designs", "Designs", "palette"], ["orders", "Bestellungen", "list"], ["chat", "Chat", "message"]];
+  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Apps", "store"], ["systemapps", "Standard-Apps", "settings"], ["storage", "Speicher", "database"], ["designs", "Designs", "palette"], ["orders", "Bestellungen", "list"], ["chat", "Chat", "message"]];
   $("#adminTabs").innerHTML = tabs.map(([id, label, ic]) =>
     `<button class="chip ${state.adminTab === id ? "active" : ""}" data-action="admin-tab" data-tab="${id}">${icon(ic, 16)}${label}</button>`).join("");
-  const views = { users: adminUsers, items: adminItems, apps: adminApps, systemapps: adminSystemApps, designs: adminDesigns, orders: adminOrders, chat: adminChatSettings };
+  const views = { users: adminUsers, items: adminItems, apps: adminApps, systemapps: adminSystemApps, storage: adminStorage, designs: adminDesigns, orders: adminOrders, chat: adminChatSettings };
   $("#adminContent").innerHTML = views[state.adminTab]();
 }
 
@@ -1674,8 +1698,45 @@ function adminApps() {
 }
 
 async function deleteSystemApp(id){const a=APPS[id];if(!a)return;if(!await confirmDialog({title:`${a.title} wirklich löschen?`,text:"Die Standard-App wird für alle aus CoinOS entfernt und ist danach nicht mehr im App Store verfügbar.",confirmLabel:"Endgültig löschen",danger:true}))return;await setDoc(doc(db,"system","config"),{apps:{...(state.systemApps||{}),[id]:{...(state.systemApps?.[id]||{}),deleted:true,homeHidden:true}}},{merge:true});toast("Standard-App gelöscht.","success")}
-function adminSystemApps(){const rows=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>{const c=state.systemApps?.[id]||{};return `<div class="row"><div class="thumb" style="background:linear-gradient(145deg,${a.c1||"#7b5cff"},${a.c2||"#4b33d6"});display:grid;place-items:center;color:#fff">${icon(a.icon,22)}</div><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${esc(a.category||"System")} · ${c.deleted?"Gelöscht":c.locked?"Gesperrt":"Freigegeben"}</span></div><button class="btn small" data-action="system-app-edit" data-id="${id}">${icon("pencil",16)}</button><button class="btn small danger" data-action="system-app-del" data-id="${id}">${icon("trash",16)}</button></div>`}).join("");return `<div class="toolbar"><span class="muted">Standard-Apps bleiben im App Store verfügbar. Hier verwaltest du Sperre, Icon, Kategorie und Homescreen.</span></div>${rows}`;}
-async function systemAppDialog(id){const a=APPS[id],c=state.systemApps?.[id]||{};showModal({title:`Standard-App: ${a.title}`,submitLabel:"Speichern",fields:[{name:"title",label:"Name",value:a.title,required:true},{name:"icon",label:"Icon",type:"select",value:c.icon||a.icon,options:Object.keys(ICONS).map(x=>({value:x,label:x}))},{name:"category",label:"Kategorie",value:c.category||a.category||"System"},{name:"locked",label:"App sperren",type:"checkbox",value:!!c.locked},{name:"homeHidden",label:"Vom Homescreen entfernen",type:"checkbox",value:!!c.homeHidden},{name:"storageMb",label:"Speicher in MB",type:"number",min:1,value:c.storageMb||500}],onSubmit:async v=>{const next={...c,title:v.title,icon:v.icon,category:v.category||"System",locked:!!v.locked,homeHidden:!!v.homeHidden,storageMb:Math.max(1,Math.floor(v.storageMb)||500)};await setDoc(doc(db,"system","config"),{apps:{...(state.systemApps||{}),[id]:next}},{merge:true});toast("Standard-App aktualisiert.","success")}})}
+function adminSystemApps(){
+  const rows=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>{const c=state.systemApps?.[id]||{};return `<div class="row"><div class="thumb" style="background:linear-gradient(145deg,${a.c1||"#7b5cff"},${a.c2||"#4b33d6"});display:grid;place-items:center;color:#fff">${appIconHTML(a,22)}</div><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${esc(a.category||"System")} · ${c.deleted?"Gelöscht":c.locked?"Gesperrt":"Freigegeben"}</span></div><button class="btn small" data-action="system-app-edit" data-id="${id}">${icon("pencil",16)}</button><button class="btn small danger" data-action="system-app-del" data-id="${id}">${icon("trash",16)}</button></div>`}).join("");
+  return `<div class="toolbar"><span class="muted">Standard-Apps bleiben im App Store verfügbar. Hier verwaltest du Sperre, eigenes Icon, Kategorie, Speicher und Homescreen.</span></div>${rows}`;
+}
+async function systemAppDialog(id){
+  const a=APPS[id],c=state.systemApps?.[id]||{};
+  showModal({title:`Standard-App: ${a.title}`,submitLabel:"Speichern",fields:[
+    {name:"title",label:"Name",value:c.title||a.title,required:true},
+    {name:"icon",label:"Icon",type:"select",value:c.icon||a.icon,options:Object.keys(ICONS).map(x=>({value:x,label:x}))},
+    {name:"iconFile",label:"Eigenes Icon hochladen (optional)",type:"file"},
+    {name:"category",label:"Kategorie",value:c.category||a.category||"System"},
+    {name:"locked",label:"App sperren",type:"checkbox",value:!!c.locked},
+    {name:"homeHidden",label:"Vom Homescreen entfernen",type:"checkbox",value:!!c.homeHidden},
+    {name:"storageMb",label:"Speicher in MB",type:"number",min:1,value:c.storageMb||500}
+  ],onSubmit:async v=>{
+    const next={...c,title:v.title,icon:v.icon,category:v.category||"System",locked:!!v.locked,homeHidden:!!v.homeHidden,storageMb:Math.max(1,Math.floor(v.storageMb)||500)};
+    if(v.iconFile)next.iconData=await compressAppIconFile(v.iconFile);
+    await setDoc(doc(db,"system","config"),{apps:{...(state.systemApps||{}),[id]:next}},{merge:true});toast("Standard-App aktualisiert.","success");
+  }});
+}
+function storageBillingLabel(b){return b==="daily"?"Abo · täglich":b==="weekly"?"Abo · wöchentlich":"Einmalig";}
+function adminStorage(){
+  const cfg=state.storageConfig||DEFAULT_STORAGE_CONFIG,plans=Array.isArray(cfg.plans)?cfg.plans:[];
+  return `<section class="panel"><h3>💾 Speicherverträge</h3><p class="muted">Hier stellst du den kostenlosen Grundspeicher und die Zusatzverträge ein. Änderungen am Grundspeicher gelten für alle Nutzer; bereits gekaufter dauerhafter Zusatzspeicher bleibt erhalten.</p><div class="toolbar"><div class="grow"><b>Kostenloser Speicher</b><span class="muted small">${fmt(cfg.freeGb||20)} GB pro Nutzer</span></div><button class="btn primary small" data-action="storage-config-save">Grundspeicher ändern</button><button class="btn small" data-action="storage-plan-new">+ Vertrag</button></div>${plans.length?plans.map(p=>`<div class="row"><div class="grow"><b>${esc(p.title||("+"+p.gb+" GB Speicher"))}</b><span class="muted small">+${fmt(p.gb)} GB · ${fmt(p.price)} Coins · ${storageBillingLabel(p.billing)}</span></div><button class="btn small" data-action="storage-plan-edit" data-id="${esc(p.id)}">Bearbeiten</button><button class="btn small danger" data-action="storage-plan-del" data-id="${esc(p.id)}">Löschen</button></div>`).join(""):`<div class="empty">Noch keine Zusatzverträge.</div>`}</section>`;
+}
+function storageConfigSaveDialog(){
+  const cfg=state.storageConfig||DEFAULT_STORAGE_CONFIG;
+  showModal({title:"Kostenlosen Speicher ändern",text:"Der neue Grundspeicher wird auf alle Nutzer angewendet. Dauerhaft gekaufter Zusatzspeicher bleibt erhalten.",submitLabel:"Speichern",fields:[{name:"freeGb",label:"Kostenloser Speicher in GB",type:"number",min:1,value:cfg.freeGb||20,required:true}],onSubmit:async v=>{
+    const free=Math.max(1,Math.floor(v.freeGb)||20),oldFree=Math.max(1,Number(cfg.freeGb)||20),users=[...(state.allUsers||[]),state.profile].filter(Boolean),batches=[];let batch=writeBatch(db),count=0;
+    for(const u of users){const oldLimit=Math.max(1,Number(u.storageLimitGb)||oldFree),permanent=u.storagePermanentGb!=null?Math.max(0,Number(u.storagePermanentGb)||0):Math.max(0,oldLimit-oldFree);batch.update(doc(db,"users",u.id),{storageBaseGb:free,storagePermanentGb:permanent,storageLimitGb:free+permanent});count++;if(count===450){batches.push(batch);batch=writeBatch(db);count=0;}}
+    if(count)batches.push(batch);for(const b of batches)await b.commit();
+    await setDoc(doc(db,"system","config"),{storage:{freeGb:free,plans:cfg.plans||[]}},{merge:true});toast(`Kostenloser Speicher auf ${free} GB gesetzt.`,"success");
+  }});
+}
+function storagePlanDialog(id){
+  const cfg=state.storageConfig||DEFAULT_STORAGE_CONFIG,old=(cfg.plans||[]).find(p=>p.id===id);
+  showModal({title:old?"Speichervertrag bearbeiten":"Neuer Speichervertrag",submitLabel:"Speichern",fields:[{name:"title",label:"Name",required:true,value:old?.title||"+10 GB Speicher"},{name:"gb",label:"Zusätzlicher Speicher in GB",type:"number",min:1,value:old?.gb||10,required:true},{name:"price",label:"Preis in Coins",type:"number",min:0,value:old?.price||50,required:true},{name:"billing",label:"Zahlungsart",type:"select",value:old?.billing||"once",options:[{value:"once",label:"Einmalig"},{value:"daily",label:"Abo · täglich"},{value:"weekly",label:"Abo · wöchentlich"}]}],onSubmit:async v=>{const plans=[...(cfg.plans||[])].map(x=>({...x})),item={id:old?.id||("storage_"+Date.now()),title:v.title,gb:Math.max(1,Math.floor(v.gb)||1),price:Math.max(0,Math.floor(v.price)||0),billing:v.billing||"once"};const i=plans.findIndex(x=>x.id===item.id);if(i>=0)plans[i]=item;else plans.push(item);await setDoc(doc(db,"system","config"),{storage:{freeGb:Math.max(1,Number(cfg.freeGb)||20),plans}},{merge:true});toast("Speichervertrag gespeichert.","success");}});
+}
+async function deleteStoragePlan(id){const cfg=state.storageConfig||DEFAULT_STORAGE_CONFIG;if(!await confirmDialog({title:"Speichervertrag löschen?",text:"Der Vertrag kann danach nicht mehr neu gekauft werden. Bereits gekaufter Speicher bleibt erhalten.",confirmLabel:"Löschen",danger:true}))return;await setDoc(doc(db,"system","config"),{storage:{freeGb:Math.max(1,Number(cfg.freeGb)||20),plans:(cfg.plans||[]).filter(x=>x.id!==id)}},{merge:true});toast("Speichervertrag gelöscht.","success");}
 function adminDesigns() {
   return `<div class="toolbar"><button class="btn primary" data-action="design-new">${icon("plus",18)}Eigenen Hintergrund hochladen</button></div>
     ${state.designs.length ? state.designs.map(d=>`<div class="row"><div class="thumb design-preview" style="${d.imageData?"background:#eee":`background:${d.bg||"#eef1f7"}`}" >${d.imageData?`<img src="${esc(d.imageData)}" alt="${esc(d.title)}" loading="lazy">`:``}</div><div class="grow"><b>${esc(d.title)}</b><span class="muted small">${designPrice(d)>0?`${fmt(designPrice(d))} Coins`:'Kostenlos'} · ${fmt(Number(d.sales)||0)} Verkäufe</span></div><button class="btn small" data-action="design-edit" data-id="${d.id}" aria-label="Bearbeiten">${icon("pencil",16)}</button><button class="btn small" data-action="design-del" data-id="${d.id}" aria-label="Löschen">${icon("trash",16)}</button></div>`).join("") : `<div class="empty">${icon("palette",36)}Noch keine eigenen Designs hochgeladen.</div>`}`;
@@ -2049,7 +2110,7 @@ const actions = {
   "item-del": el => itemDelete(el.dataset.id),
   "seed": seedItems,
   "app-new": () => appDialog(),
-  "app-import": appImportDialog,"library-add-home":el=>addInstalledToHome(el.dataset.id),"library-open":el=>APPS[el.dataset.id]?openApp(el.dataset.id):openInstalledApp(el.dataset.id),
+  "app-import": appImportDialog,"design-upload":designUploadDialog,"storage-config-save":storageConfigSaveDialog,"storage-plan-new":()=>storagePlanDialog(),"storage-plan-edit":el=>storagePlanDialog(el.dataset.id),"storage-plan-del":el=>deleteStoragePlan(el.dataset.id),"library-add-home":el=>addInstalledToHome(el.dataset.id),"library-open":el=>APPS[el.dataset.id]?openApp(el.dataset.id):openInstalledApp(el.dataset.id),
   "change-device-pin": changeDevicePin,
   "remove-device-pin": removeDevicePin, "storage-upgrade": storageUpgradeDialog, "install-builtin": el=>restoreBuiltinToHome(el.dataset.id),
   "app-edit": el => appDialog(el.dataset.id),
