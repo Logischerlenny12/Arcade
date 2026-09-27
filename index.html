@@ -266,6 +266,16 @@ a{color:inherit;text-decoration:none}
 .toast.error{background:var(--red)}
 .toast.success{background:#0a7d5c}
 
+/* CoinOS-Gerätesperre + Speicher */
+#deviceLock{position:fixed;inset:0;z-index:120;display:grid;place-items:center;background:radial-gradient(circle at 50% 25%,rgba(255,255,255,.96),rgba(243,228,255,.96) 45%,rgba(219,196,255,.98));backdrop-filter:blur(18px)}
+#deviceLock[hidden]{display:none}
+.device-lock-card{width:min(360px,calc(100% - 28px));text-align:center;padding:30px 24px;border-radius:34px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);box-shadow:0 30px 90px rgba(43,27,74,.22)}
+.device-lock-logo{width:68px;height:68px;margin:0 auto 14px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(145deg,#8f74ff,#4b33d6);color:#fff;box-shadow:0 12px 30px rgba(75,51,214,.25)}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin:20px 0 22px}.pin-dot{width:13px;height:13px;border-radius:50%;background:transparent;border:2px solid #7b5cff}.pin-dot.filled{background:#7b5cff}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:auto}.pin-key{height:58px;border:0;border-radius:18px;background:rgba(255,255,255,.88);font-size:1.25rem;font-weight:800;color:var(--ink);box-shadow:0 5px 14px rgba(43,27,74,.08);cursor:pointer}.pin-key:active{transform:scale(.96)}.pin-key.zero{grid-column:2}.pin-delete{grid-column:3;background:rgba(123,92,255,.1)}
+.storage-bar{height:13px;border-radius:999px;background:var(--soft);overflow:hidden;border:1px solid var(--line)}.storage-fill{height:100%;width:0;background:linear-gradient(90deg,#7b5cff,#ff6fae);border-radius:inherit;transition:width .35s}
+.storage-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.storage-row:last-child{border-bottom:0}.storage-row .bar-mini{flex:1;height:7px;background:var(--soft);border-radius:99px;overflow:hidden}.storage-row .bar-mini>span{display:block;height:100%;background:var(--primary);border-radius:inherit}
+
 @media (max-width:700px){
   .two-col{grid-template-columns:1fr}
   #window{top:62px;bottom:92px;width:100%;border-radius:26px 26px 0 0;border-bottom:0}
@@ -362,6 +372,16 @@ a{color:inherit;text-decoration:none}
   <iframe id="gameFrame" title="Spiel" allow="fullscreen; gamepad; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals"></iframe>
 </section>
 
+<div id="deviceLock" hidden aria-modal="true" role="dialog">
+  <div class="device-lock-card">
+    <div class="device-lock-logo">🔒</div>
+    <h2>CoinOS gesperrt</h2>
+    <p class="muted small">Gib deine Geräte-PIN ein, um CoinOS zu entsperren.</p>
+    <div id="pinDots" class="pin-dots" aria-label="PIN-Eingabe"></div>
+    <div id="pinPad" class="pin-pad"></div>
+    <p id="lockError" class="form-error" hidden></p>
+  </div>
+</div>
 <div id="modalRoot"></div>
 <div id="toasts" aria-live="polite"></div>
 
@@ -515,6 +535,16 @@ async function removeDevicePin(){
   if(!(await requireDevicePin("die PIN zu entfernen")))return;
   localStorage.removeItem(pinStorageKey()); toast("Die Geräte-PIN wurde entfernt. Beim nächsten Öffnen wird eine neue PIN verlangt.","success");
 }
+let deviceLockPin="", deviceLockBusy=false;
+function renderPinPad(){
+  const dots=$("#pinDots"),pad=$("#pinPad"); if(!dots||!pad)return;
+  dots.innerHTML=Array.from({length:8},(_,i)=>`<span class="pin-dot ${i<deviceLockPin.length?"filled":""}"></span>`).join("");
+  const nums=[1,2,3,4,5,6,7,8,9,0];
+  pad.innerHTML=nums.map(n=>`<button class="pin-key ${n===0?"zero":""}" data-pin-key="${n}">${n}</button>`).join("")+`<button class="pin-key pin-delete" data-pin-key="delete">⌫</button><button class="btn primary" style="grid-column:1/4;margin-top:4px" data-pin-key="confirm">Entsperren</button>`;
+  $$("[data-pin-key]").forEach(b=>b.onclick=()=>pinKeyPress(b.dataset.pinKey));
+}
+function lockDevice(){if(!state.user||!hasDevicePin()||deviceLockBusy)return;deviceLockBusy=true;deviceLockPin="";$("#lockError").hidden=true;$("#deviceLock").hidden=false;renderPinPad();}
+async function pinKeyPress(k){if(deviceLockBusy&&$("#deviceLock").hidden)return;if(k==="delete"){deviceLockPin=deviceLockPin.slice(0,-1);renderPinPad();return;}if(k==="confirm"){if(!validPin(deviceLockPin)){$("#lockError").textContent="Die PIN muss aus 4 bis 8 Ziffern bestehen.";$("#lockError").hidden=false;return;}const ok=(await hashDevicePin(deviceLockPin))===localStorage.getItem(pinStorageKey());if(ok){$("#deviceLock").hidden=true;deviceLockPin="";deviceLockBusy=false;$("#lockError").hidden=true;}else{deviceLockPin="";renderPinPad();$("#lockError").textContent="Falsche PIN. Bitte erneut versuchen.";$("#lockError").hidden=false;}return;}if(deviceLockPin.length>=8)return;deviceLockPin+=String(k);renderPinPad();}
 /* ---------------- Einstellungen ---------------- */
 function mountSettings(el){
   el.innerHTML=`<div class="settings-grid">
@@ -524,6 +554,7 @@ function mountSettings(el){
       <div class="setting-row"><span>Transparenz</span><input id="setBlur" type="range" min="0" max="100" value="80"></div>
     </section>
     <section class="settings-card"><h3>🏠 Homescreen</h3>
+      <div class="setting-row"><span>Neue Apps automatisch auf Homescreen</span><button class="switch on" data-action="toggle-setting" data-key="autoAddToHome"></button></div>
       <div class="setting-row"><span>Apps automatisch anordnen</span><button class="btn small" data-action="auto-arrange">Anordnen</button></div>
       <div class="setting-row"><span>Seitenpunkte anzeigen</span><button class="switch on" id="setDots" data-action="toggle-setting" data-key="showDots"></button></div>
       <div class="setting-row"><span>Dock anzeigen</span><button class="switch on" id="setDock" data-action="toggle-setting" data-key="showDock"></button></div>
@@ -548,6 +579,8 @@ function mountSettings(el){
       <div class="setting-row"><span>PIN ändern</span><button class="btn small" data-action="change-device-pin">PIN ändern</button></div>
       <div class="setting-row"><span>PIN auf diesem Gerät entfernen</span><button class="btn small danger" data-action="remove-device-pin">Entfernen</button></div>
     </section>
+    <section class="settings-card"><h3>💾 Speicher</h3><div id="storageSettings"></div></section>
+    <section class="settings-card"><h3>📱 Geräteübersicht</h3><div class="row"><div class="grow"><b>CoinOS-Gerät</b><span class="muted small">Virtueller Speicher</span></div><span class="pill">20 GB Basis</span></div><div class="row"><div class="grow"><b>Installierte Apps</b></div><span class="pill">${fmt(getInstalledApps().length)}</span></div><div class="row"><div class="grow"><b>Nachrichten</b></div><span class="pill">${fmt(Number(state.profile?.messageStorageMb||0)/100)} Speicher-Einheiten</span></div></div></section>
     <section class="settings-card"><h3>🧹 Daten & Zurücksetzen</h3>
       <div class="setting-row"><span>Homescreen zurücksetzen</span><button class="btn small" data-action="reset-home">Zurücksetzen</button></div>
       <div class="setting-row"><span>Lokale Benachrichtigungen löschen</span><button class="btn small" data-action="clear-local-notes">Löschen</button></div>
@@ -558,12 +591,14 @@ function mountSettings(el){
 function getSettings(){return {...(state.profile?.settings||{})};}
 function updateSettings(){
   if(!$("#setTheme"))return; const st=getSettings(); $("#setTheme").value=st.theme||state.profile?.theme||"standard";
-  ["showDots","showDock","notifications","orderNotifications","chatNotifications","enterSends","largeIcons","highContrast","reduceMotion"].forEach(k=>{const b=document.querySelector(`[data-key="${k}"]`);if(b)b.classList.toggle("on",st[k]!==false);});
+  ["showDots","showDock","notifications","orderNotifications","chatNotifications","enterSends","largeIcons","highContrast","reduceMotion","autoAddToHome"].forEach(k=>{const b=document.querySelector(`[data-key="${k}"]`);if(b)b.classList.toggle("on",st[k]!==false);});
+  const sb=$("#storageSettings"); if(sb){const limit=storageLimitMb(),used=storageUsedMb(),pct=Math.min(100,used/limit*100),rows=currentStorageRows();sb.innerHTML=`<div class="row"><div class="grow"><b>${fmt(used/1024)} GB / ${fmt(limit/1024)} GB</b><span class="muted small">${fmt(Math.max(0,limit-used)/1024)} GB frei</span></div></div><div class="storage-bar"><div class="storage-fill" style="width:${pct}%"></div></div><div style="margin-top:12px">${rows.map(r=>`<div class="storage-row"><span class="grow"><b>${esc(r.title)}</b><span class="muted small">${esc(r.type)}</span></span><span class="pill">${r.mb>=1024?fmt(r.mb/1024)+" GB":fmt(r.mb)+" MB"}</span></div>`).join("")||`<div class="muted">Noch keine Speicherbelegung.</div>`}</div><div class="toolbar"><button class="btn primary small" data-action="storage-upgrade">+ Speicher kaufen</button></div>`} 
   const box=$("#subscriptionList");
   if(box){const subs=getInstalledApps().map(e=>({e,a:state.apps.find(x=>x.id===e.appId)})).filter(x=>x.a&&appBilling(x.a)!=="once");box.innerHTML=subs.length?subs.map(({e,a})=>{const exp=subscriptionExpiry(a);const active=exp&&exp>Date.now()&&!e.subscriptionCancelled;return `<div class="row"><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${active?`aktiv bis ${new Date(exp).toLocaleString("de-DE")}`:"nicht aktiv"}${e.subscriptionCancelled?" · gekündigt":""}</span></div>${active?`<button class="btn small danger" data-action="cancel-subscription" data-id="${esc(a.id)}">Abo kündigen</button>`:`<button class="btn small primary" data-action="subscribe-app" data-id="${esc(a.id)}">Abo starten</button>`}</div>`}).join(""):`<p class="muted">Du hast aktuell keine App-Abos.</p>`;}
 }
 async function toggleSetting(key){const st=getSettings();st[key]=st[key]===false;await updateDoc(doc(db,"users",state.user.uid),{settings:st});if(key==="showDots")$("#pageDots").style.display=st[key]===false?"none":"flex";if(key==="showDock")$("#dock").style.display=st[key]===false?"none":"flex";if(key==="largeIcons")document.documentElement.classList.toggle("large-icons",!!st[key]);if(key==="highContrast")document.documentElement.classList.toggle("high-contrast",!!st[key]);if(key==="reduceMotion")document.documentElement.classList.toggle("reduce-motion",!!st[key]);updateSettings();}
-async function resetHome(){await updateDoc(doc(db,"users",state.user.uid),{homePages:[{items:Object.keys(APPS).filter(id=>!APPS[id].adminOnly||isAdmin())}],dockApps:Object.keys(APPS).filter(id=>!APPS[id].adminOnly||isAdmin()).slice(0,5),widgetLayout:[]});currentHomePage=0;toast("Homescreen zurückgesetzt.","success");}
+async function storageUpgradeDialog(){showModal({title:"💾 Speicher erweitern",text:"Dein virtueller CoinOS-Speicher beträgt standardmäßig 20 GB. Erweiterungen werden mit Coins gekauft.",fields:[{name:"gb",label:"Zusätzlicher Speicher",type:"select",value:"10",options:[{value:"10",label:"+10 GB – 50 Coins"},{value:"50",label:"+50 GB – 150 Coins"},{value:"100",label:"+100 GB – 250 Coins"}]}],submitLabel:"Kaufen",onSubmit:async v=>{const gb=Number(v.gb),price=gb===10?50:gb===50?150:250;if(!(await requireDevicePin("Speicher kaufen")))return;const ref=doc(db,"users",state.user.uid),txRef=doc(collection(db,"users",state.user.uid,"transactions"));await runTransaction(db,async tx=>{const s=await tx.get(ref);const d=s.data(),bal=Number(d.balance)||0;if(bal<price)throw new AppError("Nicht genügend Coins.");tx.update(ref,{balance:bal-price,storageLimitGb:(Number(d.storageLimitGb)||20)+gb});tx.set(txRef,{amount:-price,type:"storage_upgrade",description:`Speicherupgrade +${gb} GB`,timestamp:serverTimestamp()})});toast(`+${gb} GB Speicher gekauft.` ,"success")}})}
+async function resetHome(){await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap([builtinHomeIds()]),dockApps:[],widgetLayout:[],hiddenBuiltinApps:[]});currentHomePage=0;toast("Homescreen zurückgesetzt.","success");}
 function clearLocalNotes(){localStorage.removeItem("coinos_read_notifications");toast("Lokale Benachrichtigungen zurückgesetzt.","success");}
 /* ---------------- App-Registry ---------------- */
 const APPS = {
@@ -582,7 +617,7 @@ const APPS = {
 const state = {
   user: null, profile: null,
   items: [], apps: [], orders: [], txs: [], designs: [],
-  allUsers: [], allOrders: [],
+  allUsers: [], allOrders: [], systemApps: {},
   openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle",
   adminTab: "users", orderFilter: "alle", chatUserId: "official", chatSearch: "", chatMessages: [], chatUnsub: null
 };
@@ -650,7 +685,7 @@ async function ensureProfile(user) {
     installedApps: [],
     ownedDesigns: [],
     usage: { date: usageDateKey(), totalSeconds: 0, appSeconds: {}, events: [] },
-    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard", settings: {theme:"standard",showDots:true,showDock:true,notifications:true,orderNotifications:true,chatNotifications:true,enterSends:true,largeIcons:false,highContrast:false,reduceMotion:false}, homePages: [{items:[]}], dockApps: [], devicePinVersion: 1
+    chatInvisible: false, widgetLayout: [], wishlist: [], folders: [], theme: "standard", settings: {theme:"standard",showDots:true,showDock:true,notifications:true,orderNotifications:true,chatNotifications:true,enterSends:true,largeIcons:false,highContrast:false,reduceMotion:false,autoAddToHome:true}, homePages: [{items:[]}], dockApps: [], hiddenBuiltinApps: [], storageLimitGb:20, messageStorageMb:0, devicePinVersion: 1
   });
 }
 
@@ -706,7 +741,7 @@ function startListeners(user) {
     if (isAdmin() && !adminSubs) startAdminListeners();
     if (!pinGateReady && !pinGateBusy) {
       pinGateBusy = true;
-      try { await ensureDevicePin(); pinGateReady = true; if (!osShown) showOS(); }
+      try { await ensureDevicePin(); pinGateReady = true; if (!osShown) showOS(); setTimeout(lockDevice, 50); }
       catch (e) { console.error(e); }
       finally { pinGateBusy = false; }
     }
@@ -727,6 +762,8 @@ function startListeners(user) {
     state.apps = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
     scheduleRender();
   }, onErr));
+
+  unsubs.push(onSnapshot(doc(db,"system","config"), snap => { state.systemApps = snap.exists() ? (snap.data().apps||{}) : {}; applySystemApps(); scheduleRender(); }, onErr));
 
   unsubs.push(onSnapshot(collection(db, "designs"), snap => {
     state.designs = docs(snap).sort((a, b) => String(a.title).localeCompare(String(b.title), "de"));
@@ -762,7 +799,7 @@ function stopListeners() {
   unsubs = [];
   if (state.chatUnsub) { try { state.chatUnsub(); } catch {} state.chatUnsub = null; }
   adminSubs = false;
-  pinGateReady=false; pinGateBusy=false;
+  pinGateReady=false; pinGateBusy=false; deviceLockBusy=false; deviceLockPin=""; $("#deviceLock")?.setAttribute("hidden","");
   Object.assign(state, { items: [], apps: [], orders: [], txs: [], designs: [], allUsers: [], allOrders: [], openApp: null, shopSearch: "", shopCat: "Alle", appSearch: "", appCat: "Alle", adminTab: "users", orderFilter: "alle" });
   shownCoins = null;
   $("#window")?.classList.remove("open");
@@ -888,7 +925,7 @@ function appMenu(id, fromDock=false, item=null){
     else if(action==="dock-remove") await removeDockApp(id);
     else if(action==="widget") await convertToWidget(id,item,v.size||"medium");
     else if(action==="page") await moveHomeItemToPage(id,Number(v.page));
-    else if(action==="group") setTimeout(()=>addToGroupDialog(id),0);
+
   }});
 }
 async function convertToWidget(id,item,size){const pages=normalizedHomePages();const key=item||id;const page=pages.findIndex(p=>p.includes(key));if(page<0)return;pages[page]=pages[page].filter(x=>x!==key);const wi=`w:${id}:${size}`;if(pages[page].reduce((n,x)=>n+itemWeight(x),0)+itemWeight(wi)>HOME_CAPACITY){pages.splice(page+1,0,[]);pages[page+1].push(wi);currentHomePage=page+1}else pages[page].push(wi);await savePagesOnly(pages);renderDesktop();toast("Widget aktualisiert.","success")}
@@ -916,6 +953,11 @@ function installedEntry(id) { return getInstalledApps().find(x => x.appId === id
 function appPrice(a) { return Math.max(0, Math.floor(Number(a.price ?? a.requiredCoins) || 0)); }
 function appBilling(a) { return ["once","daily","weekly"].includes(a.billing) ? a.billing : "once"; }
 function billingLabel(a) { return appBilling(a) === "daily" ? "pro Tag" : appBilling(a) === "weekly" ? "pro Woche" : "einmalig"; }
+function appStorageMb(a){const n=Number(a?.storageMb);if(Number.isFinite(n)&&n>0)return Math.round(n);return a?.isGame?1500:500}
+function storageLimitMb(){return Math.max(1,Number(state.profile?.storageLimitGb)||20)*1024}
+function currentStorageRows(){const rows=[];for(const [id,a] of Object.entries(APPS)){if((!a.adminOnly||isAdmin())&&!state.systemApps?.[id]?.deleted)rows.push({id,title:a.title,mb:Number((state.systemApps?.[id]?.storageMb)||a.storageMb)||500,type:"System-App"})}for(const e of getInstalledApps()){const a=state.apps.find(x=>x.id===e.appId);if(a)rows.push({id:a.id,title:a.title,mb:Number(e.storageMb)||appStorageMb(a),type:a.isGame?"Spiel":"App"})}const msg=Number(state.profile?.messageStorageMb)||0;if(msg)rows.push({id:"messages",title:"Nachrichten",mb:msg,type:"Nachrichten"});return rows}
+function storageUsedMb(){return currentStorageRows().reduce((n,r)=>n+r.mb,0)}
+
 function entryExpiry(entry) {
   if (!entry?.expiresAt) return null;
   return entry.expiresAt?.toMillis ? entry.expiresAt.toMillis() : new Date(entry.expiresAt).getTime();
@@ -933,7 +975,8 @@ function subscriptionExpiry(a){const e=installedEntry(a.id);if(!e)return null;co
 
 let currentHomePage=0, editMode=false, homeTouchStartX=0, homeTouchStartY=0, homeDrag=null, dockDrag=null;
 const HOME_COLS=5, HOME_ROWS=2, HOME_CAPACITY=HOME_COLS*HOME_ROWS;
-function builtinHomeIds(){return Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id])=>id)}
+function applySystemApps(){for(const [id,cfg] of Object.entries(state.systemApps||{})){if(APPS[id])Object.assign(APPS[id],cfg)}}
+function builtinHomeIds(){const hidden=new Set([...(state.profile?.hiddenBuiltinApps||[]),...Object.entries(state.systemApps||{}).filter(([,c])=>c?.homeHidden||c?.locked).map(([id])=>id)]);return Object.entries(APPS).filter(([id,a])=>!a.adminOnly||isAdmin()).filter(([id])=>!hidden.has(id)).map(([id])=>id)}
 function installedHomeIds(){return getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id))}
 function widgetIds(){return ["konto","shop","appstore","designstore","chat",...getInstalledApps().map(e=>e.appId).filter(id=>{const a=state.apps.find(x=>x.id===id);return a&&a.widgetEnabled})]}
 function isWidgetItem(id){return typeof id==="string"&&id.startsWith("w:")}
@@ -1024,10 +1067,10 @@ function renderDock(){
 }
 function addDockDialog(){
   const current=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
-  const available=[...Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>({id,title:a.title,icon:a.icon})),...state.apps.filter(a=>!current.includes(a.id)).map(a=>({id:a.id,title:a.title,icon:null,iconUrl:a.iconUrl}))].filter(a=>!current.includes(a.id));
+  const available=[...Object.entries(APPS).filter(([id,a])=>(!a.adminOnly||isAdmin())&&!(state.profile?.hiddenBuiltinApps||[]).includes(id)).map(([id,a])=>({id,title:a.title,icon:a.icon})),...state.apps.filter(a=>installedEntry(a.id)&&!current.includes(a.id)).map(a=>({id:a.id,title:a.title,icon:null,iconUrl:a.iconUrl}))].filter(a=>!current.includes(a.id));
   const r=$("#widgetPicker");r.hidden=false;r.innerHTML=`<h2>App ins Dock</h2><p class="muted">Wähle eine App für die untere Leiste.</p><div class="widget-picker-grid">${available.map(a=>`<button class="widget-choice" data-action="choose-dock" data-id="${esc(a.id)}"><span class="widget-icon">${a.icon?icon(a.icon,22):`<span class="dock-app-image">${thumbHTML(a.iconUrl,"globe",22)}</span>`}</span><span><b>${esc(a.title)}</b><small class="muted">Ins Dock aufnehmen</small></span></button>`).join("")}</div><div class="modal-actions"><button class="btn" data-action="close-widget-picker">Schließen</button></div>`;
 }
-async function chooseDock(id){const ids=Array.isArray(state.profile?.dockApps)?[...state.profile.dockApps]:[];if(!ids.includes(id))ids.push(id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});state.profile.dockApps=ids;closeWidgetPicker();renderDock();toast("App ins Dock gelegt.","success")}
+async function chooseDock(id){if(!APPS[id]&&!installedEntry(id))return toast("Nur installierte Apps können ins Dock.","error");if(APPS[id]&&(state.profile?.hiddenBuiltinApps||[]).includes(id))return toast("Diese System-App ist nicht auf dem Homescreen aktiviert.","error");const ids=Array.isArray(state.profile?.dockApps)?[...state.profile.dockApps]:[];if(!ids.includes(id))ids.push(id);await updateDoc(doc(db,"users",state.user.uid),{dockApps:ids});state.profile.dockApps=ids;closeWidgetPicker();renderDock();toast("App ins Dock gelegt.","success")}
 function enterEdit(){editMode=true;document.body.classList.add("editing");document.documentElement.classList.add("edit-mode");const b=$("#homeEditButton");if(b){b.dataset.action="exit-edit";b.classList.add("done");b.innerHTML=`${icon("check",16)}<span>Fertig</span>`}renderDesktop()}
 function exitEdit(){editMode=false;document.body.classList.remove("editing");document.documentElement.classList.remove("edit-mode");closeWidgetPicker();saveHomeLayout();const b=$("#homeEditButton");if(b){b.dataset.action="edit-home";b.classList.remove("done");b.innerHTML=`${icon("pencil",16)}<span>Bearbeiten</span>`}renderDesktop()}
 async function saveHomeLayout(){if(!state.user)return;const pages=normalizedHomePages();await savePagesOnly(pages).catch(console.debug)}
@@ -1086,7 +1129,7 @@ async function endTileDrag(e){
   }
   await saveHomeLayout();renderDesktop();
 }
-async function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
+async function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));if(APPS[id]){const hidden=[...(state.profile?.hiddenBuiltinApps||[])];if(!hidden.includes(id))hidden.push(id);await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(pages),hiddenBuiltinApps:hidden});state.profile.hiddenBuiltinApps=hidden}else{await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(pages),dockApps:(state.profile?.dockApps||[]).filter(x=>x!==id)});state.profile.dockApps=(state.profile?.dockApps||[]).filter(x=>x!==id)}renderDesktop()}
 async function removeWidget(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
 function addWidgetDialog(){
   const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(a=>a&&a.widgetEnabled);
@@ -1105,7 +1148,7 @@ tickClock();
 /* ---------------- App-Fenster ---------------- */
 function openApp(id) {
   const app = APPS[id];
-  if (!app || (app.adminOnly && !isAdmin())) return;
+  if (!app || (app.adminOnly && !isAdmin())) return; if(state.systemApps?.[id]?.deleted) return toast("Diese App wurde gelöscht.","error"); if(app.adminLocked||state.systemApps?.[id]?.locked) return toast("Diese App wurde vom Admin gesperrt.","error");
   state.openApp = id;
   logUsageEvent("App geöffnet", app.title, id);
   const root = document.documentElement.style;
@@ -1284,22 +1327,26 @@ function mountAppStore(el) {
   s.addEventListener("input", () => { state.appSearch = s.value; updateAppStoreGrid(); });
 }
 function updateAppStore() {
-  const cats = ["Alle", ...new Set(state.apps.map(a => a.category).filter(Boolean))];
+  const cats = ["Alle", ...new Set([...Object.values(APPS).map(a=>a.category), ...state.apps.map(a => a.category)].filter(Boolean))];
   if (!cats.includes(state.appCat)) state.appCat = "Alle";
   $("#appChips").innerHTML = cats.map(c => `<button class="chip ${c === state.appCat ? "active" : ""}" data-action="app-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
   updateAppStoreGrid();
 }
 function updateAppStoreGrid() {
   const q = state.appSearch.trim().toLowerCase();
-  const list = state.apps.filter(a => (state.appCat === "Alle" || a.category === state.appCat) && (!q || String(a.title).toLowerCase().includes(q)) && a.hidden !== true);
+  const standard=Object.entries(APPS).filter(([id,a])=>(!a.adminOnly||isAdmin())&&!(state.systemApps?.[id]?.deleted)).map(([id,a])=>({id,...a,isBuiltin:true,category:state.systemApps?.[id]?.category||a.category||"System",price:0,billing:"once",hidden:false,storageMb:state.systemApps?.[id]?.storageMb||a.storageMb||500}));
+  const combined=[...standard,...state.apps];
+  const list = combined.filter(a => (state.appCat === "Alle" || a.category === state.appCat) && (!q || String(a.title).toLowerCase().includes(q)) && a.hidden !== true);
   $("#appStoreGrid").innerHTML = list.length ? `<div class="grid-games">${list.map(a => {
-    const installed = installedEntry(a.id); const active = isAppActive(a); const price = appPrice(a); const billing = appBilling(a);
-    const action = installed && active ? "installed" : installed && billing !== "once" ? "subscribe-app" : installed ? "installed" : "install-app";
-    const label = installed && active ? "Installiert" : installed && billing !== "once" ? `Abo starten · ${fmt(price)} Coins` : price > 0 && billing === "once" ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren";
-    return `<article class="game"><div class="thumb">${thumbHTML(a.iconUrl, a.isGame ? "gamepad" : "globe", 32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${price > 0 ? `${fmt(price)} Coins ${billingLabel(a)}` : "Kostenlos"}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
+    const installed = a.isBuiltin ? !((state.profile?.hiddenBuiltinApps||[]).includes(a.id)) : !!installedEntry(a.id); const active = a.isBuiltin ? !((state.systemApps?.[a.id]?.locked)) : isAppActive(a); const price = appPrice(a); const billing = appBilling(a);
+    const action = a.isBuiltin ? (installed ? "installed" : "install-builtin") : (installed && active ? "installed" : installed && billing !== "once" ? "subscribe-app" : installed ? "installed" : "install-app");
+    const label = a.isBuiltin ? (installed ? "Auf Homescreen" : "Installieren") : (installed && active ? "Installiert" : installed && billing !== "once" ? `Abo starten · ${fmt(price)} Coins` : price > 0 && billing === "once" ? `Für ${fmt(price)} Coins installieren` : "Kostenlos installieren");
+    const storageLabel = a.isBuiltin ? `System-App · ${fmt(Number(a.storageMb)||500)} MB` : `${appStorageMb(a)>=1024 ? fmt(appStorageMb(a)/1024)+" GB" : fmt(appStorageMb(a))+" MB"} · ${price>0 ? `${fmt(price)} Coins ${billingLabel(a)}` : "Kostenlos"}`;
+    return `<article class="game"><div class="thumb">${a.isBuiltin?icon(a.icon||"settings",32):thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${storageLabel}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed && !a.isBuiltin ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
   }).join("")}</div>` : `<div class="empty">${icon("store",40)}${state.apps.length ? "Keine App passt zu deiner Suche." : "Der App Store ist noch leer."}</div>`;
 }
-function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}function autoAddInstalledAppToHome(id){if(getSettings().autoAddToHome===false)return;const pages=normalizedHomePages();if(pages.some(p=>p.includes(id)))return;let p=pages.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)<HOME_CAPACITY);if(p<0){pages.push([]);p=pages.length-1}pages[p].push(id);savePagesOnly(pages).catch(console.debug)}
+
 async function showInstallProgress(a){
   closeModal();
   const root=$("#modalRoot");
@@ -1319,8 +1366,8 @@ async function installApp(id) {
     const ok=await confirmDialog({title:`${a.title} installieren?`,text:"Die App wird kostenlos installiert. Zum Öffnen brauchst du ein aktives Abo.",confirmLabel:"Kostenlos installieren"});
     if(!ok)return;
     await showInstallProgress(a);
-    await updateDoc(userRef,{installedApps:[...getInstalledApps().filter(x=>x.appId!==id),{appId:id,installedAt:new Date(),subscriptionUntil:null,subscriptionCancelled:false}]});
-    toast(`${a.title} wurde installiert. Beim ersten Öffnen kannst du das Abo abschließen.` ,"success");
+    await updateDoc(userRef,{installedApps:[...getInstalledApps().filter(x=>x.appId!==id),{appId:id,installedAt:new Date(),subscriptionUntil:null,subscriptionCancelled:false,storageMb:appStorageMb(a)}]});
+    autoAddInstalledAppToHome(id); toast(`${a.title} wurde installiert. Beim ersten Öffnen kannst du das Abo abschließen.` ,"success");
     logUsageEvent("App installiert",`${a.title} · kostenlos, Abo erforderlich` ,"appstore");
     return;
   }
@@ -1328,8 +1375,8 @@ async function installApp(id) {
   if(!ok)return;
   await showInstallProgress(a);
   const txRef=doc(collection(db,"users",uid,"transactions"));
-  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data();const bal=Number(data.balance)||0;if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];const next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date()});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
-  toast(price>0?`${a.title} wurde installiert.`:`${a.title} wurde kostenlos installiert.`,"success");logUsageEvent("App installiert",`${a.title}${price>0?` · ${fmt(price)} Coins`:" · kostenlos"}`,"appstore");
+  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data();const bal=Number(data.balance)||0;if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];const next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date(),storageMb:appStorageMb(a)});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
+  autoAddInstalledAppToHome(id); toast(price>0?`${a.title} wurde installiert.`:`${a.title} wurde kostenlos installiert.`,"success");logUsageEvent("App installiert",`${a.title}${price>0?` · ${fmt(price)} Coins`:" · kostenlos"}`,"appstore");
 }
 async function subscribeToApp(id){
   if(!(await requireDevicePin("Abo starten"))) return false;
@@ -1351,7 +1398,7 @@ async function uninstallApp(id) {
   if (!await confirmDialog({title:`${a.title} deinstallieren?`,text:"Die App verschwindet von deinem Homescreen. Ein bereits bezahlter Zeitraum wird nicht erstattet.",confirmLabel:"Deinstallieren",danger:true})) return;
   const ref=doc(db,"users",state.user.uid); const snap=await getDoc(ref); if(!snap.exists()) return;
   const next=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x).filter(x=>x.appId!==id);
-  await updateDoc(ref,{installedApps:next}); toast("App deinstalliert.","success");
+  await updateDoc(ref,{installedApps:next,dockApps:(state.profile?.dockApps||[]).filter(x=>x!==id),homePageItems:firestoreHomeMap(normalizedHomePages().map(p=>p.filter(x=>x!==id)))}); toast("App deinstalliert.","success");
   logUsageEvent("App deinstalliert", a.title, "appstore");
 }
 async function moveInstalledApp(id, direction) {
@@ -1361,6 +1408,7 @@ async function moveInstalledApp(id, direction) {
   [list[i],list[j]]=[list[j],list[i]]; await updateDoc(ref,{installedApps:list});
 }
 
+async function restoreBuiltinToHome(id){if(!APPS[id])return;const hidden=[...(state.profile?.hiddenBuiltinApps||[])].filter(x=>x!==id);await updateDoc(doc(db,"users",state.user.uid),{hiddenBuiltinApps:hidden});state.profile.hiddenBuiltinApps=hidden;const pages=normalizedHomePages();if(!pages.some(p=>p.includes(id))){let p=pages.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)<HOME_CAPACITY);if(p<0){pages.push([]);p=pages.length-1}pages[p].push(id);await savePagesOnly(pages)}renderDesktop();toast(`${APPS[id].title} ist wieder auf dem Homescreen.`,"success")}
 function openInstalledApp(id) {
   const a=state.apps.find(x=>x.id===id); if(!a) return;
   if(!isAppActive(a)){ showSubscriptionPaywall(a); return; }
@@ -1402,21 +1450,23 @@ function updateChatMessages(){
   box.innerHTML=visible.length?visible.map(m=>{const mine=m.senderId===state.user?.uid;return `<div class="chat-bubble ${mine?"mine":""} ${m.type==="system"?"chat-official":""}"><b>${esc(m.senderName||"CoinOS")}</b>${m.text?`<div>${esc(m.text).replace(/\n/g,"<br>")}</div>`:""}${m.imageData?`<img src="${esc(m.imageData)}" alt="Bild">`:""}${m.coinAmount?`<div class="pill">${COIN}${fmt(m.coinAmount)} Coins</div>`:""}<div class="chat-meta">${m.timestamp?fmtDate(m.timestamp):"gerade eben"}</div></div>`}).join(""):`<div class="empty">${icon("message",38)}Noch keine Nachrichten.</div>`;
   box.scrollTop=box.scrollHeight;
 }
+async function addIncomingMessageStorage(userIds){const ids=[...new Set(userIds||[])].filter(Boolean);if(!ids.length)return;await Promise.all(ids.map(async uid=>{const ref=doc(db,"users",uid);try{await updateDoc(ref,{messageStorageMb:increment(100)})}catch(e){console.debug("Message-Speicher:",e)}}))}
 async function sendChatMessage(){
   const input=$("#chatInput"); const text=input?.value.trim(); if(!text)return; const target=chatTarget(); const cid=target.official?"official":chatIdFor(state.user.uid,target.id);
   await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),text,type:target.official?"user":"text",timestamp:serverTimestamp()});
+  if(target.official){ if(isAdmin()) await addIncomingMessageStorage(state.allUsers.map(u=>u.id)); } else await addIncomingMessageStorage([target.id]);
   input.value=""; logUsageEvent("Chat-Nachricht gesendet",target.name,"chat");
 }
 async function compressChatImage(file){if(!file||!file.type.startsWith("image/"))throw new AppError("Bitte ein Bild auswählen.");if(file.size>5*1024*1024)throw new AppError("Das Bild darf höchstens 5 MB groß sein.");const u=URL.createObjectURL(file);try{const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>j(new AppError("Bild konnte nicht gelesen werden."));i.src=u});const max=900,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.max(1,img.naturalWidth*scale);c.height=Math.max(1,img.naturalHeight*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.68);if(data.length>450000)throw new AppError("Das Bild ist noch zu groß. Bitte ein kleineres Bild verwenden.");return data}finally{URL.revokeObjectURL(u)}}
 async function sendChatImage(){
-  const input=document.createElement("input"); input.type="file"; input.accept="image/*"; input.onchange=async()=>{try{const data=await compressChatImage(input.files?.[0]);const target=chatTarget();const cid=target.official?"official":chatIdFor(state.user.uid,target.id);await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),type:"image",imageData:data,timestamp:serverTimestamp()});logUsageEvent("Chat-Bild gesendet",target.name,"chat");}catch(e){toast(errMsg(e),"error")}};input.click();
+  const input=document.createElement("input"); input.type="file"; input.accept="image/*"; input.onchange=async()=>{try{const data=await compressChatImage(input.files?.[0]);const target=chatTarget();const cid=target.official?"official":chatIdFor(state.user.uid,target.id);await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),type:"image",imageData:data,timestamp:serverTimestamp()});if(target.official){if(isAdmin())await addIncomingMessageStorage(state.allUsers.map(u=>u.id));}else await addIncomingMessageStorage([target.id]);logUsageEvent("Chat-Bild gesendet",target.name,"chat");}catch(e){toast(errMsg(e),"error")}};input.click();
 }
 async function chatCoinsDialog(){
   if(state.chatUserId==="official")throw new AppError("Coins können nur an ein Mitglied gesendet werden."); const u=state.allUsers.find(x=>x.id===state.chatUserId); if(!u)return;
-  showModal({title:`Coins an ${chatName(u)} senden`,fields:[{name:"amount",label:"Betrag",type:"number",min:1,required:true,placeholder:"z. B. 25"}],submitLabel:"Coins senden",onSubmit:async v=>{const amount=Math.floor(v.amount||0);if(amount<1)throw new AppError("Bitte einen Betrag eingeben.");const from=doc(db,"users",state.user.uid),to=doc(db,"users",u.id),txFrom=doc(collection(db,"users",state.user.uid,"transactions")),txTo=doc(collection(db,"users",u.id,"transactions"));await runTransaction(db,async tx=>{const a=await tx.get(from),b=await tx.get(to);if(!a.exists()||!b.exists())throw new AppError("Konto nicht gefunden.");const bal=Number(a.data().balance)||0;if(bal<amount)throw new AppError("Nicht genügend Coins.");tx.update(from,{balance:bal-amount});tx.update(to,{balance:(Number(b.data().balance)||0)+amount});tx.set(txFrom,{amount:-amount,type:"transfer",description:`An ${chatName(u)} gesendet`,timestamp:serverTimestamp()});tx.set(txTo,{amount,type:"transfer",description:`Von ${chatName(state.profile)} erhalten`,timestamp:serverTimestamp()});});const cid=chatIdFor(state.user.uid,u.id);await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),type:"coin",text:`🪙 ${fmt(amount)} Coins gesendet`,coinAmount:amount,timestamp:serverTimestamp()});toast(`${fmt(amount)} Coins gesendet.` ,"success");logUsageEvent("Coins im Chat gesendet",`${fmt(amount)} an ${chatName(u)}`,"chat");}});
+  showModal({title:`Coins an ${chatName(u)} senden`,fields:[{name:"amount",label:"Betrag",type:"number",min:1,required:true,placeholder:"z. B. 25"}],submitLabel:"Coins senden",onSubmit:async v=>{const amount=Math.floor(v.amount||0);if(amount<1)throw new AppError("Bitte einen Betrag eingeben.");const from=doc(db,"users",state.user.uid),to=doc(db,"users",u.id),txFrom=doc(collection(db,"users",state.user.uid,"transactions")),txTo=doc(collection(db,"users",u.id,"transactions"));await runTransaction(db,async tx=>{const a=await tx.get(from),b=await tx.get(to);if(!a.exists()||!b.exists())throw new AppError("Konto nicht gefunden.");const bal=Number(a.data().balance)||0;if(bal<amount)throw new AppError("Nicht genügend Coins.");tx.update(from,{balance:bal-amount});tx.update(to,{balance:(Number(b.data().balance)||0)+amount});tx.set(txFrom,{amount:-amount,type:"transfer",description:`An ${chatName(u)} gesendet`,timestamp:serverTimestamp()});tx.set(txTo,{amount,type:"transfer",description:`Von ${chatName(state.profile)} erhalten`,timestamp:serverTimestamp()});});const cid=chatIdFor(state.user.uid,u.id);await addDoc(collection(db,"chats",cid,"messages"),{senderId:state.user.uid,senderName:chatName(state.profile),type:"coin",text:`🪙 ${fmt(amount)} Coins gesendet`,coinAmount:amount,timestamp:serverTimestamp()});await addIncomingMessageStorage([u.id]);toast(`${fmt(amount)} Coins gesendet.` ,"success");logUsageEvent("Coins im Chat gesendet",`${fmt(amount)} an ${chatName(u)}`,"chat");}});
 }
 async function toggleChatInvisible(){const next=!state.profile?.chatInvisible;await updateDoc(doc(db,"users",state.user.uid),{chatInvisible:next});toast(next?"Du bist im Chat jetzt unsichtbar.":"Du bist im Chat wieder sichtbar.","success");}
-async function officialMessageDialog(){showModal({title:"Offizielle Nachricht",fields:[{name:"text",label:"Nachricht",required:true,placeholder:"Nachricht an alle CoinOS-Mitglieder…"}],submitLabel:"Senden",onSubmit:async v=>{await addDoc(collection(db,"chats","official","messages"),{senderId:state.user.uid,senderName:"CoinOS",type:"system",text:v.text,timestamp:serverTimestamp()});toast("Offizielle Nachricht gesendet.","success");}})}
+async function officialMessageDialog(){showModal({title:"Offizielle Nachricht",fields:[{name:"text",label:"Nachricht",required:true,placeholder:"Nachricht an alle CoinOS-Mitglieder…"}],submitLabel:"Senden",onSubmit:async v=>{await addDoc(collection(db,"chats","official","messages"),{senderId:state.user.uid,senderName:"CoinOS",type:"system",text:v.text,timestamp:serverTimestamp()});await addIncomingMessageStorage(state.allUsers.map(u=>u.id));toast("Offizielle Nachricht gesendet.","success");}})}
 
 /* Homescreen-Bearbeitung: ausschließlich über den Button oben rechts */
 document.addEventListener("pointerdown",e=>{
@@ -1556,10 +1606,10 @@ function mountAdmin(el) {
 
 function updateAdmin() {
   if (!isAdmin()) return;
-  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Apps", "store"], ["designs", "Designs", "palette"], ["orders", "Bestellungen", "list"], ["chat", "Chat", "message"]];
+  const tabs = [["users", "Nutzer", "user"], ["items", "Artikel", "bag"], ["apps", "Apps", "store"], ["systemapps", "Standard-Apps", "settings"], ["designs", "Designs", "palette"], ["orders", "Bestellungen", "list"], ["chat", "Chat", "message"]];
   $("#adminTabs").innerHTML = tabs.map(([id, label, ic]) =>
     `<button class="chip ${state.adminTab === id ? "active" : ""}" data-action="admin-tab" data-tab="${id}">${icon(ic, 16)}${label}</button>`).join("");
-  const views = { users: adminUsers, items: adminItems, apps: adminApps, designs: adminDesigns, orders: adminOrders, chat: adminChatSettings };
+  const views = { users: adminUsers, items: adminItems, apps: adminApps, systemapps: adminSystemApps, designs: adminDesigns, orders: adminOrders, chat: adminChatSettings };
   $("#adminContent").innerHTML = views[state.adminTab]();
 }
 
@@ -1607,6 +1657,9 @@ function adminApps() {
     ${state.apps.length ? state.apps.map(a=>`<div class="row"><div class="thumb">${thumbHTML(a.iconUrl,a.isGame?"gamepad":"globe",22)}</div><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${esc(a.category||"Ohne Kategorie")} · ${appPrice(a)>0?`${fmt(appPrice(a))} Coins ${billingLabel(a)}`:"Kostenlos"} · ${fmt(installs(a.id))} Installationen</span></div><button class="btn small" data-action="app-edit" data-id="${a.id}" aria-label="Bearbeiten">${icon("pencil",16)}</button><button class="btn small" data-action="app-del" data-id="${a.id}" aria-label="Löschen">${icon("trash",16)}</button></div>`).join("") : `<div class="empty">${icon("store",36)}Noch keine Apps.</div>`}`;
 }
 
+async function deleteSystemApp(id){const a=APPS[id];if(!a)return;if(!await confirmDialog({title:`${a.title} wirklich löschen?`,text:"Die Standard-App wird für alle aus CoinOS entfernt und ist danach nicht mehr im App Store verfügbar.",confirmLabel:"Endgültig löschen",danger:true}))return;await setDoc(doc(db,"system","config"),{apps:{...(state.systemApps||{}),[id]:{...(state.systemApps?.[id]||{}),deleted:true,homeHidden:true}}},{merge:true});toast("Standard-App gelöscht.","success")}
+function adminSystemApps(){const rows=Object.entries(APPS).filter(([,a])=>!a.adminOnly||isAdmin()).map(([id,a])=>{const c=state.systemApps?.[id]||{};return `<div class="row"><div class="thumb" style="background:linear-gradient(145deg,${a.c1||"#7b5cff"},${a.c2||"#4b33d6"});display:grid;place-items:center;color:#fff">${icon(a.icon,22)}</div><div class="grow"><b>${esc(a.title)}</b><span class="muted small">${esc(a.category||"System")} · ${c.deleted?"Gelöscht":c.locked?"Gesperrt":"Freigegeben"}</span></div><button class="btn small" data-action="system-app-edit" data-id="${id}">${icon("pencil",16)}</button><button class="btn small danger" data-action="system-app-del" data-id="${id}">${icon("trash",16)}</button></div>`}).join("");return `<div class="toolbar"><span class="muted">Standard-Apps bleiben im App Store verfügbar. Hier verwaltest du Sperre, Icon, Kategorie und Homescreen.</span></div>${rows}`;}
+async function systemAppDialog(id){const a=APPS[id],c=state.systemApps?.[id]||{};showModal({title:`Standard-App: ${a.title}`,submitLabel:"Speichern",fields:[{name:"title",label:"Name",value:a.title,required:true},{name:"icon",label:"Icon",type:"select",value:c.icon||a.icon,options:Object.keys(ICONS).map(x=>({value:x,label:x}))},{name:"category",label:"Kategorie",value:c.category||a.category||"System"},{name:"locked",label:"App sperren",type:"checkbox",value:!!c.locked},{name:"homeHidden",label:"Vom Homescreen entfernen",type:"checkbox",value:!!c.homeHidden},{name:"storageMb",label:"Speicher in MB",type:"number",min:1,value:c.storageMb||500}],onSubmit:async v=>{const next={...c,title:v.title,icon:v.icon,category:v.category||"System",locked:!!v.locked,homeHidden:!!v.homeHidden,storageMb:Math.max(1,Math.floor(v.storageMb)||500)};await setDoc(doc(db,"system","config"),{apps:{...(state.systemApps||{}),[id]:next}},{merge:true});toast("Standard-App aktualisiert.","success")}})}
 function adminDesigns() {
   return `<div class="toolbar"><button class="btn primary" data-action="design-new">${icon("plus",18)}Eigenen Hintergrund hochladen</button></div>
     ${state.designs.length ? state.designs.map(d=>`<div class="row"><div class="thumb design-preview" style="${d.imageData?"background:#eee":`background:${d.bg||"#eef1f7"}`}" >${d.imageData?`<img src="${esc(d.imageData)}" alt="${esc(d.title)}" loading="lazy">`:``}</div><div class="grow"><b>${esc(d.title)}</b><span class="muted small">${designPrice(d)>0?`${fmt(designPrice(d))} Coins`:'Kostenlos'} · ${fmt(Number(d.sales)||0)} Verkäufe</span></div><button class="btn small" data-action="design-edit" data-id="${d.id}" aria-label="Bearbeiten">${icon("pencil",16)}</button><button class="btn small" data-action="design-del" data-id="${d.id}" aria-label="Löschen">${icon("trash",16)}</button></div>`).join("") : `<div class="empty">${icon("palette",36)}Noch keine eigenen Designs hochgeladen.</div>`}`;
@@ -1786,12 +1839,12 @@ async function analyzeWebApp(url){
       if(link?.href) iconUrl=new URL(link.href,u).href;
     }
   }catch(e){console.debug("App-Import ohne direkten Website-Zugriff:",e)}
-  return {title, targetUrl:u, iconUrl};
+  const crazy=/crazygames\.com/i.test(parsed.hostname); return {title, targetUrl:u, iconUrl, isGame:crazy, category:crazy?"Spiele":"Web-App", storageMb:crazy?1500:500};
 }
 function appImportDialog(){
   showModal({title:"⚡ Web-App schnell hinzufügen",text:"Du brauchst nur die Website-URL. CoinOS versucht Name und Icon automatisch zu übernehmen.",submitLabel:"Analysieren",fields:[{name:"url",label:"Website-URL",type:"url",required:true,placeholder:"https://youtube.com"}],onSubmit:async v=>{
     const data=await analyzeWebApp(v.url); closeModal();
-    showModal({title:`${data.title} hinzufügen`,text:"Prüfe die automatische Erkennung und speichere die App.",submitLabel:"App hinzufügen",fields:[{name:"title",label:"Name",required:true,value:data.title},{name:"targetUrl",label:"URL",type:"url",required:true,value:data.targetUrl},{name:"iconUrl",label:"Icon-URL",type:"url",value:data.iconUrl},{name:"category",label:"Kategorie",value:"Web-App"},{name:"price",label:"Preis in Coins",type:"number",min:0,value:0},{name:"billing",label:"Preisart",type:"select",value:"once",options:[{value:"once",label:"Einmalig"},{value:"daily",label:"Täglich"},{value:"weekly",label:"Wöchentlich"}]}],onSubmit:async x=>{if(!safeUrl(x.targetUrl))throw new AppError("Ungültige URL.");const price=Math.max(0,Math.floor(x.price)||0);await addDoc(collection(db,"apps"),{title:x.title,targetUrl:safeUrl(x.targetUrl),iconUrl:x.iconUrl?safeUrl(x.iconUrl):data.iconUrl,category:x.category||"Web-App",price,billing:x.billing||"once",requiredCoins:price,widgetEnabled:false,isGame:false,hidden:false});toast(`${x.title} wurde hinzugefügt.` ,"success");}});
+    showModal({title:`${data.title} hinzufügen`,text:"Prüfe die automatische Erkennung und speichere die App.",submitLabel:"App hinzufügen",fields:[{name:"title",label:"Name",required:true,value:data.title},{name:"targetUrl",label:"URL",type:"url",required:true,value:data.targetUrl},{name:"iconUrl",label:"Icon-URL",type:"url",value:data.iconUrl},{name:"category",label:"Kategorie",value:data.category||"Web-App"},{name:"price",label:"Preis in Coins",type:"number",min:0,value:0},{name:"isGame",label:"Als Spiel behandeln",type:"checkbox",value:!!data.isGame},{name:"storageMb",label:"Speicher in MB",type:"number",min:1,value:data.storageMb||500},{name:"billing",label:"Preisart",type:"select",value:"once",options:[{value:"once",label:"Einmalig"},{value:"daily",label:"Täglich"},{value:"weekly",label:"Wöchentlich"}]}],onSubmit:async x=>{if(!safeUrl(x.targetUrl))throw new AppError("Ungültige URL.");const price=Math.max(0,Math.floor(x.price)||0);await addDoc(collection(db,"apps"),{title:x.title,targetUrl:safeUrl(x.targetUrl),iconUrl:x.iconUrl?safeUrl(x.iconUrl):data.iconUrl,category:x.category||"Web-App",price,billing:x.billing||"once",requiredCoins:price,widgetEnabled:false,isGame:false,hidden:false});toast(`${x.title} wurde hinzugefügt.` ,"success");}});
   }});
 }
 
@@ -1809,13 +1862,14 @@ function appDialog(id) {
     {name:"widgetValue",label:"Widget-Hauptwert",value:a?.widgetValue??"",placeholder:"z. B. Neu!"},
     {name:"widgetText",label:"Widget-Untertitel",value:a?.widgetText??"",placeholder:"Kurzer Text"},
     {name:"isGame",label:"Ist ein Spiel",type:"checkbox",value:a?!!a.isGame:true},
+    {name:"storageMb",label:"Virtueller Speicher in MB",type:"number",min:1,value:a?.storageMb??(a?.isGame?1500:500)},
     {name:"hidden",label:"Im App Store verstecken",type:"checkbox",value:a?!!a.hidden:false}
   ],onSubmit:async v=>{
     if(!v.title)throw new AppError("Bitte einen Titel eingeben.");
     if(!safeUrl(v.targetUrl))throw new AppError("Bitte eine gültige Ziel-URL mit https:// angeben.");
     if(v.iconUrl&&!safeUrl(v.iconUrl))throw new AppError("Bitte eine gültige Icon-URL mit https:// angeben.");
     const price=Math.max(0,Math.floor(v.price)||0);
-    const data={title:v.title,targetUrl:safeUrl(v.targetUrl),iconUrl:v.iconUrl?safeUrl(v.iconUrl):"",category:v.category||"Sonstiges",price,billing:v.billing||"once",requiredCoins:price,widgetEnabled:!!v.widgetEnabled,widgetTitle:v.widgetTitle||v.title,widgetValue:v.widgetValue||"Öffnen",widgetText:v.widgetText||"App-Widget",isGame:!!v.isGame,hidden:!!v.hidden};
+    const data={title:v.title,targetUrl:safeUrl(v.targetUrl),iconUrl:v.iconUrl?safeUrl(v.iconUrl):"",category:v.category||"Sonstiges",price,billing:v.billing||"once",requiredCoins:price,widgetEnabled:!!v.widgetEnabled,widgetTitle:v.widgetTitle||v.title,widgetValue:v.widgetValue||"Öffnen",widgetText:v.widgetText||"App-Widget",isGame:!!v.isGame,storageMb:Math.max(1,Math.floor(v.storageMb)|| (v.isGame?1500:500)),hidden:!!v.hidden};
     if(a)await updateDoc(doc(db,"apps",id),data);else await addDoc(collection(db,"apps"),data);
     toast(a?"App gespeichert.":"App angelegt.","success");
   }});
@@ -1976,9 +2030,9 @@ const actions = {
   "app-new": () => appDialog(),
   "app-import": appImportDialog,
   "change-device-pin": changeDevicePin,
-  "remove-device-pin": removeDevicePin,
+  "remove-device-pin": removeDevicePin, "storage-upgrade": storageUpgradeDialog, "install-builtin": el=>restoreBuiltinToHome(el.dataset.id),
   "app-edit": el => appDialog(el.dataset.id),
-  "app-del": el => appDelete(el.dataset.id),
+  "app-del": el => appDelete(el.dataset.id), "system-app-edit": el=>systemAppDialog(el.dataset.id), "system-app-del": el=>deleteSystemApp(el.dataset.id),
   "design-new": () => designDialog(),
   "design-edit": el => designDialog(el.dataset.id),
   "design-del": el => designDelete(el.dataset.id),
