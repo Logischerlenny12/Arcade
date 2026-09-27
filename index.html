@@ -1373,7 +1373,7 @@ function updateAppStoreGrid() {
     return `<article class="game"><div class="thumb">${appIconHTML(a,32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category || (a.isGame ? "Spiel" : "App"))} · ${storageLabel}</span><div class="game-actions"><button class="btn ${installed && active ? "" : "primary"} small" data-action="${action}" data-id="${a.id}" ${installed && active ? "disabled" : ""}>${installed && active ? icon("check",16) : ""}${label}</button><button class="btn small" data-action="wishlist-toggle" data-id="${a.id}" title="Wunschliste">♥</button>${installed && !a.isBuiltin ? `<button class="btn small" data-action="move-app-up" data-id="${a.id}" aria-label="Nach oben">↑</button><button class="btn small" data-action="move-app-down" data-id="${a.id}" aria-label="Nach unten">↓</button><button class="btn small" data-action="uninstall-app" data-id="${a.id}">Deinstallieren</button>` : ""}</div></div></article>`;
   }).join("")}</div>` : `<div class="empty">${icon("store",40)}${state.apps.length ? "Keine App passt zu deiner Suche." : "Der App Store ist noch leer."}</div>`;
 }
-function wait(ms){return new Promise(r=>setTimeout(r,ms))}function autoAddInstalledAppToHome(id){if(getSettings().autoAddToHome===false)return;const pages=normalizedHomePages();if(pages.some(p=>p.includes(id)))return;let p=pages.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)<HOME_CAPACITY);if(p<0){pages.push([]);p=pages.length-1}pages[p].push(id);savePagesOnly(pages).catch(console.debug)}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}async function autoAddInstalledAppToHome(id){if(getSettings().autoAddToHome===false){const hidden=[...(state.profile?.hiddenInstalledApps||[])];if(!hidden.includes(id)){hidden.push(id);state.profile.hiddenInstalledApps=hidden;await updateDoc(doc(db,"users",state.user.uid),{hiddenInstalledApps:hidden}).catch(console.debug)}return;}const pages=normalizedHomePages();if(pages.some(p=>p.includes(id)))return;const hidden=(state.profile?.hiddenInstalledApps||[]).filter(x=>x!==id);if(hidden.length!==(state.profile?.hiddenInstalledApps||[]).length){state.profile.hiddenInstalledApps=hidden;await updateDoc(doc(db,"users",state.user.uid),{hiddenInstalledApps:hidden}).catch(console.debug)}let p=pages.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)<HOME_CAPACITY);if(p<0){pages.push([]);p=pages.length-1}pages[p].push(id);savePagesOnly(pages).catch(console.debug)}
 
 async function showInstallProgress(a){
   closeModal();
@@ -1384,10 +1384,10 @@ async function showInstallProgress(a){
   closeModal();
 }
 async function installApp(id){
-  if(!(await requireDevicePin("App herunterladen")))return;
   const a=state.apps.find(x=>x.id===id);if(!a)throw new AppError("Diese App gibt es nicht mehr.");
   const need=appStorageMb(a),limit=storageLimitMb(),used=storageUsedMb();
   if(used+need>limit)throw new AppError(`Nicht genügend Speicher. „${a.title}“ benötigt ${need>=1024?fmt(need/1024)+" GB":fmt(need)+" MB"}, aber nur ${Math.max(0,limit-used)>=1024?fmt((limit-used)/1024)+" GB":fmt(Math.max(0,limit-used))+" MB"} sind frei. Bitte deinstalliere eine App oder erweitere deinen Speicher.`);
+  if(!(await requireDevicePin("App herunterladen")))return;
   const price=appPrice(a),billing=appBilling(a),uid=state.user.uid,userRef=doc(db,"users",uid),current=installedEntry(id);
   if(current&&billing!=="once"&&isAppActive(a))return toast("Dieses Abo ist bereits aktiv.");
   if(current&&billing==="once")return toast("Diese App ist bereits installiert.");
