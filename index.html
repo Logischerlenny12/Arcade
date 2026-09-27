@@ -694,7 +694,7 @@ async function ensureProfile(user) {
 
 onAuthStateChanged(auth, async user => {
   stopListeners();
-  $("#boot").hidden = true;
+  window.__coinosBootReady=true; $("#boot").hidden = true;
   if (!user) {
     state.user = null;
     state.profile = null;
@@ -960,6 +960,8 @@ function appStorageMb(a){const n=Number(a?.storageMb);if(Number.isFinite(n)&&n>0
 function storageLimitMb(){return Math.max(1,Number(state.profile?.storageLimitGb)||20)*1024}
 function currentStorageRows(){const rows=[];for(const [id,a] of Object.entries(APPS)){if((!a.adminOnly||isAdmin())&&!state.systemApps?.[id]?.deleted)rows.push({id,title:a.title,mb:Number((state.systemApps?.[id]?.storageMb)||a.storageMb)||500,type:"System-App"})}for(const e of getInstalledApps()){const a=state.apps.find(x=>x.id===e.appId);if(a)rows.push({id:a.id,title:a.title,mb:Number(e.storageMb)||appStorageMb(a),type:a.isGame?"Spiel":"App"})}const msg=Number(state.profile?.messageStorageMb)||0;if(msg)rows.push({id:"messages",title:"Nachrichten",mb:msg,type:"Nachrichten"});return rows}
 function storageUsedMb(){return currentStorageRows().reduce((n,r)=>n+r.mb,0)}
+function storageCanFit(additionalMb){const limit=storageLimitMb(),used=storageUsedMb(),need=Math.max(0,Number(additionalMb)||0);return used+need<=limit}
+function storageInstallError(a){const limit=storageLimitMb(),used=storageUsedMb(),need=appStorageMb(a),free=Math.max(0,limit-used);return new AppError(`Nicht genügend Speicher. „${a.title}“ benötigt ${need>=1024?fmt(need/1024)+" GB":fmt(need)+" MB"}, aber nur ${free>=1024?fmt(free/1024)+" GB":fmt(free)+" MB"} sind frei. Bitte deinstalliere eine App oder erweitere deinen Speicher.`)}
 
 function entryExpiry(entry) {
   if (!entry?.expiresAt) return null;
@@ -1367,6 +1369,7 @@ async function showInstallProgress(a){
 async function installApp(id) {
   if(!(await requireDevicePin("App herunterladen"))) return;
   const a = state.apps.find(x => x.id === id); if (!a) throw new AppError("Diese App gibt es nicht mehr.");
+  if(!storageCanFit(appStorageMb(a))) throw storageInstallError(a);
   const price=appPrice(a),billing=appBilling(a),uid=state.user.uid,userRef=doc(db,"users",uid);
   const current=installedEntry(id);
   if(current && billing!=="once" && isAppActive(a)) return toast("Dieses Abo ist bereits aktiv.");
@@ -1384,12 +1387,13 @@ async function installApp(id) {
   if(!ok)return;
   await showInstallProgress(a);
   const txRef=doc(collection(db,"users",uid,"transactions"));
-  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data();const bal=Number(data.balance)||0;if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];const next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date(),storageMb:appStorageMb(a)});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
+  await runTransaction(db,async tx=>{const u=await tx.get(userRef);if(!u.exists())throw new AppError("Nutzer nicht gefunden.");const data=u.data();const bal=Number(data.balance)||0;const usedNow=storageUsedMb();const limitNow=storageLimitMb();if(usedNow+appStorageMb(a)>limitNow)throw storageInstallError(a);if(bal<price)throw new AppError(`Nicht genügend Coins. Dir fehlen ${fmt(price-bal)} Coins.`);const list=Array.isArray(data.installedApps)?data.installedApps.map(x=>typeof x==="string"?{appId:x}:x).filter(Boolean):[];const next=list.filter(x=>x.appId!==id);next.push({appId:id,installedAt:new Date(),storageMb:appStorageMb(a)});tx.update(userRef,{balance:bal-price,installedApps:next});if(price>0)tx.set(txRef,{amount:-price,type:"app_install",description:`App gekauft: ${a.title}`,timestamp:serverTimestamp()});});
   autoAddInstalledAppToHome(id); toast(price>0?`${a.title} wurde installiert.`:`${a.title} wurde kostenlos installiert.`,"success");logUsageEvent("App installiert",`${a.title}${price>0?` · ${fmt(price)} Coins`:" · kostenlos"}`,"appstore");
 }
 async function subscribeToApp(id){
   if(!(await requireDevicePin("Abo starten"))) return false;
   const a=state.apps.find(x=>x.id===id);if(!a)throw new AppError("App nicht gefunden.");
+  if(!storageCanFit(appStorageMb(a)) && !installedEntry(id)) throw storageInstallError(a);
   if(appBilling(a)==="once")return openInstalledApp(id);
   const price=appPrice(a),period=appBilling(a),label=billingLabel(a);
   const ok=await confirmDialog({title:`Abo für ${a.title}`,text:`Achtung: Dies ist ein Abo. ${fmt(price)} Coins werden jetzt für ${label} berechnet. Du kannst das Abo später in Einstellungen → Abos kündigen.`,confirmLabel:`Abo für ${fmt(price)} Coins starten`,danger:true});
@@ -2099,5 +2103,19 @@ if (!ALLOW_REGISTRATION) $("#registerTab").hidden = true;
 setAuthMode("login");
 stopUsageTracking=startUsageTracking();
 </script>
-</body>
+<script>
+setTimeout(()=>{
+  const boot=document.getElementById("boot");
+  const auth=document.getElementById("auth");
+  const os=document.getElementById("os");
+  if(boot && !window.__coinosBootReady){
+    boot.hidden=true;
+    if(auth && auth.hidden && os && os.hidden){
+      auth.hidden=false;
+      const err=document.getElementById("authError");
+      if(err){err.textContent="CoinOS konnte die Anmeldung gerade nicht laden. Bitte Seite neu laden und die Internetverbindung prüfen.";err.hidden=false;}
+    }
+  }
+},12000);
+</script></body>
 </html>
