@@ -977,7 +977,7 @@ let currentHomePage=0, editMode=false, homeTouchStartX=0, homeTouchStartY=0, hom
 const HOME_COLS=5, HOME_ROWS=2, HOME_CAPACITY=HOME_COLS*HOME_ROWS;
 function applySystemApps(){for(const [id,cfg] of Object.entries(state.systemApps||{})){if(APPS[id])Object.assign(APPS[id],cfg)}}
 function builtinHomeIds(){const hidden=new Set([...(state.profile?.hiddenBuiltinApps||[]),...Object.entries(state.systemApps||{}).filter(([,c])=>c?.homeHidden||c?.locked).map(([id])=>id)]);return Object.entries(APPS).filter(([id,a])=>!a.adminOnly||isAdmin()).filter(([id])=>!hidden.has(id)).map(([id])=>id)}
-function installedHomeIds(){return getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id))}
+function installedHomeIds(){const hidden=new Set(Array.isArray(state.profile?.hiddenInstalledApps)?state.profile.hiddenInstalledApps:[]);return getInstalledApps().map(e=>e.appId).filter(id=>state.apps.some(a=>a.id===id)&&!hidden.has(id))}
 function widgetIds(){return ["konto","shop","appstore","designstore","chat",...getInstalledApps().map(e=>e.appId).filter(id=>{const a=state.apps.find(x=>x.id===id);return a&&a.widgetEnabled})]}
 function isWidgetItem(id){return typeof id==="string"&&id.startsWith("w:")}
 function widgetItemId(id){if(!isWidgetItem(id))return id;return id.slice(2).split(":")[0]}
@@ -1037,28 +1037,34 @@ function widgetDefinition(id){
   if(a&&a.widgetEnabled) return {id,title:a.widgetTitle||a.title,icon:"widget",cls:"w-custom",html:`<b>${esc(a.widgetValue||"Widget")}</b><span>${esc(a.widgetText||a.title)}</span>`};
   return null;
 }
-function renderDesktop(){
-  const pages=normalizedHomePages(); if(currentHomePage>=pages.length)currentHomePage=pages.length-1;
-  const p=state.profile||{};
-  const pageHTML=pages.map((items,pi)=>`<section class="home-page" data-page="${pi}"><div class="home-page-inner">
-    ${pi===0?`<h1 id="greeting">Hallo, ${esc(p.name||"du")}!</h1><p id="dateLine" class="muted">${new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</p>`:`<h2 class="page-title">Seite ${pi+1}</h2>`}
-    ${pi===0?`<div class="toolbar home-tools"><button class="btn small" data-action="open-app" data-app="wishlist">🎁 Wunschliste</button></div>`:""}
-    <div class="home-content-grid">${items.map(item=>{
-      if(isWidgetItem(item)){
-        const w=widgetDefinition(widgetItemId(item)); if(!w)return "";
-        const size=widgetItemSize(item);
-        return `<button class="os-widget ${w.cls} widget-${size}" data-action="${editMode?"app-menu":"open-widget-app"}" data-app="${esc(w.id)}" data-item="${esc(item)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span>${editMode?`<span class="tile-remove" data-action="widget-remove" data-id="${esc(item)}">−</span>`:""}</button>`;
-      }
-      const a=itemApp(item); if(!a)return ""; const custom=!APPS[item];
-      return `<button draggable="${editMode}" class="tile" data-action="${editMode?"app-menu":(custom?"open-installed":"open-app")}" data-id="${custom?item:item}" data-app="${custom?"":item}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${custom?thumbHTML(a.iconUrl,"globe",38):icon(a.icon,38)}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(item)}">−</span>`:""}<span class="tile-label">${esc(a.title)}</span></button>`;
-    }).join("")}</div>
-  </div></section>`).join("");
-  $("#homePages").innerHTML=pageHTML; $("#homePages").style.transform=`translateX(-${currentHomePage*100}%)`;
-  $("#pageDots").innerHTML=pages.map((_,i)=>`<button class="page-dot ${i===currentHomePage?"active":""}" data-action="page" data-page="${i}" aria-label="Seite ${i+1}"></button>`).join("");
-  const st=getSettings();$("#pageDots").style.display=st.showDots===false?"none":"flex";
-  applyHomeSettings(); bindHomeGestures(); renderDock();
+function libraryApps(){
+  const standard=Object.entries(APPS).filter(([id,a])=>(!a.adminOnly||isAdmin())&&!state.systemApps?.[id]?.deleted).map(([id,a])=>({id,...a,isBuiltin:true}));
+  const installed=state.apps.filter(a=>installedEntry(a.id)).map(a=>({...a,isBuiltin:false}));
+  return [...installed,...standard];
 }
-function renderWidgets(){renderDesktop()}
+async function addInstalledToHome(id){
+  if(APPS[id])return restoreBuiltinToHome(id);
+  const a=state.apps.find(x=>x.id===id);if(!a||!installedEntry(id))return;
+  const pages=normalizedHomePages();if(pages.some(p=>p.includes(id)))return toast("Die App ist bereits auf dem Homescreen.","info");
+  const hidden=(state.profile?.hiddenInstalledApps||[]).filter(x=>x!==id);
+  let p=pages.findIndex(x=>x.reduce((n,it)=>n+itemWeight(it),0)+1<=HOME_CAPACITY);
+  if(p<0){pages.push([]);p=pages.length-1}pages[p].push(id);
+  await updateDoc(doc(db,"users",state.user.uid),{hiddenInstalledApps:hidden});state.profile.hiddenInstalledApps=hidden;
+  await savePagesOnly(pages);renderDesktop();toast(`${a.title} ist wieder auf dem Homescreen.`,"success");
+}
+function renderAppLibrary(){
+  const apps=libraryApps(),homeIds=new Set(normalizedHomePages().flat());
+  const body=apps.length?`<div class="grid-games">${apps.map(a=>{const onHome=homeIds.has(a.id);return `<article class="game"><div class="thumb" style="background:linear-gradient(145deg,${a.c1||"#7b5cff"},${a.c2||"#4b33d6"});display:grid;place-items:center;color:#fff">${appIconHTML(a,32)}</div><div class="grow"><h4>${esc(a.title)}</h4><span class="muted small">${esc(a.category||"App")}${a.isBuiltin?" · Standard-App":""}</span><div class="game-actions"><button class="btn small" data-action="library-open" data-id="${a.id}">Öffnen</button><button class="btn ${onHome?"":"primary"} small" data-action="${onHome?"":"library-add-home"}" data-id="${a.id}" ${onHome?"disabled":""}>${onHome?"✓ Auf Homescreen":"Auf Homescreen"}</button></div></div></article>`}).join("")}</div>`:`<div class="empty">${icon("store",40)}Keine installierten Apps.</div>`;
+  return `<div class="library-shell"><div class="toolbar"><div><h2 class="page-title">App-Mediathek</h2><p class="muted">Apps, die vom Homescreen entfernt wurden, bleiben hier. Erst beim Deinstallieren verschwinden eigene Apps aus der Mediathek.</p></div></div>${body}</div>`;
+}function renderDesktop(){
+  const pages=normalizedHomePages(),libraryIndex=pages.length;if(currentHomePage>libraryIndex)currentHomePage=libraryIndex;
+  const p=state.profile||{};
+  const pageHTML=pages.map((items,pi)=>`<section class="home-page" data-page="${pi}"><div class="home-page-inner">${pi===0?`<h1 id="greeting">Hallo, ${esc(p.name||"du")}!</h1><p id="dateLine" class="muted">${new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</p>`:`<h2 class="page-title">Seite ${pi+1}</h2>`}${pi===0?`<div class="toolbar home-tools"><button class="btn small" data-action="open-app" data-app="wishlist">🎁 Wunschliste</button></div>`:""}<div class="home-content-grid">${items.map(item=>{if(isWidgetItem(item)){const w=widgetDefinition(widgetItemId(item));if(!w)return "";const size=widgetItemSize(item);return `<button class="os-widget ${w.cls} widget-${size}" data-action="${editMode?"app-menu":"open-widget-app"}" data-app="${esc(w.id)}" data-item="${esc(item)}"><span class="widget-icon">${icon(w.icon,22)}</span><span class="widget-content">${w.html}</span>${editMode?`<span class="tile-remove" data-action="widget-remove" data-id="${esc(item)}">−</span>`:""}</button>`;}const a=itemApp(item);if(!a)return "";const custom=!APPS[item];return `<button draggable="${editMode}" class="tile" data-action="${editMode?"app-menu":(custom?"open-installed":"open-app")}" data-id="${custom?item:item}" data-app="${custom?"":item}" title="${esc(a.title)}"><span class="tile-icon" style="--c1:${a.c1||"#667eea"};--c2:${a.c2||"#764ba2"}">${appIconHTML(a,38)}</span>${editMode?`<span class="tile-remove" data-action="tile-remove" data-id="${esc(item)}">−</span>`:""}<span class="tile-label">${esc(a.title)}</span></button>`;}).join("")}</div></div></section>`).join("");
+  const libraryHTML=`<section class="home-page app-library-page" data-page="${libraryIndex}">${renderAppLibrary()}</section>`;
+  $("#homePages").innerHTML=pageHTML+libraryHTML;$("#homePages").style.transform=`translateX(-${currentHomePage*100}%)`;
+  $("#pageDots").innerHTML=[...pages,"library"].map((_,i)=>`<button class="page-dot ${i===currentHomePage?"active":""}" data-action="page" data-page="${i}" aria-label="${i===libraryIndex?"App-Mediathek":"Seite "+(i+1)}"></button>`).join("");
+  const st=getSettings();$("#pageDots").style.display=st.showDots===false?"none":"flex";applyHomeSettings();bindHomeGestures();renderDock();
+}function renderWidgets(){renderDesktop()}
 function renderDock(){
   const ids=Array.isArray(state.profile?.dockApps)?state.profile.dockApps:[];
   const apps=ids.map(id=>{const a=APPS[id]||state.apps.find(x=>x.id===id);return a?{id,a}:null}).filter(Boolean);
@@ -1129,7 +1135,7 @@ async function endTileDrag(e){
   }
   await saveHomeLayout();renderDesktop();
 }
-async function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));if(APPS[id]){const hidden=[...(state.profile?.hiddenBuiltinApps||[])];if(!hidden.includes(id))hidden.push(id);await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(pages),hiddenBuiltinApps:hidden});state.profile.hiddenBuiltinApps=hidden}else{await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(pages),dockApps:(state.profile?.dockApps||[]).filter(x=>x!==id)});state.profile.dockApps=(state.profile?.dockApps||[]).filter(x=>x!==id)}renderDesktop()}
+async function removeHomeApp(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));if(APPS[id]){const hidden=[...(state.profile?.hiddenBuiltinApps||[])];if(!hidden.includes(id))hidden.push(id);await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(pages),hiddenBuiltinApps:hidden});state.profile.hiddenBuiltinApps=hidden}else{const hidden=[...(state.profile?.hiddenInstalledApps||[])];if(!hidden.includes(id))hidden.push(id);await updateDoc(doc(db,"users",state.user.uid),{homePageItems:firestoreHomeMap(pages),hiddenInstalledApps:hidden,dockApps:(state.profile?.dockApps||[]).filter(x=>x!==id)});state.profile.hiddenInstalledApps=hidden;state.profile.dockApps=(state.profile?.dockApps||[]).filter(x=>x!==id)}renderDesktop()}
 async function removeWidget(id){const pages=normalizedHomePages().map(p=>p.filter(x=>x!==id));await savePagesOnly(pages);renderDesktop()}
 function addWidgetDialog(){
   const installed=getInstalledApps().map(e=>state.apps.find(a=>a.id===e.appId)).filter(a=>a&&a.widgetEnabled);
@@ -1335,7 +1341,7 @@ function updateAppStore() {
 function updateAppStoreGrid() {
   const q = state.appSearch.trim().toLowerCase();
   const standard=Object.entries(APPS).filter(([id,a])=>(!a.adminOnly||isAdmin())&&!(state.systemApps?.[id]?.deleted)).map(([id,a])=>({id,...a,isBuiltin:true,category:state.systemApps?.[id]?.category||a.category||"System",price:0,billing:"once",hidden:false,storageMb:state.systemApps?.[id]?.storageMb||a.storageMb||500}));
-  const combined=[...standard,...state.apps];
+  const combined=[...state.apps,...standard];
   const list = combined.filter(a => (state.appCat === "Alle" || a.category === state.appCat) && (!q || String(a.title).toLowerCase().includes(q)) && a.hidden !== true);
   $("#appStoreGrid").innerHTML = list.length ? `<div class="grid-games">${list.map(a => {
     const installed = a.isBuiltin ? !((state.profile?.hiddenBuiltinApps||[]).includes(a.id)) : !!installedEntry(a.id); const active = a.isBuiltin ? !((state.systemApps?.[a.id]?.locked)) : isAppActive(a); const price = appPrice(a); const billing = appBilling(a);
@@ -1398,7 +1404,7 @@ async function uninstallApp(id) {
   if (!await confirmDialog({title:`${a.title} deinstallieren?`,text:"Die App verschwindet von deinem Homescreen. Ein bereits bezahlter Zeitraum wird nicht erstattet.",confirmLabel:"Deinstallieren",danger:true})) return;
   const ref=doc(db,"users",state.user.uid); const snap=await getDoc(ref); if(!snap.exists()) return;
   const next=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x).filter(x=>x.appId!==id);
-  await updateDoc(ref,{installedApps:next,dockApps:(state.profile?.dockApps||[]).filter(x=>x!==id),homePageItems:firestoreHomeMap(normalizedHomePages().map(p=>p.filter(x=>x!==id)))}); toast("App deinstalliert.","success");
+  await updateDoc(ref,{installedApps:next,dockApps:(state.profile?.dockApps||[]).filter(x=>x!==id),hiddenInstalledApps:(state.profile?.hiddenInstalledApps||[]).filter(x=>x!==id),homePageItems:firestoreHomeMap(normalizedHomePages().map(p=>p.filter(x=>x!==id)))}); toast("App deinstalliert.","success");
   logUsageEvent("App deinstalliert", a.title, "appstore");
 }
 async function moveInstalledApp(id, direction) {
@@ -1843,11 +1849,16 @@ async function analyzeWebApp(url){
 }
 function appImportDialog(){
   showModal({title:"⚡ Web-App schnell hinzufügen",text:"Du brauchst nur die Website-URL. CoinOS versucht Name und Icon automatisch zu übernehmen.",submitLabel:"Analysieren",fields:[{name:"url",label:"Website-URL",type:"url",required:true,placeholder:"https://youtube.com"}],onSubmit:async v=>{
-    const data=await analyzeWebApp(v.url); closeModal();
-    showModal({title:`${data.title} hinzufügen`,text:"Prüfe die automatische Erkennung und speichere die App.",submitLabel:"App hinzufügen",fields:[{name:"title",label:"Name",required:true,value:data.title},{name:"targetUrl",label:"URL",type:"url",required:true,value:data.targetUrl},{name:"iconUrl",label:"Icon-URL",type:"url",value:data.iconUrl},{name:"category",label:"Kategorie",value:data.category||"Web-App"},{name:"price",label:"Preis in Coins",type:"number",min:0,value:0},{name:"isGame",label:"Als Spiel behandeln",type:"checkbox",value:!!data.isGame},{name:"storageMb",label:"Speicher in MB",type:"number",min:1,value:data.storageMb||500},{name:"billing",label:"Preisart",type:"select",value:"once",options:[{value:"once",label:"Einmalig"},{value:"daily",label:"Täglich"},{value:"weekly",label:"Wöchentlich"}]}],onSubmit:async x=>{if(!safeUrl(x.targetUrl))throw new AppError("Ungültige URL.");const price=Math.max(0,Math.floor(x.price)||0);await addDoc(collection(db,"apps"),{title:x.title,targetUrl:safeUrl(x.targetUrl),iconUrl:x.iconUrl?safeUrl(x.iconUrl):data.iconUrl,category:x.category||"Web-App",price,billing:x.billing||"once",requiredCoins:price,widgetEnabled:false,isGame:false,hidden:false});toast(`${x.title} wurde hinzugefügt.` ,"success");}});
+    const data=await analyzeWebApp(v.url);
+    setTimeout(()=>showModal({title:`${data.title} hinzufügen`,text:"Prüfe die automatische Erkennung und speichere die App.",submitLabel:"App hinzufügen",fields:[{name:"title",label:"Name",required:true,value:data.title},{name:"targetUrl",label:"URL",type:"url",required:true,value:data.targetUrl},{name:"iconUrl",label:"Icon-URL",type:"url",value:data.iconUrl},{name:"category",label:"Kategorie",value:data.category||"Web-App"},{name:"price",label:"Preis in Coins",type:"number",min:0,value:0},{name:"isGame",label:"Als Spiel behandeln",type:"checkbox",value:!!data.isGame},{name:"storageMb",label:"Speicher in MB",type:"number",min:1,value:data.storageMb||500},{name:"billing",label:"Preisart",type:"select",value:"once",options:[{value:"once",label:"Einmalig"},{value:"daily",label:"Täglich"},{value:"weekly",label:"Wöchentlich"}]}],onSubmit:async x=>{
+      if(!safeUrl(x.targetUrl))throw new AppError("Ungültige URL.");
+      const price=Math.max(0,Math.floor(x.price)||0);
+      await addDoc(collection(db,"apps"),{title:x.title,targetUrl:safeUrl(x.targetUrl),iconUrl:x.iconUrl?safeUrl(x.iconUrl):data.iconUrl,category:x.category||"Web-App",price,billing:x.billing||"once",requiredCoins:price,widgetEnabled:false,isGame:!!x.isGame,hidden:false,storageMb:Math.max(1,Math.floor(x.storageMb)||500)});
+      toast(`${x.title} wurde hinzugefügt.`,"success");
+    }}),0);
+    return {keepOpen:true};
   }});
 }
-
 function appDialog(id) {
   const a=id?state.apps.find(x=>x.id===id):null;
   showModal({title:a?"App bearbeiten":"Neue App",submitLabel:a?"Änderungen speichern":"App anlegen",fields:[
@@ -1936,8 +1947,8 @@ function showModal({ title, text = "", fields = [], submitLabel = "Speichern", d
     const btn = form.querySelector("button[type=submit]");
     btn.disabled = true;
     try {
-      await onSubmit(readForm(form, fields));
-      closeModal();
+      const result = await onSubmit(readForm(form, fields));
+      if(!(result && result.keepOpen)) closeModal();
     } catch (ex) {
       console.error(ex);
       const box = $("#modalError");
@@ -2028,7 +2039,7 @@ const actions = {
   "item-del": el => itemDelete(el.dataset.id),
   "seed": seedItems,
   "app-new": () => appDialog(),
-  "app-import": appImportDialog,
+  "app-import": appImportDialog,"library-add-home":el=>addInstalledToHome(el.dataset.id),"library-open":el=>APPS[el.dataset.id]?openApp(el.dataset.id):openInstalledApp(el.dataset.id),
   "change-device-pin": changeDevicePin,
   "remove-device-pin": removeDevicePin, "storage-upgrade": storageUpgradeDialog, "install-builtin": el=>restoreBuiltinToHome(el.dataset.id),
   "app-edit": el => appDialog(el.dataset.id),
