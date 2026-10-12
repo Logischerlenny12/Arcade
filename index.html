@@ -2367,12 +2367,10 @@ Object.assign(actions,{
 document.addEventListener("keydown",e=>{
   if(e.target?.id==="chatInput"&&e.key==="Enter"&&!e.shiftKey&&getSettings().enterSends!==false){e.preventDefault();sendChatMessage().catch(err=>toast(errMsg(err),"error"))}
 });
-/* =========================================================
-   ADMIN-SYSTEM v2 – Volladmin, Einzelrechte, Coin-Zentrale, Sperren,
-   Bestell-Verwaltung, Gutscheine, Wartungsmodus, Admin-Protokoll
-   EINFÜGEN: direkt VOR der Zeile  /* ---------------- Start ---------------- */
-   (ganz unten im <script type="module">). Sonst nichts ändern.
-   ========================================================= */
+// =========================================================
+// ADMIN-SYSTEM v2 – Volladmin, Einzelrechte, Coin-Zentrale, Sperren,
+// Bestell-Verwaltung, Gutscheine, Wartungsmodus, Admin-Protokoll
+// =========================================================
 document.head.insertAdjacentHTML("beforeend",`<style>
 .gate{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 25%,#fff,#f3e4ff 55%,#dbc4ff)}
 .gate-card{width:min(420px,100%);text-align:center;padding:32px 26px;border-radius:30px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);display:grid;gap:12px;color:#2b1b4a}
