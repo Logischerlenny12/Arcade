@@ -403,7 +403,7 @@ import {
 /* ---------------- KONFIGURATION ---------------- */
 // WICHTIG: Hier deine Admin-E-Mail eintragen. Das Konto mit dieser Adresse wird beim
 // ersten Login als Admin angelegt. Dieselbe Adresse gehört auch in die Firestore-Regeln.
-const ADMIN_EMAIL = "DEINE-ADMIN-MAIL@example.com";
+const ADMIN_EMAIL = "lennard@huennies.de";
 // Nach dem Anlegen aller Konten auf false setzen (oder in Firebase die Registrierung sperren).
 // Neue Nutzer kann der Admin dann trotzdem in der Admin-App anlegen.
 const ALLOW_REGISTRATION = true;
@@ -2367,7 +2367,391 @@ Object.assign(actions,{
 document.addEventListener("keydown",e=>{
   if(e.target?.id==="chatInput"&&e.key==="Enter"&&!e.shiftKey&&getSettings().enterSends!==false){e.preventDefault();sendChatMessage().catch(err=>toast(errMsg(err),"error"))}
 });
+/* =========================================================
+   ADMIN-SYSTEM v2 – Volladmin, Einzelrechte, Coin-Zentrale, Sperren,
+   Bestell-Verwaltung, Gutscheine, Wartungsmodus, Admin-Protokoll
+   EINFÜGEN: direkt VOR der Zeile  /* ---------------- Start ---------------- */
+   (ganz unten im <script type="module">). Sonst nichts ändern.
+   ========================================================= */
+document.head.insertAdjacentHTML("beforeend",`<style>
+.gate{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 25%,#fff,#f3e4ff 55%,#dbc4ff)}
+.gate-card{width:min(420px,100%);text-align:center;padding:32px 26px;border-radius:30px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);display:grid;gap:12px;color:#2b1b4a}
+.gate-ic{font-size:3rem}
+.badge.st-bearbeitung{background:#e8e0ff;color:#4b33d6}
+.badge.st-abholbereit{background:#dcebff;color:#0b4a94}
+.ud-stats{display:flex;gap:20px;flex-wrap:wrap;margin:12px 0}
+.ud-stats b{display:block;font-family:var(--font-head);font-size:1.3rem}
+.ud-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.sel{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.ud-box{margin-top:12px;padding:12px;border-radius:16px;background:var(--soft)}
+</style>`);
 
+/* ---------- Bestell-Status erweitern ---------- */
+for(const k of Object.keys(STATUS)) delete STATUS[k];
+Object.assign(STATUS,{bestellt:"Bestellt",bearbeitung:"In Bearbeitung",abholbereit:"Abholbereit",geliefert:"Erledigt"});
+Object.defineProperty(STATUS,"gepackt",{value:"Abholbereit",enumerable:false}); // alte Bestellungen
+const ost=o=>o.status==="gepackt"?"abholbereit":o.status;
+
+/* ---------- Rechte ---------- */
+const RIGHTS=[
+  ["usersView","Benutzer ansehen"],["usersEdit","Benutzer bearbeiten (anlegen, Apps schenken)"],["usersBan","Benutzer sperren / entsperren"],
+  ["coinsGive","Coins geben"],["coinsTake","Coins abziehen"],
+  ["shopManage","Shopartikel verwalten"],["ordersEdit","Bestellungen bearbeiten"],["ordersDelete","Bestellungen löschen"],
+  ["appsManage","Apps verwalten / veröffentlichen / entfernen"],["messages","Systemmeldungen senden"],
+  ["vouchers","Gutscheincodes & Belohnungen erstellen"],["logView","Aktivitätsprotokoll ansehen"],["maintenance","Wartungsmodus verwalten"]
+];
+// Bestehende Admins ohne "adminRights" gelten automatisch als Volladmin.
+const isFullUser=u=>u?.role==="admin"&&(u.fullAdmin===true||!u.adminRights);
+const isFull=()=>isFullUser(state.profile);
+const hasRight=k=>isFull()||(k!=="full"&&state.profile?.role==="admin"&&state.profile.adminRights?.[k]===true);
+const need=(k,msg)=>{if(!hasRight(k))throw new AppError(msg||"Dafür fehlt dir die Berechtigung.")};
+const roleLabel=u=>isFullUser(u)?"Volladmin":u.role==="admin"?"Admin":"Nutzer";
+const guardTarget=u=>{if(!isFull()&&u.role==="admin")throw new AppError("Admin-Konten kann nur der Volladmin bearbeiten.")};
+const getUser=id=>{const u=state.allUsers.find(x=>x.id===id);if(!u)throw new AppError("Nutzer nicht gefunden.");return u};
+const userOpt=u=>({value:u.id,label:`${chatName(u)} · ${u.email||""} · ${fmt(u.balance)} Coins`});
+
+state.adminLog=[];state.vouchers=[];
+let orderSel=new Set();
+
+/* ---------- Protokoll ---------- */
+async function logAdmin(action,detail="",target=null){
+  if(!state.user)return;
+  try{await addDoc(collection(db,"adminLog"),{ts:serverTimestamp(),adminId:state.user.uid,adminName:chatName(state.profile),action,detail:String(detail||"").slice(0,300),targetId:target?.id||"",targetName:target?chatName(target):""});}
+  catch(e){console.debug("Protokoll:",e)}
+}
+// Dialoge protokollieren, sobald sie erfolgreich abgeschickt wurden
+let pendingLog=null;
+const _showModal=showModal;
+showModal=function(o){
+  const pl=pendingLog;pendingLog=null;
+  if(pl&&typeof o.onSubmit==="function"){const os=o.onSubmit;o={...o,onSubmit:async v=>{const r=await os(v);logAdmin(pl.text,pl.detail||v?.title||v?.name||"");return r}}}
+  return _showModal(o);
+};
+
+/* ---------- Sperrseite (gesperrt / Wartung) ---------- */
+const gate=document.createElement("div");gate.className="gate";gate.hidden=true;document.body.appendChild(gate);
+function showGate(ic,title,text){gate.innerHTML=`<div class="gate-card"><div class="gate-ic">${ic}</div><h2>${esc(title)}</h2><p>${esc(text)}</p><button class="btn primary" data-action="logout">Abmelden</button></div>`;gate.hidden=false}
+const mine={unsubs:[],profile:null,maint:{},log:false,vou:false};
+function evalGate(){
+  const d=mine.profile;if(!d){gate.hidden=true;return}
+  if(d.banned===true)return showGate("🚫","Konto gesperrt",d.banReason?`Grund: ${d.banReason}`:"Dein CoinOS-Konto wurde gesperrt. Bitte wende dich an den Admin.");
+  if(mine.maint?.on&&d.role!=="admin")return showGate("🛠️","Wartungsmodus",mine.maint.message||"CoinOS wird gerade gewartet. Bitte versuche es später noch einmal.");
+  gate.hidden=true;
+}
+onAuthStateChanged(auth,user=>{
+  mine.unsubs.forEach(u=>{try{u()}catch{}});mine.unsubs=[];mine.profile=null;mine.log=false;mine.vou=false;state.adminLog=[];state.vouchers=[];orderSel.clear();evalGate();
+  if(!user)return;
+  const quiet=()=>{};
+  mine.unsubs.push(onSnapshot(doc(db,"system","config"),s=>{mine.maint=s.exists()?(s.data().maintenance||{}):{};evalGate();if(state.openApp==="admin")scheduleRender()},quiet));
+  mine.unsubs.push(onSnapshot(doc(db,"users",user.uid),s=>{
+    mine.profile=s.exists()?s.data():null;evalGate();
+    const d=mine.profile;if(d?.role!=="admin")return;
+    const full=isFullUser(d);
+    if(!mine.log&&(full||d.adminRights?.logView)){mine.log=true;mine.unsubs.push(onSnapshot(query(collection(db,"adminLog"),orderBy("ts","desc"),limit(200)),sn=>{state.adminLog=docs(sn);if(state.openApp==="admin")scheduleRender()},quiet))}
+    if(!mine.vou&&(full||d.adminRights?.vouchers)){mine.vou=true;mine.unsubs.push(onSnapshot(collection(db,"vouchers"),sn=>{state.vouchers=docs(sn).sort((a,b)=>String(a.code).localeCompare(String(b.code)));if(state.openApp==="admin")scheduleRender()},quiet))}
+  },quiet));
+});
+
+/* ---------- Admin-Tabs ---------- */
+const ADMIN_TABS=[
+  ["users","Nutzer","user",()=>hasRight("usersView"),()=>adminUsers2()],
+  ["coins","Coin-Zentrale","coin",()=>hasRight("coinsGive")||hasRight("coinsTake"),()=>adminCoinCenter()],
+  ["items","Artikel","bag",()=>hasRight("shopManage"),()=>adminItems()],
+  ["orders","Bestellungen","list",()=>hasRight("ordersEdit")||hasRight("ordersDelete"),()=>adminOrders2()],
+  ["apps","Apps","store",()=>hasRight("appsManage"),()=>adminApps()],
+  ["systemapps","Standard-Apps","settings",()=>hasRight("appsManage"),()=>adminSystemApps()],
+  ["designs","Designs","palette",()=>hasRight("appsManage"),()=>adminDesigns()],
+  ["storage","Speicher","database",()=>hasRight("full"),()=>adminStorage()],
+  ["chat","Meldungen","message",()=>hasRight("messages"),()=>adminChatSettings()],
+  ["vouchers","Gutscheine","gift",()=>hasRight("vouchers"),()=>adminVouchers()],
+  ["feedback","Feedback","message",()=>hasRight("usersView"),()=>adminFeedback()],
+  ["log","Protokoll","receipt",()=>hasRight("logView"),()=>adminLogView()],
+  ["maint","Wartung","settings",()=>hasRight("maintenance"),()=>adminMaint()],
+  ["admins","Admins","shield",()=>hasRight("full"),()=>adminAdmins()]
+];
+function updateAdmin2(){
+  if(!isAdmin()||!$("#adminTabs"))return;
+  const tabs=ADMIN_TABS.filter(t=>t[3]());
+  if(!tabs.length){$("#adminTabs").innerHTML="";$("#adminContent").innerHTML=`<div class="empty">${icon("shield",36)}Dir wurden noch keine Admin-Rechte zugewiesen.</div>`;return}
+  if(!tabs.some(t=>t[0]===state.adminTab))state.adminTab=tabs[0][0];
+  $("#adminTabs").innerHTML=tabs.map(([id,l,ic])=>`<button class="chip ${state.adminTab===id?"active":""}" data-action="admin-tab" data-tab="${id}">${icon(ic,16)}${l}</button>`).join("");
+  $("#adminContent").innerHTML=tabs.find(t=>t[0]===state.adminTab)[4]();
+}
+APPS.admin.update=updateAdmin2;
+
+/* ---------- Nutzer ---------- */
+function adminUsers2(){
+  const day=usageDateKey();
+  return `<div class="toolbar">${hasRight("usersEdit")?`<button class="btn primary" data-action="user-new">${icon("plus",18)}Nutzer anlegen</button>`:""}<span class="muted">${fmt(state.allUsers.length)} Konten</span></div>`+
+  (state.allUsers.length?state.allUsers.map(u=>{
+    const mins=u.usage?.date===day?Math.round((Number(u.usage?.totalSeconds)||0)/60):0;
+    return `<div class="row"><span class="avatar">${esc((u.name||u.email||"?").charAt(0).toUpperCase())}</span><div class="grow"><b>${esc(u.name||"Ohne Namen")}</b><span class="muted small">${esc(u.email)} · heute ${mins} Min. aktiv</span></div>${u.banned?`<span class="badge red">Gesperrt</span>`:""}<span class="badge ${u.role==="admin"?"red":"blue"}">${roleLabel(u)}</span><span class="pill">${COIN}${fmt(u.balance)}</span><button class="btn small" data-action="user-details" data-id="${u.id}">Details</button></div>`}).join(""):`<div class="empty">${icon("user",36)}Noch keine Nutzer.</div>`);
+}
+function openUserDetail(id){
+  need("usersView");const u=getUser(id);
+  const day=usageDateKey(),usage=u.usage?.date===day?u.usage:{},mins=Math.round((Number(usage.totalSeconds)||0)/60);
+  const apps=(Array.isArray(u.installedApps)?u.installedApps:[]).map(x=>typeof x==="string"?x:x?.appId).map(a=>state.apps.find(z=>z.id===a)?.title).filter(Boolean);
+  const orders=state.allOrders.filter(o=>o.userId===id),events=(usage.events||[]).slice(0,8);
+  const canCoin=hasRight("coinsGive")||hasRight("coinsTake"),admin=u.role==="admin";
+  closeModal();
+  $("#modalRoot").innerHTML=`<div class="modal-backdrop"><div class="modal" style="width:min(640px,100%)" role="dialog" aria-modal="true">
+    <h3>${esc(chatName(u))} <span class="badge ${admin?"red":"blue"}">${roleLabel(u)}</span> ${u.banned?`<span class="badge red">Gesperrt</span>`:""}</h3>
+    <p class="muted small">${esc(u.email||"")}</p>${u.banned&&u.banReason?`<p class="form-error">Sperrgrund: ${esc(u.banReason)}</p>`:""}
+    <div class="ud-stats"><div><b>${fmt(u.balance)}</b><span class="muted small">Coins</span></div><div><b>${fmt(orders.length)}</b><span class="muted small">Bestellungen</span></div><div><b>${fmt(apps.length)}</b><span class="muted small">Apps</span></div><div><b>${mins} Min.</b><span class="muted small">heute aktiv</span></div></div>
+    <div class="ud-actions">
+      ${canCoin?`<button class="btn small primary" data-action="ud-coins" data-id="${id}">Coins ändern</button>`:""}
+      ${hasRight("usersBan")&&id!==state.user.uid?(u.banned?`<button class="btn small" data-action="ud-unban" data-id="${id}">Entsperren</button>`:`<button class="btn small danger" data-action="ud-ban" data-id="${id}">Sperren</button>`):""}
+      ${hasRight("usersEdit")?`<button class="btn small" data-action="ud-gift" data-id="${id}">App schenken</button>`:""}
+      ${hasRight("full")&&id!==state.user.uid&&!isFullUser(u)?`<button class="btn small" data-action="ud-role" data-id="${id}">${admin?"Admin-Rechte":"Zum Admin ernennen"}</button>`:""}
+    </div>
+    <div class="ud-box"><b>Installierte Apps</b><div class="muted small">${apps.length?apps.map(esc).join(", "):"Keine"}</div></div>
+    <div class="ud-box"><b>Letzte Bestellungen</b>${orders.slice(0,5).map(o=>`<div class="muted small">${esc(o.itemTitle)} · ${esc(STATUS[o.status]||o.status)} · ${fmtDate(o.timestamp)}</div>`).join("")||`<div class="muted small">Keine</div>`}</div>
+    <div class="ud-box"><b>Aktivität heute</b>${events.map(e=>`<div class="muted small">${esc(e.action)} · ${esc(e.detail||"")} · ${esc(new Date(e.at).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}))}</div>`).join("")||`<div class="muted small">Noch nichts protokolliert</div>`}</div>
+    <div class="modal-actions"><button class="btn primary" data-action="close-modal">Schließen</button></div></div></div>`;
+}
+function banDialog(id){
+  need("usersBan");const u=getUser(id);guardTarget(u);if(id===state.user.uid)throw new AppError("Du kannst dich nicht selbst sperren.");
+  showModal({title:`${chatName(u)} sperren`,text:"Der Nutzer sieht beim nächsten Öffnen nur noch die Sperrseite.",submitLabel:"Sperren",danger:true,fields:[{name:"reason",label:"Sperrgrund (optional)",placeholder:"z. B. Regelverstoß"}],onSubmit:async v=>{
+    await updateDoc(doc(db,"users",id),{banned:true,banReason:v.reason||"",bannedAt:serverTimestamp(),bannedBy:state.user.uid});
+    logAdmin("Benutzer gesperrt",v.reason?`Grund: ${v.reason}`:"",u);toast("Nutzer gesperrt.","success");}});
+}
+async function unban(id){
+  need("usersBan");const u=getUser(id);guardTarget(u);
+  if(!await confirmDialog({title:`${chatName(u)} entsperren?`,text:"Das Konto kann danach wieder normal genutzt werden.",confirmLabel:"Entsperren"}))return;
+  await updateDoc(doc(db,"users",id),{banned:false,banReason:""});logAdmin("Benutzer entsperrt","",u);toast("Nutzer entsperrt.","success");
+}
+function giftAppDialog(id){
+  need("usersEdit");const u=getUser(id);guardTarget(u);
+  const have=new Set((u.installedApps||[]).map(x=>typeof x==="string"?x:x?.appId)),opts=state.apps.filter(a=>!have.has(a.id));
+  if(!opts.length)throw new AppError("Dieser Nutzer hat bereits alle Apps.");
+  showModal({title:`App schenken: ${chatName(u)}`,submitLabel:"Schenken",fields:[{name:"app",label:"App",type:"select",value:opts[0].id,options:opts.map(a=>({value:a.id,label:a.title}))}],onSubmit:async v=>{
+    const a=state.apps.find(x=>x.id===v.app),ref=doc(db,"users",id),snap=await getDoc(ref);if(!a||!snap.exists())throw new AppError("App oder Nutzer nicht gefunden.");
+    const list=(Array.isArray(snap.data().installedApps)?snap.data().installedApps:[]).map(x=>typeof x==="string"?{appId:x}:x);
+    if(list.some(x=>x.appId===a.id))throw new AppError("App ist schon installiert.");
+    list.push({appId:a.id,installedAt:new Date(),storageMb:appStorageMb(a),gift:true});
+    await updateDoc(ref,{installedApps:list});logAdmin("App geschenkt",a.title,u);toast(`${a.title} wurde geschenkt.`,"success");}});
+}
+
+/* ---------- Coins ---------- */
+async function adminCoinOp(uid,delta,reason){
+  const n=Math.abs(delta);if(!n)throw new AppError("Bitte einen Betrag eingeben.");
+  reason=String(reason||"").trim();if(!reason)throw new AppError("Bitte einen Grund angeben (wird protokolliert).");
+  need(delta>0?"coinsGive":"coinsTake");
+  const full=isFull(),p=state.profile,opL=Number(p.coinLimitOp)||50,dayL=Number(p.coinLimitDay)||0;
+  if(!full){
+    if(uid===state.user.uid)throw new AppError("Du kannst dir selbst keine Coins geben oder abziehen.");
+    guardTarget(getUser(uid));
+    if(n>opL)throw new AppError(`Dein Limit: maximal ${fmt(opL)} Coins pro Vorgang.`);
+  }
+  const meRef=doc(db,"users",state.user.uid),tRef=doc(db,"users",uid),txRef=doc(collection(db,"users",uid,"transactions")),day=usageDateKey();
+  await runTransaction(db,async tx=>{
+    const [m,t]=await Promise.all([tx.get(meRef),tx.get(tRef)]);
+    if(!t.exists())throw new AppError("Nutzer nicht gefunden.");
+    const cd=m.data().adminCoinDay,used=cd?.date===day?Number(cd.total)||0:0;
+    if(!full&&dayL>0&&used+n>dayL)throw new AppError(`Tageslimit erreicht: ${fmt(used)} / ${fmt(dayL)} Coins heute.`);
+    const bal=Number(t.data().balance)||0;if(bal+delta<0)throw new AppError(`Das Guthaben kann nicht unter 0 fallen (aktuell ${fmt(bal)} Coins).`);
+    tx.update(tRef,{balance:bal+delta});
+    if(!full)tx.update(meRef,{adminCoinDay:{date:day,total:used+n}});
+    tx.set(txRef,{amount:delta,type:"admin",description:`${delta>0?"Gutschrift":"Abzug"} vom Admin: ${reason}`,timestamp:serverTimestamp()});
+  });
+  logAdmin(`${delta>0?"+":"−"}${fmt(n)} Coins`,`Grund: ${reason}`,state.allUsers.find(x=>x.id===uid));
+}
+function coinDialog(uid){
+  const give=hasRight("coinsGive"),take=hasRight("coinsTake");if(!give&&!take)throw new AppError("Dafür fehlt dir die Berechtigung.");
+  const full=isFull(),u=uid?getUser(uid):null;if(u)guardTarget(u);
+  const pool=state.allUsers.filter(x=>full||(x.id!==state.user.uid&&x.role!=="admin"));
+  if(!u&&!pool.length)throw new AppError("Keine Nutzer verfügbar.");
+  const lim=full?"":`Dein Limit: max. ${fmt(Number(state.profile.coinLimitOp)||50)} Coins pro Vorgang${Number(state.profile.coinLimitDay)?`, ${fmt(state.profile.coinLimitDay)} pro Tag`:""}.`;
+  showModal({title:u?`Coins: ${chatName(u)}`:"Coins vergeben / abziehen",text:(u?`Aktuell ${fmt(u.balance)} Coins. `:"")+lim,submitLabel:"Ausführen",fields:[
+    ...(u?[]:[{name:"uid",label:"Nutzer",type:"select",value:pool[0].id,options:pool.map(userOpt)}]),
+    {name:"mode",label:"Aktion",type:"select",value:give?"add":"sub",options:[...(give?[{value:"add",label:"Coins geben"}]:[]),...(take?[{value:"sub",label:"Coins abziehen"}]:[])]},
+    {name:"amount",label:"Anzahl",type:"number",min:1,value:10,required:true},
+    {name:"reason",label:"Grund (Pflicht, wird protokolliert)",required:true,placeholder:"z. B. Aufgabe erledigt"}
+  ],onSubmit:async v=>{const n=Math.floor(v.amount);if(!(n>0))throw new AppError("Bitte eine Anzahl größer als 0 eingeben.");
+    await adminCoinOp(u?u.id:v.uid,v.mode==="sub"?-n:n,v.reason);toast(`${v.mode==="sub"?"Abgezogen":"Vergeben"}: ${fmt(n)} Coins.`,"success");}});
+}
+async function bulkUsers(list,fn){for(let i=0;i<list.length;i+=200){const b=writeBatch(db);list.slice(i,i+200).forEach(u=>fn(b,u));await b.commit()}}
+function coinsAllDialog(){
+  need("full");
+  showModal({title:"Coins an alle geben",text:`Jeder der ${fmt(state.allUsers.length)} Nutzer erhält den Betrag.`,submitLabel:"An alle senden",fields:[{name:"amount",label:"Coins pro Nutzer",type:"number",min:1,value:20,required:true},{name:"reason",label:"Grund (Pflicht)",required:true,placeholder:"z. B. Event-Bonus"}],onSubmit:async v=>{
+    const n=Math.floor(v.amount);if(!(n>0))throw new AppError("Bitte einen Betrag eingeben.");if(!v.reason)throw new AppError("Bitte einen Grund angeben.");
+    await bulkUsers(state.allUsers,(b,u)=>{b.update(doc(db,"users",u.id),{balance:increment(n)});b.set(doc(collection(db,"users",u.id,"transactions")),{amount:n,type:"admin",description:`Gutschrift für alle: ${v.reason}`,timestamp:serverTimestamp()})});
+    logAdmin(`+${fmt(n)} Coins an alle`,`${state.allUsers.length} Nutzer · Grund: ${v.reason}`);toast(`${fmt(n)} Coins an alle gesendet.`,"success");}});
+}
+function coinsResetDialog(){
+  need("full");
+  showModal({title:"⚠️ Alle Coins entfernen",text:"Kontostände aller Benutzer wirklich auf 0 setzen? Das kann nicht rückgängig gemacht werden. Tippe zur Bestätigung NULL.",submitLabel:"Alle Coins entfernen",danger:true,fields:[{name:"c",label:"Bestätigung (NULL)",required:true},{name:"reason",label:"Grund (Pflicht)",required:true}],onSubmit:async v=>{
+    if(String(v.c).toUpperCase()!=="NULL")throw new AppError("Bitte NULL eintippen.");
+    const list=state.allUsers.filter(u=>(Number(u.balance)||0)>0);
+    await bulkUsers(list,(b,u)=>{b.update(doc(db,"users",u.id),{balance:0});b.set(doc(collection(db,"users",u.id,"transactions")),{amount:-(Number(u.balance)||0),type:"admin",description:`Alle Coins entfernt: ${v.reason}`,timestamp:serverTimestamp()})});
+    logAdmin("ALLE COINS ENTFERNT",`${list.length} Konten auf 0 · Grund: ${v.reason}`);toast("Alle Kontostände wurden auf 0 gesetzt.","success");}});
+}
+function adminCoinCenter(){
+  const full=isFull(),p=state.profile||{},day=usageDateKey(),opL=Number(p.coinLimitOp)||50,dayL=Number(p.coinLimitDay)||0,used=p.adminCoinDay?.date===day?Number(p.adminCoinDay.total)||0:0;
+  const total=state.allUsers.reduce((n,u)=>n+(Number(u.balance)||0),0);
+  const recent=hasRight("logView")?state.adminLog.filter(x=>/Coins/i.test(x.action)).slice(0,8):[];
+  return `<section class="panel"><h3>${icon("coin",18)} Coin-Zentrale</h3><p class="muted">${full?"Volladmin: kein Limit.":`Dein Limit: max. ${fmt(opL)} Coins pro Vorgang${dayL?` · heute ${fmt(used)} / ${fmt(dayL)} genutzt`:""}.`} Insgesamt im Umlauf: <b>${fmt(total)}</b> Coins.</p>
+  <div class="toolbar"><button class="btn primary" data-action="coin-dialog">Coins geben / abziehen</button>${full?`<button class="btn" data-action="coins-all">Coins an alle geben</button><button class="btn danger" data-action="coins-reset">Alle Coins entfernen</button>`:""}</div></section>
+  ${recent.length?`<section class="panel" style="margin-top:14px"><h3>Letzte Coin-Aktionen</h3>${recent.map(x=>`<div class="row"><div class="grow"><b>${esc(x.adminName)}${x.targetName?` → ${esc(x.targetName)}`:""}: ${esc(x.action)}</b><span class="muted small">${fmtDate(x.ts)} · ${esc(x.detail||"")}</span></div></div>`).join("")}</section>`:""}`;
+}
+
+/* ---------- Bestellungen ---------- */
+const visibleOrders=()=>state.allOrders.filter(o=>state.orderFilter==="alle"||ost(o)===state.orderFilter);
+function adminOrders2(){
+  const f=state.orderFilter,list=visibleOrders(),edit=hasRight("ordersEdit"),del=hasRight("ordersDelete"),n=orderSel.size;
+  const chips=[["alle","Alle"],...Object.entries(STATUS)].map(([k,v])=>`<button class="chip ${f===k?"active":""}" data-action="order-filter" data-status="${k}">${v}</button>`).join("");
+  return `<div class="toolbar"><div class="chips">${chips}</div></div>
+  <div class="toolbar"><button class="btn small" data-action="order-select-all">Alle sichtbaren auswählen</button>${n?`<button class="btn small" data-action="order-select-none">Auswahl aufheben (${n})</button>`:""}${edit&&n?`<button class="btn small primary" data-action="order-bulk-status">Status ändern (${n})</button>`:""}${del&&n?`<button class="btn small danger" data-action="order-bulk-del">Auswahl löschen (${n})</button>`:""}${del&&state.allOrders.length?`<button class="btn small danger" data-action="order-del-all">Alle Aufträge löschen</button>`:""}</div>`+
+  (list.length?list.map(o=>{const u=state.allUsers.find(x=>x.id===o.userId);return `<div class="row"><input type="checkbox" class="sel" data-osel="${o.id}" ${orderSel.has(o.id)?"checked":""} aria-label="Auswählen"><div class="grow"><b>${esc(o.itemTitle)}</b><span class="muted small">${esc(u?chatName(u):o.userId)}, ${fmtDate(o.timestamp)}</span></div><span class="price">${COIN}${fmt(o.price)}</span>${edit?`<select data-change="order-status2" data-id="${o.id}" aria-label="Status">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${ost(o)===k?"selected":""}>${v}</option>`).join("")}</select>`:`<span class="badge st-${esc(ost(o))}">${esc(STATUS[o.status]||o.status)}</span>`}</div>`}).join(""):`<div class="empty">${icon("list",36)}Keine Bestellungen in dieser Ansicht.</div>`);
+}
+async function setOrderStatus(ids,status){
+  need("ordersEdit");if(!STATUS[status])throw new AppError("Unbekannter Status.");
+  const list=state.allOrders.filter(o=>ids.includes(o.id)&&ost(o)!==status);if(!list.length)return;
+  for(let i=0;i<list.length;i+=200){const b=writeBatch(db);list.slice(i,i+200).forEach(o=>{b.update(doc(db,"orders",o.id),{status});if(status==="geliefert")b.set(doc(collection(db,"chats","official","messages")),{senderId:"system",senderName:"CoinOS",type:"system",text:`📦 Deine Bestellung „${o.itemTitle||"Bestellung"}“ ist angekommen!`,userId:o.userId,orderId:o.id,timestamp:serverTimestamp()})});await b.commit()}
+  logAdmin("Bestellstatus geändert",`${list.length} Auftrag/Aufträge → ${STATUS[status]}${list.length===1?`: ${list[0].itemTitle}`:""}`);
+}
+async function deleteOrders(ids,all){
+  need("ordersDelete");const list=state.allOrders.filter(o=>ids.includes(o.id));if(!list.length)return;
+  if(!await confirmDialog({title:all?"ALLE Aufträge löschen?":`${list.length} Auftrag/Aufträge löschen?`,text:all?`Alle ${list.length} Bestellungen werden endgültig gelöscht.`:"Die ausgewählten Bestellungen werden endgültig gelöscht.",confirmLabel:"Endgültig löschen",danger:true}))return;
+  for(let i=0;i<list.length;i+=400){const b=writeBatch(db);list.slice(i,i+400).forEach(o=>b.delete(doc(db,"orders",o.id)));await b.commit()}
+  orderSel.clear();logAdmin(all?"ALLE Aufträge gelöscht":"Aufträge gelöscht",`${list.length} Stück`);toast("Aufträge gelöscht.","success");
+}
+document.addEventListener("change",async e=>{
+  const cb=e.target.closest?.("[data-osel]");
+  if(cb){cb.checked?orderSel.add(cb.dataset.osel):orderSel.delete(cb.dataset.osel);updateAdmin2();return}
+  const el=e.target.closest?.('[data-change="order-status2"]');if(!el)return;
+  try{await setOrderStatus([el.dataset.id],el.value);toast("Status aktualisiert.","success")}catch(err){toast(errMsg(err),"error");updateAdmin2()}
+});
+
+/* ---------- Gutscheine ---------- */
+function adminVouchers(){
+  return `<div class="toolbar"><button class="btn primary" data-action="voucher-new">${icon("plus",18)}Gutschein erstellen</button></div>`+
+  (state.vouchers.length?state.vouchers.map(v=>`<div class="row"><div class="grow"><b style="letter-spacing:.08em">${esc(v.code)}</b><span class="muted small">${fmt(v.coins)} Coins · ${fmt(v.used||0)} / ${v.maxUses>0?fmt(v.maxUses):"∞"} eingelöst${v.note?` · ${esc(v.note)}`:""}</span></div><span class="badge ${v.active===false?"":"st-geliefert"}">${v.active===false?"Inaktiv":"Aktiv"}</span><button class="btn small" data-action="voucher-toggle" data-id="${esc(v.id)}">${v.active===false?"Aktivieren":"Deaktivieren"}</button><button class="btn small" data-action="voucher-del" data-id="${esc(v.id)}">${icon("trash",16)}</button></div>`).join(""):`<div class="empty">${icon("gift",36)}Noch keine Gutscheincodes.</div>`);
+}
+function voucherDialog(){
+  need("vouchers");
+  showModal({title:"Gutschein erstellen",text:isFull()?"":`Als Admin gilt: Coins × Einlösungen darf dein Limit pro Vorgang (${fmt(Number(state.profile.coinLimitOp)||50)}) nicht überschreiten.`,submitLabel:"Erstellen",fields:[{name:"code",label:"Code (leer = automatisch)",placeholder:"z. B. WILLKOMMEN"},{name:"coins",label:"Coins pro Einlösung",type:"number",min:1,value:10,required:true},{name:"maxUses",label:"Max. Einlösungen (0 = unbegrenzt)",type:"number",min:0,value:1},{name:"note",label:"Notiz (optional)"}],onSubmit:async v=>{
+    let code=String(v.code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(!code)code=genCode();if(code.length<4||code.length>20)throw new AppError("Der Code braucht 4 bis 20 Buchstaben/Zahlen.");
+    const coins=Math.floor(v.coins),max=Math.max(0,Math.floor(v.maxUses)||0);if(!(coins>=1))throw new AppError("Bitte mindestens 1 Coin eingeben.");
+    if(!isFull()){const lim=Number(state.profile.coinLimitOp)||50;if(max<1||coins*max>lim)throw new AppError(`Mit deinem Limit (${fmt(lim)} Coins) muss Coins × Einlösungen ≤ ${fmt(lim)} sein (Einlösungen mind. 1).`)}
+    const ref=doc(db,"vouchers",code);if((await getDoc(ref)).exists())throw new AppError("Diesen Code gibt es schon.");
+    await setDoc(ref,{code,coins,maxUses:max,used:0,usedBy:[],active:true,note:v.note||"",createdBy:state.user.uid,createdAt:serverTimestamp()});
+    logAdmin("Gutschein erstellt",`${code} · ${fmt(coins)} Coins · ${max||"∞"} Einlösungen`);toast(`Gutschein ${code} erstellt.`,"success");}});
+}
+function voucherRedeemDialog(){
+  showModal({title:"Gutschein einlösen",submitLabel:"Einlösen",fields:[{name:"code",label:"Code",required:true,placeholder:"z. B. WILLKOMMEN"}],onSubmit:async v=>{
+    const code=String(v.code||"").toUpperCase().replace(/[^A-Z0-9]/g,""),me=state.user.uid,vRef=doc(db,"vouchers",code),mRef=doc(db,"users",me),txRef=doc(collection(db,"users",me,"transactions"));
+    if(!code)throw new AppError("Bitte einen Code eingeben.");let coins=0;
+    await runTransaction(db,async tx=>{
+      const [s,m]=await Promise.all([tx.get(vRef),tx.get(mRef)]);
+      if(!s.exists()||s.data().active===false)throw new AppError("Dieser Code ist ungültig oder nicht aktiv.");
+      const d=s.data(),by=Array.isArray(d.usedBy)?d.usedBy:[];
+      if(by.includes(me))throw new AppError("Du hast diesen Code schon eingelöst.");
+      if(d.maxUses>0&&(d.used||0)>=d.maxUses)throw new AppError("Dieser Code wurde schon zu oft eingelöst.");
+      coins=Math.floor(Number(d.coins)||0);if(coins<1)throw new AppError("Dieser Code ist ungültig.");
+      tx.update(vRef,{used:(d.used||0)+1,usedBy:[...by,me]});
+      tx.update(mRef,{balance:(Number(m.data().balance)||0)+coins});
+      tx.set(txRef,{amount:coins,type:"voucher",description:`Gutschein eingelöst: ${code}`,timestamp:serverTimestamp()});
+    });
+    toast(`Gutschein eingelöst: +${fmt(coins)} Coins!`,"success");}});
+}
+const _rewardsMount=APPS.rewards.mount;
+APPS.rewards.mount=el=>{_rewardsMount(el);el.insertAdjacentHTML("beforeend",`<section class="panel" style="margin-top:16px"><h3>🎟️ Gutschein einlösen</h3><p class="muted small">Hast du einen Gutscheincode bekommen? Hier einlösen.</p><button class="btn primary" data-action="voucher-redeem">Code eingeben</button></section>`)};
+
+/* ---------- Protokoll-Ansicht ---------- */
+function adminLogView(){
+  const l=state.adminLog,full=isFull();
+  return `<div class="toolbar"><span class="muted">Letzte ${fmt(l.length)} Einträge. ${full?"Nur der Volladmin kann Einträge löschen.":"Einträge können von Admins nicht gelöscht werden."}</span></div>`+
+  (l.length?l.map(x=>`<div class="row"><div class="grow"><b>${esc(x.adminName||"Admin")}${x.targetName?` → ${esc(x.targetName)}`:""}: ${esc(x.action)}</b><span class="muted small">${fmtDate(x.ts)}${x.detail?` · ${esc(x.detail)}`:""}</span></div>${full?`<button class="btn small" data-action="log-del" data-id="${esc(x.id)}" aria-label="Löschen">${icon("trash",16)}</button>`:""}</div>`).join(""):`<div class="empty">${icon("receipt",36)}Noch keine Einträge.</div>`);
+}
+
+/* ---------- Wartungsmodus ---------- */
+function adminMaint(){
+  const m=mine.maint||{};
+  return `<section class="panel"><h3>🛠️ Wartungsmodus</h3><p class="muted">Im Wartungsmodus sehen normale Nutzer nur eine Sperrseite. Admins können weiterarbeiten.</p><div class="row"><div class="grow"><b>Status: ${m.on?"AN":"AUS"}</b><span class="muted small">${esc(m.message||"Keine Nachricht hinterlegt.")}</span></div><button class="btn ${m.on?"":"danger"}" data-action="maint-toggle">${m.on?"Ausschalten":"Einschalten"}</button><button class="btn small" data-action="maint-msg">Nachricht</button></div></section>`;
+}
+async function setMaint(patch,logText){
+  need("maintenance");const cur=mine.maint||{};
+  await setDoc(doc(db,"system","config"),{maintenance:{on:!!cur.on,message:cur.message||"",...patch,by:state.user.uid,at:serverTimestamp()}},{merge:true});logAdmin(logText,patch.message||"");
+}
+
+/* ---------- Admins verwalten (nur Volladmin) ---------- */
+function adminAdmins(){
+  const admins=state.allUsers.filter(u=>u.role==="admin");
+  return `<div class="toolbar"><button class="btn primary" data-action="admin-new">${icon("plus",18)}Admin ernennen</button></div>`+admins.map(u=>{
+    const f=isFullUser(u),r=u.adminRights||{},cnt=RIGHTS.filter(([k])=>r[k]).length;
+    return `<div class="row"><span class="avatar">${esc(chatName(u).charAt(0).toUpperCase())}</span><div class="grow"><b>${esc(chatName(u))}</b><span class="muted small">${esc(u.email||"")} · ${f?"alle Rechte, kein Limit":`${cnt}/${RIGHTS.length} Rechte · max. ${fmt(Number(u.coinLimitOp)||50)}/Vorgang${Number(u.coinLimitDay)?` · ${fmt(u.coinLimitDay)}/Tag`:""}`}</span></div><span class="badge ${f?"red":"blue"}">${f?"Volladmin":"Admin"}</span>${f?"":`<button class="btn small" data-action="admin-edit" data-id="${u.id}">Rechte</button><button class="btn small danger" data-action="admin-remove" data-id="${u.id}">Entfernen</button>`}</div>`}).join("");
+}
+function adminRightsDialog(uid){
+  need("full");const u=uid?getUser(uid):null;
+  if(u&&(isFullUser(u)||u.id===state.user.uid))throw new AppError("Dieses Konto kann hier nicht geändert werden.");
+  const cands=state.allUsers.filter(x=>x.id!==state.user.uid&&x.role!=="admin");
+  if(!u&&!cands.length)throw new AppError("Keine Nutzer zum Ernennen vorhanden.");
+  const cur=u?.adminRights||{},isAdm=u?.role==="admin";
+  showModal({title:u?(isAdm?`Rechte: ${chatName(u)}`:`Zum Admin ernennen: ${chatName(u)}`):"Admin ernennen",submitLabel:"Speichern",fields:[
+    ...(u?[]:[{name:"uid",label:"Nutzer",type:"select",value:cands[0].id,options:cands.map(userOpt)}]),
+    ...RIGHTS.map(([k,l])=>({name:k,label:l,type:"checkbox",value:cur[k]===true})),
+    {name:"coinLimitOp",label:"Coin-Limit pro Vorgang",type:"number",min:1,value:Number(u?.coinLimitOp)||50},
+    {name:"coinLimitDay",label:"Coin-Limit pro Tag (0 = kein Tageslimit)",type:"number",min:0,value:Number(u?.coinLimitDay)||0}
+  ],onSubmit:async v=>{
+    const tid=u?u.id:v.uid,t=getUser(tid);if(isFullUser(t)||tid===state.user.uid)throw new AppError("Dieses Konto kann nicht geändert werden.");
+    const rights={};RIGHTS.forEach(([k])=>rights[k]=!!v[k]);
+    await updateDoc(doc(db,"users",tid),{role:"admin",fullAdmin:false,adminRights:rights,coinLimitOp:Math.max(1,Math.floor(v.coinLimitOp)||50),coinLimitDay:Math.max(0,Math.floor(v.coinLimitDay)||0)});
+    logAdmin(t.role==="admin"?"Admin-Rechte geändert":"Admin ernannt",`${Object.values(rights).filter(Boolean).length} Rechte`,t);toast("Admin-Rechte gespeichert.","success");}});
+}
+async function adminRemove(id){
+  need("full");const u=getUser(id);if(isFullUser(u))throw new AppError("Ein Volladmin kann hier nicht entfernt werden.");
+  if(!await confirmDialog({title:`${chatName(u)} als Admin entfernen?`,text:"Alle Adminrechte werden entzogen. Das Konto bleibt als normaler Nutzer bestehen.",confirmLabel:"Entfernen",danger:true}))return;
+  await updateDoc(doc(db,"users",id),{role:"user",fullAdmin:false,adminRights:null});logAdmin("Adminrechte entfernt","",u);toast("Adminrechte entfernt.","success");
+}
+
+/* ---------- Rechteprüfung & Protokollierung für bestehende Aktionen ---------- */
+const titleOf=list=>id=>list().find(x=>x.id===id)?.title;
+const GUARDS={
+  "item-new":["shopManage","Artikel angelegt"],"item-edit":["shopManage","Artikel bearbeitet",titleOf(()=>state.items)],"item-del":["shopManage","Artikel gelöscht",titleOf(()=>state.items)],
+  "seed":["shopManage","Beispiel-Artikel angelegt",null,true],
+  "app-new":["appsManage","App angelegt"],"app-edit":["appsManage","App bearbeitet",titleOf(()=>state.apps)],"app-del":["appsManage","App gelöscht",titleOf(()=>state.apps)],"app-import":["appsManage",null],
+  "system-app-edit":["appsManage","Standard-App bearbeitet",id=>APPS[id]?.title],"system-app-del":["appsManage","Standard-App gelöscht",id=>APPS[id]?.title],
+  "design-new":["appsManage","Design veröffentlicht"],"design-edit":["appsManage","Design bearbeitet",titleOf(()=>state.designs)],"design-del":["appsManage","Design gelöscht",titleOf(()=>state.designs)],
+  "storage-config-save":["full","Grundspeicher geändert"],"storage-plan-new":["full","Speichervertrag angelegt"],"storage-plan-edit":["full","Speichervertrag bearbeitet"],"storage-plan-del":["full","Speichervertrag gelöscht"],
+  "official-message":["messages","Systemmeldung gesendet"],"user-new":["usersEdit","Nutzer angelegt"]
+};
+for(const [k,[right,text,dfn,direct]] of Object.entries(GUARDS)){
+  const f=actions[k];if(!f)continue;
+  actions[k]=async el=>{
+    need(right);pendingLog=text?{text,detail:dfn?(dfn(el.dataset.id)||""):""}:null;
+    try{await f(el)}finally{const p=pendingLog;pendingLog=null;if(p&&direct)logAdmin(p.text,p.detail)}
+  };
+}
+
+/* ---------- Neue Aktionen ---------- */
+Object.assign(actions,{
+  "user-details":el=>openUserDetail(el.dataset.id),
+  "coins":el=>coinDialog(el.dataset.id),
+  "coin-dialog":()=>coinDialog(),
+  "coins-all":coinsAllDialog,"coins-reset":coinsResetDialog,
+  "ud-coins":el=>{closeModal();coinDialog(el.dataset.id)},
+  "ud-ban":el=>{closeModal();banDialog(el.dataset.id)},
+  "ud-unban":el=>{closeModal();return unban(el.dataset.id)},
+  "ud-gift":el=>{closeModal();giftAppDialog(el.dataset.id)},
+  "ud-role":el=>{closeModal();adminRightsDialog(el.dataset.id)},
+  "admin-tab":el=>{state.adminTab=el.dataset.tab;updateAdmin2()},
+  "order-filter":el=>{state.orderFilter=el.dataset.status;updateAdmin2()},
+  "order-select-all":()=>{visibleOrders().forEach(o=>orderSel.add(o.id));updateAdmin2()},
+  "order-select-none":()=>{orderSel.clear();updateAdmin2()},
+  "order-bulk-status":()=>{need("ordersEdit");const ids=[...orderSel];showModal({title:`Status für ${ids.length} Auftrag/Aufträge`,submitLabel:"Status setzen",fields:[{name:"status",label:"Neuer Status",type:"select",value:"bearbeitung",options:Object.entries(STATUS).map(([k,v])=>({value:k,label:v}))}],onSubmit:async v=>{await setOrderStatus(ids,v.status);orderSel.clear();toast("Status aktualisiert.","success")}})},
+  "order-bulk-del":()=>deleteOrders([...orderSel],false),
+  "order-del-all":()=>deleteOrders(state.allOrders.map(o=>o.id),true),
+  "voucher-new":voucherDialog,"voucher-redeem":voucherRedeemDialog,
+  "voucher-toggle":async el=>{need("vouchers");const v=state.vouchers.find(x=>x.id===el.dataset.id);if(!v)return;await updateDoc(doc(db,"vouchers",v.id),{active:v.active===false});logAdmin(v.active===false?"Gutschein aktiviert":"Gutschein deaktiviert",v.code)},
+  "voucher-del":async el=>{need("vouchers");const v=state.vouchers.find(x=>x.id===el.dataset.id);if(!v)return;if(!await confirmDialog({title:`${v.code} löschen?`,text:"Der Gutschein kann danach nicht mehr eingelöst werden.",confirmLabel:"Löschen",danger:true}))return;await deleteDoc(doc(db,"vouchers",v.id));logAdmin("Gutschein gelöscht",v.code)},
+  "maint-toggle":async()=>{need("maintenance");const on=!mine.maint?.on;if(on&&!await confirmDialog({title:"Wartungsmodus einschalten?",text:"Normale Nutzer werden sofort ausgesperrt.",confirmLabel:"Einschalten",danger:true}))return;await setMaint({on},on?"Wartungsmodus eingeschaltet":"Wartungsmodus ausgeschaltet")},
+  "maint-msg":()=>{need("maintenance");showModal({title:"Wartungsnachricht",submitLabel:"Speichern",fields:[{name:"message",label:"Nachricht für Nutzer",value:mine.maint?.message||"",placeholder:"z. B. Wir sind gleich wieder da."}],onSubmit:async v=>{await setMaint({message:v.message},"Wartungsnachricht geändert")}})},
+  "admin-new":()=>adminRightsDialog(null),
+  "admin-edit":el=>adminRightsDialog(el.dataset.id),
+  "admin-remove":el=>adminRemove(el.dataset.id),
+  "log-del":async el=>{need("full","Nur der Volladmin darf Protokolleinträge löschen.");await deleteDoc(doc(db,"adminLog",el.dataset.id))}
+});
 /* ---------------- Start ---------------- */
 $$("[data-icon]").forEach(el => el.insertAdjacentHTML("afterbegin", icon(el.dataset.icon, 18)));
 if (!ALLOW_REGISTRATION) $("#registerTab").hidden = true;
