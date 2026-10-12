@@ -702,6 +702,8 @@ async function ensureProfile(user) {
   await setDoc(ref, {
     email: user.email,
     role: admin ? "admin" : "user",
+    adminLevel: admin ? "full" : null,
+    adminRights: [], adminCoinLimit: null, blocked: false, blockedReason: "",
     name: pendingName || user.displayName || (user.email || "").split("@")[0],
     balance: START_BALANCE,
     installedApps: [],
@@ -760,6 +762,10 @@ function startListeners(user) {
   unsubs.push(onSnapshot(doc(db, "users", uid), async snap => {
     if (!snap.exists()) return;
     state.profile = { id: snap.id, ...snap.data() };
+    if (state.profile.blocked) {
+      toast("Dieses CoinOS-Konto ist gesperrt." + (state.profile.blockedReason ? " Grund: " + state.profile.blockedReason : ""), "error");
+      await signOut(auth); return;
+    }
     if (isAdmin() && !adminSubs) startAdminListeners();
     if (!pinGateReady && !pinGateBusy) {
       pinGateBusy = true;
@@ -1977,6 +1983,110 @@ async function appDelete(id) {
     toast("Eintrag gelöscht.", "success");
   }
 }
+
+
+/* =========================================================
+   ADMIN 2.0 – Volladmin, Rechte, Limits, Sperren & Bulk-Aktionen
+   ========================================================= */
+const ADMIN_RIGHTS={
+  users:"Nutzer ansehen",userManage:"Nutzer bearbeiten / sperren",coins:"Coins ändern",
+  shop:"Shop & Artikel verwalten",orders:"Bestellungen verwalten",apps:"Apps verwalten",
+  system:"Standard-Apps & Speicher",designs:"Designs verwalten",chat:"Systemmeldungen",
+  feedback:"Feedback ansehen"
+};
+const FULL_ADMIN_RIGHTS=Object.keys(ADMIN_RIGHTS);
+const isFullAdmin=()=>isAdmin()&&(state.profile?.adminLevel==="full"||(state.profile?.email||"").toLowerCase()===ADMIN_EMAIL.toLowerCase());
+function adminRightsOf(p=state.profile){return isFullAdmin()?FULL_ADMIN_RIGHTS:(Array.isArray(p?.adminRights)?p.adminRights:[]);}
+function canAdmin(right){return isFullAdmin()||adminRightsOf().includes(right);}
+function needAdmin(right){if(!isAdmin()||!canAdmin(right))throw new AppError("Dafür hast du keine Admin-Berechtigung.");}
+function adminLimit(){if(isFullAdmin())return Infinity;const n=Number(state.profile?.adminCoinLimit);return Number.isFinite(n)&&n>=0?n:0;}
+async function adminAudit(action,detail="",targetId=""){
+  if(!state.user)return;
+  try{await addDoc(collection(db,"adminLogs"),{adminId:state.user.uid,adminName:state.profile?.name||state.profile?.email||"Admin",action,detail,targetId,timestamp:serverTimestamp()});}catch(e){console.debug("Admin-Log:",e)}
+}
+function adminRoleLabel(u){if(u.role!=="admin")return "Nutzer";return u.adminLevel==="full"||String(u.email||"").toLowerCase()===ADMIN_EMAIL.toLowerCase()?"Volladmin":"Admin";}
+async function toggleUserBlock(uid){
+  needAdmin("userManage");const u=state.allUsers.find(x=>x.id===uid);if(!u)throw new AppError("Nutzer nicht gefunden.");
+  if(uid===state.user.uid)throw new AppError("Du kannst dein eigenes Konto nicht sperren.");
+  if((u.adminLevel==="full"||String(u.email||"").toLowerCase()===ADMIN_EMAIL.toLowerCase())&&!isFullAdmin())throw new AppError("Nur der Volladmin kann einen Volladmin bearbeiten.");
+  const next=!u.blocked;
+  let reason="";
+  if(next){
+    reason=prompt("Sperrgrund (optional):","")||"";
+    if(!await confirmDialog({title:`${u.name||u.email} sperren?`,text:"Der Account wird in CoinOS gesperrt.",confirmLabel:"Sperren",danger:true}))return;
+  }else if(!await confirmDialog({title:`${u.name||u.email} entsperren?`,text:"Der Account kann CoinOS danach wieder benutzen.",confirmLabel:"Entsperren"}))return;
+  await updateDoc(doc(db,"users",uid),{blocked:next,blockedReason:next?reason:"",blockedAt:next?serverTimestamp():null});
+  await adminAudit(next?"Nutzer gesperrt":"Nutzer entsperrt",reason,uid);toast(next?"Nutzer gesperrt.":"Nutzer entsperrt.","success");
+}
+function adminPermissionsDialog(uid){
+  if(!isFullAdmin())throw new AppError("Nur der Volladmin darf Adminrechte verwalten.");
+  const u=state.allUsers.find(x=>x.id===uid);if(!u)throw new AppError("Nutzer nicht gefunden.");
+  if(String(u.email||"").toLowerCase()===ADMIN_EMAIL.toLowerCase())throw new AppError("Der Haupt-Volladmin kann hier nicht eingeschränkt werden.");
+  const rights=Array.isArray(u.adminRights)?u.adminRights:[];
+  showModal({title:`Rechte: ${u.name||u.email}`,text:"Volladmin = alle Rechte ohne Coin-Limit. Admin = nur die unten erlaubten Bereiche.",submitLabel:"Rechte speichern",fields:[
+    {name:"role",label:"Rolle",type:"select",value:u.role==="admin"?(u.adminLevel==="full"?"full":"limited"):"user",options:[{value:"user",label:"Nutzer"},{value:"limited",label:"Admin mit eigenen Rechten"},{value:"full",label:"Volladmin"}]},
+    ...Object.entries(ADMIN_RIGHTS).map(([k,label])=>({name:"r_"+k,label,type:"checkbox",value:rights.includes(k)})),
+    {name:"coinLimit",label:"Max. Coins pro Änderung",type:"number",min:0,value:Number(u.adminCoinLimit)||100}
+  ],onSubmit:async v=>{
+    const role=v.role==="user"?"user":"admin",level=v.role==="full"?"full":v.role==="limited"?"limited":null;
+    const nextRights=Object.keys(ADMIN_RIGHTS).filter(k=>v["r_"+k]);
+    await updateDoc(doc(db,"users",uid),{role,adminLevel:level,adminRights:role==="admin"&&level==="limited"?nextRights:[],adminCoinLimit:role==="admin"&&level==="limited"?Math.max(0,Math.floor(v.coinLimit||0)):null});
+    await adminAudit("Adminrechte geändert",`Rolle: ${v.role}; Rechte: ${nextRights.join(", ")}; Coin-Limit: ${v.coinLimit}`,uid);
+    toast("Adminrechte gespeichert.","success");
+  }});
+}
+async function clearAllCoins(){
+  if(!isFullAdmin())throw new AppError("Nur der Volladmin darf alle Coins entfernen.");
+  if(!await confirmDialog({title:"ALLE Coins entfernen?",text:"Die Kontostände aller Nutzer werden auf 0 gesetzt. Diese Aktion betrifft auch Admins.",confirmLabel:"Alle Kontostände auf 0",danger:true}))return;
+  const batch=writeBatch(db);
+  for(const u of state.allUsers){batch.update(doc(db,"users",u.id),{balance:0});batch.set(doc(collection(db,"users",u.id,"transactions")),{amount:-Math.max(0,Number(u.balance)||0),type:"admin_reset",description:"Kontostand durch Volladmin auf 0 gesetzt",timestamp:serverTimestamp()});}
+  await batch.commit();await adminAudit("Alle Coins entfernt",`${state.allUsers.length} Konten auf 0 gesetzt`);toast("Alle Kontostände wurden auf 0 gesetzt.","success");
+}
+async function clearAllOrders(){
+  needAdmin("orders");if(!state.allOrders.length)return toast("Es gibt keine Bestellungen.","info");
+  if(!await confirmDialog({title:"Alle Shop-Aufträge löschen?",text:`${state.allOrders.length} Bestellungen werden endgültig gelöscht.`,confirmLabel:"Alle Aufträge löschen",danger:true}))return;
+  const batch=writeBatch(db);state.allOrders.forEach(o=>batch.delete(doc(db,"orders",o.id)));await batch.commit();await adminAudit("Alle Shop-Aufträge gelöscht",`${state.allOrders.length} Aufträge`);toast("Alle Shop-Aufträge gelöscht.","success");
+}
+async function deleteOrder(id){needAdmin("orders");const o=state.allOrders.find(x=>x.id===id);if(!o)return;if(!await confirmDialog({title:"Auftrag löschen?",text:o.itemTitle||"Bestellung",confirmLabel:"Löschen",danger:true}))return;await deleteDoc(doc(db,"orders",id));await adminAudit("Shop-Auftrag gelöscht",o.itemTitle||"",id);toast("Auftrag gelöscht.","success");}
+function adminAdmins(){
+  if(!isFullAdmin())return '<div class="empty">Nur der Volladmin kann Adminrechte verwalten.</div>';
+  return `<section class="panel"><h3>👑 Admins & Rechte</h3><p class="muted">Lege pro Admin genau fest, was erlaubt ist und wie viele Coins pro Vorgang vergeben oder abgezogen werden dürfen.</p>${state.allUsers.map(u=>`<div class="row"><span class="avatar">${esc((u.name||u.email||"?")[0].toUpperCase())}</span><div class="grow"><b>${esc(u.name||u.email)}</b><span class="muted small">${esc(u.email||"")} · ${esc(adminRoleLabel(u))}${u.role==="admin"&&u.adminLevel!=="full"?` · Limit ${fmt(Number(u.adminCoinLimit)||0)} Coins`:""}</span></div><button class="btn small" data-action="admin-rights" data-id="${u.id}">Rechte</button></div>`).join("")}</section>`;
+}
+function adminDanger(){
+  if(!isFullAdmin())return '<div class="empty">Dieser Bereich ist nur für den Volladmin.</div>';
+  return `<section class="panel"><h3>⚠️ Gefahrenbereich</h3><p class="muted">Globale Aktionen sind absichtlich nur für den Volladmin verfügbar.</p><div class="toolbar"><button class="btn danger" data-action="clear-all-coins">Alle Coins entfernen</button><button class="btn danger" data-action="clear-all-orders">Alle Shop-Aufträge löschen</button></div></section>`;
+}
+const _mountAdmin=mountAdmin;
+mountAdmin=function(el){_mountAdmin(el);};
+const _updateAdmin=updateAdmin;
+updateAdmin=function(){
+  if(!isAdmin())return;
+  const defs=[["users","Nutzer","users"],["items","Artikel","shop"],["apps","Apps","apps"],["systemapps","Standard-Apps","system"],["storage","Speicher","system"],["designs","Designs","designs"],["orders","Bestellungen","orders"],["chat","Chat","chat"],["feedback","Feedback","feedback"],["admins","Admins & Rechte","full"],["danger","Gefahrenbereich","full"]];
+  const allowed=defs.filter(x=>x[2]==="full"?isFullAdmin():canAdmin(x[2]));
+  if(!allowed.some(x=>x[0]===state.adminTab))state.adminTab=allowed[0]?.[0]||"users";
+  $("#adminTabs").innerHTML=allowed.map(([id,label])=>`<button class="chip ${state.adminTab===id?"active":""}" data-action="admin-tab" data-tab="${id}">${esc(label)}</button>`).join("");
+  const views={users:adminUsers,items:adminItems,apps:adminApps,systemapps:adminSystemApps,storage:adminStorage,designs:adminDesigns,orders:adminOrders,chat:adminChatSettings,feedback:adminFeedback,admins:adminAdmins,danger:adminDanger};
+  $("#adminContent").innerHTML=views[state.adminTab]?views[state.adminTab]():"";
+};
+const _adminUsers=adminUsers;
+adminUsers=function(){
+  needAdmin("users");const day=usageDateKey(),totalToday=state.allUsers.reduce((n,u)=>n+(u.usage?.date===day?Number(u.usage?.totalSeconds)||0:0),0);
+  return `<div class="toolbar"><span class="muted">Heute zusammen: <b>${Math.round(totalToday/60)} Min.</b></span>${canAdmin("userManage")?'<button class="btn primary" data-action="user-new">＋ Nutzer anlegen</button>':""}</div>${state.allUsers.map(u=>{const mins=u.usage?.date===day?Math.round((Number(u.usage?.totalSeconds)||0)/60):0;return `<div class="row"><span class="avatar">${esc((u.name||u.email||"?")[0].toUpperCase())}</span><div class="grow"><b>${esc(u.name||"Ohne Namen")} ${u.blocked?'<span class="badge red">Gesperrt</span>':""}</b><span class="muted small">${esc(u.email||"")} · heute ${mins} Min. · ${esc(adminRoleLabel(u))}</span></div><span class="pill">${COIN}${fmt(u.balance)}</span><button class="btn small" data-action="user-details" data-id="${u.id}">Aktivität</button>${canAdmin("coins")?`<button class="btn small" data-action="coins" data-id="${u.id}">Coins</button>`:""}${canAdmin("userManage")&&u.id!==state.user.uid?`<button class="btn small ${u.blocked?"":"danger"}" data-action="user-block" data-id="${u.id}">${u.blocked?"Entsperren":"Sperren"}</button>`:""}${isFullAdmin()?`<button class="btn small" data-action="admin-rights" data-id="${u.id}">Rechte</button>`:""}</div>`}).join("")||'<div class="empty">Noch keine Nutzer.</div>'}`;
+};
+const _adminOrders=adminOrders;
+adminOrders=function(){
+  needAdmin("orders");const f=state.orderFilter,list=state.allOrders.filter(o=>f==="alle"||o.status===f),chips=[["alle","Alle"],...Object.entries(STATUS)].map(([k,v])=>`<button class="chip ${f===k?"active":""}" data-action="order-filter" data-status="${k}">${v}</button>`).join("");
+  return `<div class="toolbar"><div class="chips">${chips}</div><div class="grow"></div>${isFullAdmin()?'<button class="btn danger small" data-action="clear-all-orders">Alle Aufträge löschen</button>':""}</div>${list.map(o=>{const u=state.allUsers.find(x=>x.id===o.userId);return `<div class="row"><div class="grow"><b>${esc(o.itemTitle||"Bestellung")}</b><span class="muted small">${esc(u?.name||u?.email||o.userId)}, ${fmtDate(o.timestamp)}</span></div><span class="price">${COIN}${fmt(o.price)}</span><select data-change="order-status" data-id="${o.id}">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?"selected":""}>${v}</option>`).join("")}</select><button class="btn small danger" data-action="order-del" data-id="${o.id}">${icon("trash",16)}</button></div>`}).join("")||'<div class="empty">Keine Bestellungen in dieser Ansicht.</div>'}`;
+};
+const _coinsDialog=coinsDialog;
+coinsDialog=function(uid){
+  needAdmin("coins");const u=state.allUsers.find(x=>x.id===uid);if(!u)throw new AppError("Nutzer nicht gefunden.");const lim=adminLimit();
+  showModal({title:`Coins ändern: ${u.name||u.email}`,text:`Aktuell ${fmt(u.balance)} Coins.${Number.isFinite(lim)?` Dein Limit: ${fmt(lim)} Coins pro Vorgang.`:" Volladmin: kein Limit."}`,submitLabel:"Speichern",fields:[{name:"mode",label:"Aktion",type:"select",value:"add",options:[{value:"add",label:"Coins hinzufügen"},{value:"sub",label:"Coins abziehen"}]},{name:"amount",label:"Anzahl",type:"number",min:1,value:10,required:true},{name:"reason",label:"Grund",required:true,placeholder:"Warum werden Coins geändert?"}],onSubmit:async v=>{const n=Math.floor(v.amount);if(!(n>0))throw new AppError("Bitte eine Anzahl größer als 0 eingeben.");if(Number.isFinite(lim)&&n>lim)throw new AppError(`Dein Admin-Limit beträgt ${fmt(lim)} Coins pro Vorgang.`);await adjustCoins(uid,v.mode==="sub"?-n:n,v.reason);await adminAudit(v.mode==="sub"?"Coins abgezogen":"Coins vergeben",`${n} Coins · ${v.reason}`,uid);toast("Coins aktualisiert.","success");}});
+};
+Object.assign(actions,{
+  "user-block":el=>toggleUserBlock(el.dataset.id),"admin-rights":el=>adminPermissionsDialog(el.dataset.id),
+  "clear-all-coins":clearAllCoins,"clear-all-orders":clearAllOrders,"order-del":el=>deleteOrder(el.dataset.id)
+});
 
 /* =========================================================
    Modal & Toast
