@@ -2441,12 +2441,16 @@ showModal=function(o){
 /* ---------- Sperrseite (gesperrt / Wartung) ---------- */
 const gate=document.createElement("div");gate.className="gate";gate.hidden=true;document.body.appendChild(gate);
 function showGate(ic,title,text){gate.innerHTML=`<div class="gate-card"><div class="gate-ic">${ic}</div><h2>${esc(title)}</h2><p>${esc(text)}</p><button class="btn primary" data-action="logout">Abmelden</button></div>`;gate.hidden=false}
-const mine={unsubs:[],profile:null,maint:{},log:false,vou:false};
+const mine={unsubs:[],profile:null,maint:{},terms:{},log:false,vou:false};
 function pendingWarning(d){const w=d?.warning;return w&&w.active===true&&w.accepted!==true?w:null}
 function evalGate(){
   const d=mine.profile;if(!d){gate.hidden=true;return}
   if(d.banned===true)return showGate("🚫","Konto gesperrt",d.banReason?`Grund: ${d.banReason}`:"Dein CoinOS-Konto wurde gesperrt. Bitte wende dich an den Admin.");
   const w=pendingWarning(d);if(w){gate.innerHTML=`<div class="gate-card warning-card"><div class="gate-ic">⚠️</div><h2>Verwarnung</h2><p>Du hast eine Verwarnung von einem CoinOS-Admin erhalten. Du musst sie bestätigen, bevor du CoinOS weiter benutzen kannst.</p><div class="warning-text">${esc(w.text||"Verwarnung")}</div><div class="warning-meta">Ausgesprochen von ${esc(w.byName||"CoinOS Admin")}${w.createdAt?` · ${fmtDate(w.createdAt)}`:""}</div><button class="btn primary" data-action="warning-accept">Verwarnung akzeptieren</button><button class="btn" data-action="logout">Abmelden</button></div>`;gate.hidden=false;return}
+  const terms=mine.terms||{},termsVersion=Number(terms.version)||1;
+  if(d.requireTerms===true||Number(d.termsAcceptedVersion||0)<termsVersion){
+    gate.innerHTML=`<div class="gate-card warning-card"><div class="gate-ic">📜</div><h2>CoinOS-Bedingungen</h2><p>Bevor du CoinOS weiter benutzen kannst, musst du den aktuellen Bedingungen zustimmen.</p><div class="warning-text" style="max-height:38vh;overflow:auto">${esc(terms.text||"Bitte halte dich an die CoinOS-Regeln und nutze das System fair und respektvoll.").replace(/\n/g,"<br>")}</div><button class="btn primary" data-action="terms-accept">Bedingungen akzeptieren</button><button class="btn" data-action="logout">Abmelden</button></div>`;gate.hidden=false;return
+  }
   if(mine.maint?.on&&d.role!=="admin")return showGate("🛠️","Wartungsmodus",mine.maint.message||"CoinOS wird gerade gewartet. Bitte versuche es später noch einmal.");
   gate.hidden=true;setTimeout(checkRequiredOfficialMessage,0);
 }
@@ -2454,7 +2458,7 @@ onAuthStateChanged(auth,user=>{
   mine.unsubs.forEach(u=>{try{u()}catch{}});mine.unsubs=[];mine.profile=null;mine.log=false;mine.vou=false;state.adminLog=[];state.vouchers=[];orderSel.clear();evalGate();
   if(!user)return;
   const quiet=()=>{};
-  mine.unsubs.push(onSnapshot(doc(db,"system","config"),s=>{mine.maint=s.exists()?(s.data().maintenance||{}):{};evalGate();if(state.openApp==="admin")scheduleRender()},quiet));
+  mine.unsubs.push(onSnapshot(doc(db,"system","config"),s=>{mine.maint=s.exists()?(s.data().maintenance||{}):{};mine.terms=s.exists()?(s.data().terms||{}):{};evalGate();if(state.openApp==="admin")scheduleRender()},quiet));
   mine.unsubs.push(onSnapshot(doc(db,"users",user.uid),s=>{
     mine.profile=s.exists()?s.data():null;evalGate();
     const d=mine.profile;if(d?.role!=="admin")return;
@@ -2488,7 +2492,7 @@ function warningDialog(id){
 }
 async function acceptWarning(){
   if(!state.user||!pendingWarning(mine.profile))return;
-  await updateDoc(doc(db,"users",state.user.uid),{"warning.accepted":true,"warning.active":false,"warning.acceptedAt":serverTimestamp()});
+  await updateDoc(doc(db,"users",state.user.uid),{"warning.accepted":true,"warning.active":false,"warning.acceptedAt":serverTimestamp(),requireTerms:true});
   gate.hidden=true;toast("Verwarnung akzeptiert.","success");
 }
 Object.assign(actions,{"ud-warn":el=>warningDialog(el.dataset.id),"warning-accept":acceptWarning});
@@ -2560,7 +2564,7 @@ function banDialog(id){
 async function unban(id){
   need("usersBan");const u=getUser(id);guardTarget(u);
   if(!await confirmDialog({title:`${chatName(u)} entsperren?`,text:"Das Konto kann danach wieder normal genutzt werden.",confirmLabel:"Entsperren"}))return;
-  await updateDoc(doc(db,"users",id),{banned:false,banReason:""});logAdmin("Benutzer entsperrt","",u);toast("Nutzer entsperrt.","success");
+  await updateDoc(doc(db,"users",id),{banned:false,banReason:"",requireTerms:true});logAdmin("Benutzer entsperrt","",u);toast("Nutzer entsperrt.","success");
 }
 function giftAppDialog(id){
   need("usersEdit");const u=getUser(id);guardTarget(u);
@@ -2710,12 +2714,23 @@ function adminLogView(){
 /* ---------- Wartungsmodus ---------- */
 function adminMaint(){
   const m=mine.maint||{};
-  return `<section class="panel"><h3>🛠️ Wartungsmodus</h3><p class="muted">Im Wartungsmodus sehen normale Nutzer nur eine Sperrseite. Admins können weiterarbeiten.</p><div class="row"><div class="grow"><b>Status: ${m.on?"AN":"AUS"}</b><span class="muted small">${esc(m.message||"Keine Nachricht hinterlegt.")}</span></div><button class="btn ${m.on?"":"danger"}" data-action="maint-toggle">${m.on?"Ausschalten":"Einschalten"}</button><button class="btn small" data-action="maint-msg">Nachricht</button></div></section>`;
+  return `<section class="panel"><h3>🛠️ Wartungsmodus</h3><p class="muted">Im Wartungsmodus sehen normale Nutzer nur eine Sperrseite. Admins können weiterarbeiten.</p><div class="row"><div class="grow"><b>Status: ${m.on?"AN":"AUS"}</b><span class="muted small">${esc(m.message||"Keine Nachricht hinterlegt.")}</span></div><button class="btn ${m.on?"":"danger"}" data-action="maint-toggle">${m.on?"Ausschalten":"Einschalten"}</button><button class="btn small" data-action="maint-msg">Nachricht</button></div></section><section class="panel" style="margin-top:14px"><h3>📜 CoinOS-Bedingungen</h3><p class="muted">Diese Bedingungen werden nach einer Verwarnung oder Entsperrung erneut angezeigt. Bei einer Änderung der Bedingungen müssen alle Nutzer der neuen Version zustimmen.</p><div class="warning-text">${esc(mine.terms?.text||"Noch keine eigenen Bedingungen hinterlegt.").replace(/\n/g,"<br>")}</div><button class="btn primary" data-action="terms-edit">Bedingungen bearbeiten</button></section>`;
 }
 async function setMaint(patch,logText){
   need("maintenance");const cur=mine.maint||{};
   await setDoc(doc(db,"system","config"),{maintenance:{on:!!cur.on,message:cur.message||"",...patch,by:state.user.uid,at:serverTimestamp()}},{merge:true});logAdmin(logText,patch.message||"");
 }
+
+/* ---------- CoinOS-Bedingungen ---------- */
+function termsDialog(){
+  need("maintenance");const t=mine.terms||{};
+  showModal({title:"📜 CoinOS-Bedingungen bearbeiten",text:"Beim Speichern wird eine neue Version veröffentlicht. Alle Konten müssen diese Version anschließend akzeptieren.",submitLabel:"Neue Version veröffentlichen",fields:[{name:"text",label:"Bedingungen / Regeln",required:true,value:t.text||"",placeholder:"CoinOS-Regeln und Bedingungen…"}],onSubmit:async v=>{const txt=String(v.text||"").trim();if(txt.length<10)throw new AppError("Die Bedingungen sind zu kurz.");const version=(Number(t.version)||1)+1;await setDoc(doc(db,"system","config"),{terms:{text:txt.slice(0,6000),version,updatedAt:serverTimestamp(),updatedBy:state.user.uid}},{merge:true});await logAdmin("CoinOS-Bedingungen geändert",`Version ${version}`);toast("Neue Bedingungen veröffentlicht.","success");}});
+}
+async function acceptTerms(){
+  if(!state.user)return;const version=Number(mine.terms?.version)||1;
+  await updateDoc(doc(db,"users",state.user.uid),{requireTerms:false,termsAcceptedVersion:version,termsAcceptedAt:serverTimestamp()});gate.hidden=true;toast("Bedingungen akzeptiert.","success");setTimeout(evalGate,50);
+}
+Object.assign(actions,{"terms-edit":termsDialog,"terms-accept":acceptTerms});
 
 /* ---------- Admins verwalten (nur Volladmin) ---------- */
 function adminAdmins(){
