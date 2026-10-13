@@ -2512,6 +2512,7 @@ const ADMIN_TABS=[
   ["feedback","Feedback","message",()=>hasRight("usersView"),()=>adminFeedback()],
   ["log","Protokoll","receipt",()=>hasRight("logView"),()=>adminLogView()],
   ["maint","Wartung","settings",()=>hasRight("maintenance"),()=>adminMaint()],
+  ["terms","Regeln","receipt",()=>hasRight("maintenance"),()=>adminTerms()],
   ["admins","Admins","shield",()=>hasRight("full"),()=>adminAdmins()]
 ];
 function updateAdmin2(){
@@ -2712,6 +2713,10 @@ function adminLogView(){
 }
 
 /* ---------- Wartungsmodus ---------- */
+function adminTerms(){
+  const t=mine.terms||{};
+  return `<section class="panel"><h3>📜 CoinOS-Bedingungen & Regeln</h3><p class="muted">Hier verwaltest du die Bedingungen, die Nutzer nach einer Verwarnung oder Entsperrung erneut akzeptieren müssen. Eine neue Version muss von allen Konten bestätigt werden.</p><div class="warning-text" style="max-height:360px;overflow:auto">${esc(t.text||"Noch keine eigenen Bedingungen hinterlegt.").replace(/\n/g,"<br>")}</div><div class="toolbar"><span class="badge blue">Version ${fmt(Number(t.version)||1)}</span><button class="btn primary" data-action="terms-edit">Bedingungen bearbeiten</button></div></section>`;
+}
 function adminMaint(){
   const m=mine.maint||{};
   return `<section class="panel"><h3>🛠️ Wartungsmodus</h3><p class="muted">Im Wartungsmodus sehen normale Nutzer nur eine Sperrseite. Admins können weiterarbeiten.</p><div class="row"><div class="grow"><b>Status: ${m.on?"AN":"AUS"}</b><span class="muted small">${esc(m.message||"Keine Nachricht hinterlegt.")}</span></div><button class="btn ${m.on?"":"danger"}" data-action="maint-toggle">${m.on?"Ausschalten":"Einschalten"}</button><button class="btn small" data-action="maint-msg">Nachricht</button></div></section><section class="panel" style="margin-top:14px"><h3>📜 CoinOS-Bedingungen</h3><p class="muted">Diese Bedingungen werden nach einer Verwarnung oder Entsperrung erneut angezeigt. Bei einer Änderung der Bedingungen müssen alle Nutzer der neuen Version zustimmen.</p><div class="warning-text">${esc(mine.terms?.text||"Noch keine eigenen Bedingungen hinterlegt.").replace(/\n/g,"<br>")}</div><button class="btn primary" data-action="terms-edit">Bedingungen bearbeiten</button></section>`;
