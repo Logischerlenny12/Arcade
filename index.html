@@ -2814,6 +2814,217 @@ Object.assign(actions,{
   "admin-remove":el=>adminRemove(el.dataset.id),
   "log-del":async el=>{need("full","Nur der Volladmin darf Protokolleinträge löschen.");await deleteDoc(doc(db,"adminLog",el.dataset.id))}
 });
+/* ===================== COINOS ADD-ON v3 =====================
+   EINFÜGEN: direkt VOR der Zeile  "/* ---------------- Start ---------------- */"
+   Enthält: App-Katalog (200+ Apps mit Icons), Animationen, Spotlight-Suche (Strg+K),
+   Coin-Konfetti, Dock-Lupe, Ripple, 2 neue Themes, Bugfixes & Performance. */
+
+/* ---------- CSS ---------- */
+document.head.insertAdjacentHTML("beforeend",`<style>
+:root{--spring:cubic-bezier(.2,1.25,.35,1);--ease:cubic-bezier(.22,1,.36,1)}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes tilePop{from{opacity:0;transform:scale(.4) translateY(30px)}to{opacity:1;transform:none}}
+@keyframes drift1{50%{transform:translate(8vw,6vh) scale(1.15)}}
+@keyframes drift2{50%{transform:translate(-9vw,-7vh) scale(1.1)}}
+@keyframes toastIn{from{opacity:0;transform:translateY(24px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes floaty{50%{transform:translateY(-6px) rotate(2deg)}}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+@keyframes shine{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.wallpaper{overflow:hidden}
+.wallpaper::before,.wallpaper::after{content:"";position:absolute;width:55vmax;height:55vmax;border-radius:50%;opacity:.35;pointer-events:none;will-change:transform}
+.wallpaper::before{left:-15vmax;top:-15vmax;background:radial-gradient(circle,#ffffff 0%,transparent 65%);animation:drift1 22s ease-in-out infinite}
+.wallpaper::after{right:-18vmax;bottom:-18vmax;background:radial-gradient(circle,#b9a6ff 0%,transparent 65%);animation:drift2 28s ease-in-out infinite}
+#homePages{transition:transform .55s var(--ease)}
+#homeViewport{touch-action:pan-x pan-y}
+.app-library-page{overflow-y:auto!important;padding-bottom:150px!important}
+.page-dot{transition:all .35s var(--spring)}.page-dot.active{width:22px;border-radius:99px;transform:none}
+.tile{transition:transform .3s var(--spring)}
+.tile:active{transform:scale(.88)}
+.tile-icon{transition:transform .35s var(--spring),box-shadow .3s}
+.tile:hover .tile-icon{transform:scale(1.1) rotate(-3deg);box-shadow:0 22px 34px -12px var(--c2)}
+.tile-icon::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.38),transparent 48%);pointer-events:none}
+.intro .tile,.intro .os-widget{animation:tilePop .6s var(--spring) both;animation-delay:calc(var(--i,0)*40ms)}
+.edit-mode .tile:nth-child(odd){animation:wiggle .15s alternate infinite}
+.edit-mode .tile:nth-child(even){animation:wiggle .19s alternate-reverse infinite}
+.os-widget{transition:transform .3s var(--spring),box-shadow .3s}.os-widget:hover{transform:translateY(-4px) scale(1.02)}
+#window{transition:opacity .3s,transform .5s var(--spring)!important;transform-origin:50% 100%}
+#window:not(.open){transform:translateX(-50%) translateY(60px) scale(.88)!important}
+.stagger .game,.stagger .item,.stagger .row,.stagger .panel,.stagger .balance{animation:rise .5s var(--spring) both;animation-delay:calc(var(--i,0)*30ms)}
+.game,.item{content-visibility:auto;contain-intrinsic-size:auto 110px}
+.game,.item{transition:transform .25s var(--spring),box-shadow .25s}.game:hover,.item:hover{transform:translateY(-3px);box-shadow:0 16px 30px -18px rgba(43,27,74,.5)}
+.modal{animation:pop .4s var(--spring)}.modal-backdrop{animation:fade .2s}
+.toast{animation:toastIn .45s var(--spring)}
+.auth-card{animation:rise .7s var(--spring)}.auth-logo{animation:floaty 4s ease-in-out infinite}
+.coin-pill{position:relative;overflow:hidden}.coin-pill::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.7) 50%,transparent 70%);background-size:200% 100%;animation:shine 5s linear infinite;pointer-events:none}
+.coin-fly{position:fixed;z-index:200;width:16px;height:16px;pointer-events:none}
+.btn,.chip{position:relative;overflow:hidden;transition:transform .25s var(--spring),box-shadow .2s,background .2s}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.55);transform:scale(0);animation:ripple .6s ease-out forwards;pointer-events:none}
+.btn:not(.primary):not(.danger) .ripple,.chip:not(.active) .ripple{background:rgba(123,92,255,.25)}
+.dock-btn{transition:transform .2s var(--spring)}
+/* Bugfix: diese Klassen aus den Einstellungen hatten kein CSS */
+.large-icons .tile-icon{width:100px;height:100px;border-radius:32px}.large-icons .tile-label{font-size:1.02rem;max-width:120px}
+.high-contrast{--line:rgba(0,0,0,.5);--muted:#352c4d}.high-contrast .btn,.high-contrast .panel,.high-contrast .row{border-color:rgba(0,0,0,.55)!important}
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation:none!important;transition:none!important}
+/* Themes */
+.theme-ocean{--primary:#0ea5e9;--primary-2:#0369a1;--gold:#7dd3fc;--gold-deep:#0284c7}
+.theme-sunset{--primary:#f97316;--primary-2:#be123c;--gold:#fde047;--gold-deep:#f59e0b}
+/* Spotlight */
+.spot{position:fixed;inset:0;z-index:140;display:grid;align-items:start;justify-items:center;padding-top:12vh;background:rgba(43,27,74,.38);backdrop-filter:blur(8px);animation:fade .15s}
+.spot-card{width:min(560px,calc(100% - 24px));background:var(--solid);border-radius:26px;padding:12px;box-shadow:0 40px 100px -20px rgba(43,27,74,.6);animation:pop .35s var(--spring)}
+.spot-in{width:100%;padding:16px 18px;border-radius:18px;border:0;background:var(--soft);font-size:1.1rem;outline:none}
+.spot-list{display:grid;gap:4px;margin:8px 0;max-height:50vh;overflow:auto}
+.spot-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;text-align:left;transition:background .15s,transform .2s var(--spring)}
+.spot-row.on{background:var(--soft);transform:translateX(4px)}
+.spot-row b,.spot-row .muted{display:block}
+.spot-ic{position:relative;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;overflow:hidden;flex:none}
+.spot-hint{text-align:center;padding:2px 0 4px}
+</style>`);
+
+/* ---------- Hilfsfunktionen ---------- */
+const greet=()=>{const h=new Date().getHours();return h<5?"Gute Nacht":h<11?"Guten Morgen":h<17?"Hallo":h<22?"Guten Abend":"Gute Nacht"};
+function stagger(){const b=$("#winBody");if(!b)return;b.classList.add("stagger");$$("#winBody .game,#winBody .item,#winBody .row,#winBody .panel").slice(0,30).forEach((e,i)=>e.style.setProperty("--i",i));clearTimeout(stagger.t);stagger.t=setTimeout(()=>b.classList.remove("stagger"),1100)}
+{const _o=openApp;openApp=function(id){_o(id);stagger()}}
+{const _c=actions["app-cat"];actions["app-cat"]=el=>{_c(el);stagger()}}
+
+/* ---------- Homescreen: nur neu zeichnen, wenn sich wirklich etwas ändert ---------- */
+let _homeSig="",_introDone=false;
+{const _rd=renderDesktop;
+renderDesktop=function(){
+  const {usage,usageHistory,...r}=state.profile||{};
+  const sig=JSON.stringify([r,state.apps.map(a=>a.id+a.title+a.iconUrl),state.systemApps,state.orders.length,state.txs.length,editMode,currentHomePage,localStorage.getItem("coinos_current_design"),new Date().getMinutes()]);
+  if(sig===_homeSig)return;_homeSig=sig;_rd();
+  const g=$("#greeting");if(g)g.textContent=`${greet()}, ${state.profile?.name||"du"}!`;
+  if(!_introDone&&$("#os")&&!$("#os").hidden){_introDone=true;const hp=$("#homePages");hp.classList.add("intro");$$("#homePages .tile,#homePages .os-widget").forEach((t,i)=>t.style.setProperty("--i",i));setTimeout(()=>hp.classList.remove("intro"),1500)}
+}}
+onAuthStateChanged(auth,u=>{if(!u){_homeSig="";_introDone=false}});
+
+/* ---------- Coin-Konfetti ---------- */
+function coinBurst(n){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const p=$("#coinPill").getBoundingClientRect();
+  for(let i=0;i<Math.min(14,n+4);i++){const c=document.createElement("i");c.className="coin coin-fly";c.style.left=p.left+p.width/2+"px";c.style.top=p.top+p.height/2+"px";document.body.appendChild(c);
+    const a=Math.random()*Math.PI*2,d=40+Math.random()*80;
+    c.animate([{transform:"translate(0,0) scale(.4)",opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+40}px) scale(1) rotate(${Math.random()*540}deg)`,opacity:0}],{duration:800+Math.random()*500,easing:"cubic-bezier(.2,.8,.3,1)"}).onfinish=()=>c.remove()}
+}
+{const _sc=setCoins;setCoins=function(n){const prev=shownCoins;_sc(n);if(prev!==null&&n>prev)coinBurst(n-prev)}}
+
+/* ---------- Ripple + Dock-Lupe ---------- */
+document.addEventListener("pointerdown",e=>{
+  const t=e.target.closest(".btn,.chip,.tile-icon");if(!t||t.disabled)return;
+  const r=t.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,sp=document.createElement("span");
+  sp.className="ripple";sp.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;
+  t.appendChild(sp);setTimeout(()=>sp.remove(),650)
+});
+{const dock=$("#dock");
+dock.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse"||editMode)return;$$(".dock-btn",dock).forEach(b=>{const r=b.getBoundingClientRect(),d=Math.abs(e.clientX-(r.left+r.width/2)),s=1+.5*Math.max(0,1-d/120);b.style.transform=`translateY(${-(s-1)*20}px) scale(${s})`})});
+dock.addEventListener("pointerleave",()=>$$(".dock-btn",dock).forEach(b=>b.style.transform=""))}
+
+/* ---------- Spotlight-Suche (Strg/Cmd+K oder /) ---------- */
+let spotEl=null;
+const closeSpot=()=>{spotEl?.remove();spotEl=null};
+function spotItems(q){
+  q=q.trim().toLowerCase();const out=[],has=a=>!q||(a.title+" "+(a.category||"")).toLowerCase().includes(q);
+  for(const [id,a] of Object.entries(APPS))if(appVisible(a)&&!state.systemApps?.[id]?.deleted&&has(a))out.push({a,id,kind:"sys"});
+  for(const a of state.apps)if(a.hidden!==true&&has(a))out.push({a,id:a.id,kind:installedEntry(a.id)?"inst":"store"});
+  return out.sort((x,y)=>(x.kind==="store")-(y.kind==="store")).slice(0,8)
+}
+function openSpot(){
+  if(spotEl)return closeSpot();if(!state.profile)return;
+  spotEl=document.createElement("div");spotEl.className="spot";
+  spotEl.innerHTML=`<div class="spot-card"><input class="spot-in" placeholder="Apps suchen oder öffnen…" autocomplete="off"><div class="spot-list"></div><div class="spot-hint muted small">↑↓ wählen · Enter öffnen · Esc schließen</div></div>`;
+  document.body.appendChild(spotEl);
+  const inp=$(".spot-in",spotEl),list=$(".spot-list",spotEl);let sel=0,items=[];
+  const draw=()=>{items=spotItems(inp.value);sel=Math.min(sel,Math.max(0,items.length-1));
+    list.innerHTML=items.length?items.map((it,i)=>`<button class="spot-row ${i===sel?"on":""}" data-i="${i}"><span class="spot-ic" style="background:linear-gradient(145deg,${it.a.c1||"#667eea"},${it.a.c2||"#764ba2"})">${appIconHTML(it.a,22)}</span><span class="grow"><b>${esc(it.a.title)}</b><span class="muted small">${esc(it.a.category||"System")}</span></span><span class="badge">${it.kind==="store"?"Im Store":"Öffnen"}</span></button>`).join(""):`<div class="empty">Nichts gefunden</div>`};
+  const run=it=>{closeSpot();try{if(it.kind==="sys")openApp(it.id);else if(it.kind==="inst")openInstalledApp(it.id);else{state.appSearch=it.a.title;state.appCat="Alle";openApp("appstore")}}catch(e){toast(errMsg(e),"error")}};
+  inp.addEventListener("input",()=>{sel=0;draw()});
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="Escape"){e.stopPropagation();closeSpot()}
+    else if(e.key==="ArrowDown"){e.preventDefault();sel=Math.min(items.length-1,sel+1);draw()}
+    else if(e.key==="ArrowUp"){e.preventDefault();sel=Math.max(0,sel-1);draw()}
+    else if(e.key==="Enter"&&items[sel])run(items[sel])
+  });
+  list.addEventListener("click",e=>{const b=e.target.closest("[data-i]");if(b)run(items[+b.dataset.i])});
+  spotEl.addEventListener("pointerdown",e=>{if(e.target===spotEl)closeSpot()});
+  draw();inp.focus();
+}
+actions.spotlight=openSpot;
+$(".sb-right").insertAdjacentHTML("afterbegin",`<button class="btn icon-btn" data-action="spotlight" title="Suche (Strg+K)">🔍</button>`);
+document.addEventListener("keydown",e=>{
+  const typing=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();openSpot()}
+  else if(e.key==="/"&&!typing&&state.profile){e.preventDefault();openSpot()}
+});
+
+/* ---------- Neue Themes ---------- */
+{const _at=applyTheme;applyTheme=function(n){document.documentElement.classList.remove("theme-ocean","theme-sunset");_at(n);if(n==="ocean")document.documentElement.classList.add("theme-ocean");if(n==="sunset")document.documentElement.classList.add("theme-sunset")}}
+applyTheme(localStorage.getItem("coinos_theme")||"standard");
+{const _ms=APPS.settings.mount;APPS.settings.mount=el=>{_ms(el);const s=$("#setTheme");if(s)s.insertAdjacentHTML("beforeend",`<option value="ocean">Ozean</option><option value="sunset">Sonnenuntergang</option>`);updateSettings()}}
+{const _mp=APPS.profil.mount;APPS.profil.mount=el=>{_mp(el);const t=el.querySelector('[data-theme="neon"]');if(t)t.insertAdjacentHTML("afterend",`<button class="btn" data-action="theme" data-theme="ocean">Ozean</button><button class="btn" data-action="theme" data-theme="sunset">Sonnenuntergang</button>`)}}
+
+/* ---------- Bugfix: Schalter (Standard = AUS) in den Einstellungen ---------- */
+const OFF_BY_DEFAULT=["largeIcons","highContrast","reduceMotion"];
+{const _us=updateSettings;
+updateSettings=function(){_us();const st=getSettings();OFF_BY_DEFAULT.forEach(k=>document.querySelector(`[data-key="${k}"]`)?.classList.toggle("on",!!st[k]))};
+APPS.settings.update=updateSettings;}
+toggleSetting=async function(key){
+  const st=getSettings();st[key]=OFF_BY_DEFAULT.includes(key)?!st[key]:st[key]===false;
+  await updateDoc(doc(db,"users",state.user.uid),{settings:st});
+  if(key==="showDots")$("#pageDots").style.display=st[key]===false?"none":"flex";
+  if(key==="showDock")$("#dock").style.display=st[key]===false?"none":"flex";
+  applyHomeSettings();updateSettings();
+};
+/* Bugfix: Installations-Balken war 5 Sekunden lang, jetzt flüssige ~1 Sekunde */
+showInstallProgress=async function(a){
+  closeModal();
+  $("#modalRoot").innerHTML=`<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true"><h3>📥 ${esc(a.title)}</h3><p class="muted">CoinOS installiert die App…</p><div class="install-progress"><div class="install-progress-bar"><div class="install-progress-fill" id="installFill" style="transition:width .12s linear"></div></div><div class="install-progress-text" id="installPct">0 %</div></div></div></div>`;
+  const f=$("#installFill"),p=$("#installPct");
+  for(let i=0;i<=100;i+=4){f.style.width=i+"%";p.textContent=i+" %";await wait(28+i/4)}
+  await wait(120);closeModal();
+};
+
+/* ---------- App-Katalog (Icons via Favicon-Dienst) ---------- */
+// Format: "Kategorie|Farbe1|Farbe2|Spiel(1/0)|Name=Adresse;Name=Adresse"
+const CATALOG=[
+"io-Spiele|#ff6fae|#a93ee8|1|Slither.io=gulper.io;Agar.io=agma.io;Diep.io=diep.io;Paper.io 2=html5.gamedistribution.com/5f0b3c36e5204917a1d23e8685a7015e/;Krunker.io=krunker.io;Shell Shockers=shellshock.io;ZombsRoyale.io=zombsroyale.io;Survev.io=survev.io;MooMoo.io=moomoo.io;Starve.io=starve.io;Mope.io=mope.io;Deeeep.io=deeeep.io;Bonk.io=hitbox.io;Hole.io=holegame.io;Wings.io=wings.io;Warbrokers.io=warbrokers.io;Venge.io=venge.io;Ev.io=ev.io;1v1.LOL=1v1.lol;Smash Karts=smashkarts.io;BuildRoyale.io=buildroyale.io;Arras.io=arras.io;Florr.io=florr.io;Taming.io=taming.io;Defly.io=defly.io;Superhex.io=superhex.io;Splix.io=splix.io;Worms.zone=worms.zone;Little Big Snake=wormate.io;Brutal.io=brutal.io;Powerline.io=powerline.io;Zombs.io=zombs.io;Yorg.io=yorg.io;Lordz.io=lordz.io;digdig.io=digdig.io;Copter.io=copter.io;Gats.io=gats.io;Wanderers.io=wanderers.io;EvoWorld.io=evoworld.io;Stabfish.io=stabfish.io;Narwhale.io=narwhale.io;Deadshot.io=deadshot.io;Kour.io=kour.io;Voxiom.io=voxiom.io;Bloxd.io=bloxd.io",
+"Party & Quiz|#ff9f43|#e5541b|1|Skribbl.io=skribbl.io;Gartic Phone=garticphone.com;Gartic.io=gartic.io;Make It Meme=makeitmeme.com;Codenames=codenames.game;OpenGuessr=openguessr.com;Worldle=worldle.teuteuf.fr;Globle=globle-game.com;TimeGuessr=timeguessr.com;City Guesser=virtualvacation.us/guess;Higher Lower=www.higherlowergame.com;Quick, Draw!=quickdraw.withgoogle.com;Sketchful.io=sketchful.io;Colonist.io=colonist.io;Richup.io=richup.io;Akinator=de.akinator.com;CardGames.io=cardgames.io;JKLM.fun=jklm.fun;Broken Picturephone=www.brokenpicturephone.com",
+"Arcade & Klassiker|#18a0fb|#3567ff|1|Minecraft (Eaglercraft)=eaglercraft.com;Slow Roads=slowroads.io;2048=play2048.co;TETR.IO=tetr.io;Jstris=jstris.jezevec10.com;Pac-Man=freepacman.org;Flappy Bird=flappybird.io;Chrome Dino=chromedino.com;Slope=slope-game.github.io/file/;Crossy Road=poki-games.github.io/crossy-road/;HexGL=hexgl.bkcore.com/play/;Curve Fever Pro=curvefever.pro;Lichess=lichess.org;Minesweeper Online=minesweeper.online;Sudoku=sudoku.com;Fancade=play.fancade.com;osu!web=osugame.online;Line Rider=www.linerider.com;Subway Surfers=sz-games.github.io/Games8/subwaysurfers/;Spelunky HTML5=tinysubversions.com/game/spelunky/;Geometry Dash=scratch.mit.edu/projects/105500895/embed",
+"Idle & Sandbox|#12b886|#0a7d5c|1|Cookie Clicker=orteil.dashnet.org/cookieclicker/;Infinite Craft=neal.fun/infinite-craft/;The Password Game=neal.fun/password-game/;Stimulation Clicker=neal.fun/stimulation-clicker/;Little Alchemy 2=littlealchemy2.com;A Dark Room=adarkroom.doublespeakgames.com;Universal Paperclips=www.decisionproblem.com/paperclips/index2.html;Candy Box 2=candybox2.github.io;Doge Miner 2=dogeminer2.com;Sandspiel=sandspiel.club;Townscaper=oskarstalberg.com/Townscaper/;Wordle (6mal5)=6mal5.com;Contexto=contexto.me;Retro Bowl=game316009.konggames.com/gamez/0031/6009/live/index.html;ZType=zty.pe",
+"Social & Chat|#ff5d73|#a81e36|0|WhatsApp Web=web.whatsapp.com;Signal=signal.org;Threema Web=web.threema.ch;Discord=discord.com/app;Telegram Web=web.telegram.org;Element=app.element.io;Instagram=www.instagram.com;TikTok=www.tiktok.com;Snapchat=web.snapchat.com;Reddit=www.reddit.com;X (Twitter)=x.com;Threads=www.threads.net;Bluesky=bsky.app;Pinterest=www.pinterest.de;Jitsi Meet=meet.jit.si",
+"Streaming|#8f74ff|#4b33d6|0|YouTube=www.youtube.com;YouTube Music=music.youtube.com;YouTube Studio=studio.youtube.com;Twitch=www.twitch.tv;Spotify=open.spotify.com;SoundCloud=soundcloud.com;Netflix=www.netflix.com;Disney+=www.disneyplus.com;Prime Video=www.primevideo.com;Apple Music=music.apple.com;Apple TV+=tv.apple.com;Crunchyroll=www.crunchyroll.com;Joyn=www.joyn.de;ARD Mediathek=www.ardmediathek.de;ZDFmediathek=www.zdf.de;Watch2Gether=w2g.tv",
+"Cloud & Sicherheit|#20c997|#087f5b|0|UniFi Protect=unifi.ui.com;Proton Mail=mail.proton.me;Proton Drive=drive.proton.me;Proton Pass=pass.proton.me;Bitwarden=vault.bitwarden.com;VirusTotal=www.virustotal.com;Have I Been Pwned=haveibeenpwned.com;Cloudflare 1.1.1.1=one.one.one.one;Google Drive=drive.google.com;Gmail=mail.google.com;Google Fotos=photos.google.com;iCloud=www.icloud.com;OneDrive=onedrive.live.com;Outlook=outlook.live.com;Dropbox=www.dropbox.com;MEGA=mega.nz",
+"Dateiaustausch|#18c8d8|#1474c4|0|Snapdrop=snapdrop.net;PairDrop=pairdrop.net;ShareDrop=www.sharedrop.io;WeTransfer=wetransfer.com;Wormhole=wormhole.app",
+"Gaming & Minecraft|#b05cff|#6b32d9|0|GeForce NOW=play.geforcenow.com;Xbox Cloud Gaming=www.xbox.com/play;Roblox=www.roblox.com;Steam=store.steampowered.com;Epic Games=store.epicgames.com;Nitrado=server.nitrado.net;Aternos=aternos.org/server/;CurseForge=www.curseforge.com;Modrinth=modrinth.com;Chunkbase=www.chunkbase.com/apps/seed-map;Minecraft Wiki=de.minecraft.wiki;NameMC=de.namemc.com;Philips Hue=account.meethue.com",
+"Kreativ|#ff6fae|#e5384f|0|Photopea=www.photopea.com;Canva=www.canva.com;Excalidraw=excalidraw.com;tldraw=www.tldraw.com;Figma=www.figma.com;Pixlr=pixlr.com/de/editor/;Clipchamp=app.clipchamp.com;CapCut=www.capcut.com/my-edit;Remove.bg=www.remove.bg;Squoosh=squoosh.app;BandLab=www.bandlab.com;TwistedWave=twistedwave.com/online",
+"Schule & KI|#ffc233|#e59a00|0|Google Docs=docs.google.com;Google Sheets=sheets.google.com;Google Slides=slides.google.com;Google Kalender=calendar.google.com;Google Keep=keep.google.com;Notion=www.notion.so;Wikipedia=de.wikipedia.org;DeepL=www.deepl.com/translator;Navigium=www.navigium.de;PONS=de.pons.com;LEO=dict.leo.org;GeoGebra=www.geogebra.org/calculator;WolframAlpha=www.wolframalpha.com;ChatGPT=chatgpt.com;Gemini=gemini.google.com",
+"Tools & Dev|#68707d|#303640|0|GitHub=github.com;Firebase Console=console.firebase.google.com;CodePen=codepen.io/pen/;StackBlitz=stackblitz.com;Speedtest=www.speedtest.net;Fast.com=fast.com;Google Maps=www.google.com/maps;Windy=www.windy.com"
+];
+function catalogApps(){
+  const out=[];
+  for(const row of CATALOG){
+    const [category,c1,c2,g,list]=row.split("|"),game=g==="1";
+    for(const e of list.split(";")){
+      const i=e.indexOf("="),title=e.slice(0,i),addr=e.slice(i+1),url="https://"+addr,host=addr.split("/")[0];
+      out.push({id:"cat_"+title.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,""),title,targetUrl:url,
+        iconUrl:`https://www.google.com/s2/favicons?domain=${host}&sz=128`,category,c1,c2,isGame:game,storageMb:game?250:100})
+    }
+  }
+  return out;
+}
+async function importCatalog(){
+  need("appsManage");
+  const have=new Set(state.apps.map(a=>a.id)),todo=catalogApps().filter(a=>!have.has(a.id));
+  if(!todo.length)return toast("Der Katalog ist bereits vollständig importiert.","info");
+  if(!await confirmDialog({title:`${todo.length} Apps importieren?`,text:"Alle Apps werden kostenlos in den App Store gelegt (Web-Apps 100 MB, Spiele 250 MB virtueller Speicher). Schon vorhandene bleiben unverändert.",confirmLabel:"Katalog importieren"}))return;
+  for(let i=0;i<todo.length;i+=400){
+    const b=writeBatch(db);
+    todo.slice(i,i+400).forEach(a=>{const {id,...d}=a;b.set(doc(db,"apps",id),{...d,price:0,requiredCoins:0,billing:"once",widgetEnabled:false,widgetTitle:a.title,widgetValue:"Öffnen",widgetText:"App-Widget",hidden:false})});
+    await b.commit();
+  }
+  logAdmin("App-Katalog importiert",`${todo.length} Apps`);toast(`${todo.length} Apps wurden hinzugefügt.`,"success");
+}
+actions["catalog-import"]=importCatalog;
+{const _aa=adminApps;adminApps=function(){return `<div class="toolbar"><button class="btn primary" data-action="catalog-import">📦 App-Katalog importieren (${catalogApps().length} Apps)</button></div>`+_aa()}}
 /* ---------------- Start ---------------- */
 $$("[data-icon]").forEach(el => el.insertAdjacentHTML("afterbegin", icon(el.dataset.icon, 18)));
 if (!ALLOW_REGISTRATION) $("#registerTab").hidden = true;
