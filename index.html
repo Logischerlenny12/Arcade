@@ -2815,9 +2815,9 @@ Object.assign(actions,{
   "log-del":async el=>{need("full","Nur der Volladmin darf Protokolleinträge löschen.");await deleteDoc(doc(db,"adminLog",el.dataset.id))}
 });
 /* ===================== COINOS ADD-ON v3 =====================
-   EINFÜGEN: direkt VOR der Zeile  "/* ---------------- Start ---------------- */"
-   Enthält: App-Katalog (200+ Apps mit Icons), Animationen, Spotlight-Suche (Strg+K),
-   Coin-Konfetti, Dock-Lupe, Ripple, 2 neue Themes, Bugfixes & Performance. */
+   EINFUEGEN: direkt vor dem Abschnitt "Start" am Ende des Scripts.
+   Enthaelt: App-Katalog (200+ Apps mit Icons), Animationen, Spotlight-Suche (Strg+K),
+   Coin-Konfetti, Dock-Lupe, Ripple, 2 neue Themes, Bugfixes und Performance. */
 
 /* ---------- CSS ---------- */
 document.head.insertAdjacentHTML("beforeend",`<style>
